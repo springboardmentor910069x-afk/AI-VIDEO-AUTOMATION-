@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -5,16 +6,46 @@ dist/
 build/
 .eggs/
 *.egg
+
+# Environment
 .env
 .venv/
 venv/
+
+# Node
 node_modules/
 .vite/
+
+# Build
 dist/
+
+# Logs
 *.log
+
+# OS
 .DS_Store
 Thumbs.db
+
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# Uploads (IMPORTANT)
+backend/uploads/
+uploads/
+
+# Media files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wav
+*.jpg
+*.jpeg
+*.png
+
+# Whisper cache (optional)
+models/
