@@ -5,7 +5,6 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.transcript import Transcript
 
 from app.database.base import Base
 from app.models.base import TimestampMixin
@@ -95,5 +94,11 @@ class Video(TimestampMixin, Base):
         "Transcript",
         back_populates="video",
         uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    summaries: Mapped[list["Summary"]] = relationship(
+        "Summary",
+        back_populates="video",
         cascade="all, delete-orphan",
     )

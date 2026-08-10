@@ -43,6 +43,22 @@ async def get_all_videos(
     return result.scalars().all()
 
 
+async def get_videos_by_user(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[Video]:
+    result = await db.execute(
+        select(Video)
+        .where(Video.uploaded_by == user_id)
+        .order_by(Video.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return result.scalars().all()
+
+
 async def delete_video(db: AsyncSession, video_id: uuid.UUID) -> bool:
     video = await get_video_by_id(db, video_id)
     if not video:

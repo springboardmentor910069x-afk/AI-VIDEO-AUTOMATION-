@@ -1,8 +1,18 @@
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import Spinner from "@/components/ui/Spinner";
+
 export default function Home() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20">
-      <h1 className="text-4xl font-bold">ClipMind AI</h1>
-      <p className="mt-4 text-lg text-gray-600">Intelligent clip management powered by AI.</p>
-    </div>
-  );
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-brand-600 dark:bg-slate-950 dark:text-brand-400">
+        <Spinner className="h-6 w-6" />
+        <span className="sr-only">Loading…</span>
+      </div>
+    );
+  }
+
+  return <Navigate to={user ? "/dashboard" : "/login"} replace />;
 }
