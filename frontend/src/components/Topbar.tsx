@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import Avatar from "@/components/ui/Avatar";
 import Menu, { MenuItem } from "@/components/ui/Menu";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { LogoutIcon, MenuIcon, MoonIcon, SunIcon } from "@/components/Icons";
 
 interface TopbarProps {
@@ -14,11 +16,7 @@ export default function Topbar({ title, onOpenMobileNav }: TopbarProps) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur sm:px-6 dark:border-slate-800 dark:bg-slate-900/80">
@@ -61,11 +59,25 @@ export default function Topbar({ title, onOpenMobileNav }: TopbarProps) {
           </p>
           <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
         </div>
-        <MenuItem danger onClick={handleLogout}>
+        <MenuItem danger onClick={() => setLogoutConfirmOpen(true)}>
           <LogoutIcon className="h-4 w-4" />
           Log out
         </MenuItem>
       </Menu>
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title="Log out?"
+        message="You will be signed out and will need to sign in again to access your workspace."
+        confirmLabel="Log out"
+        danger
+        onConfirm={() => {
+          setLogoutConfirmOpen(false);
+          logout();
+          navigate("/login", { replace: true });
+        }}
+        onCancel={() => setLogoutConfirmOpen(false)}
+      />
     </header>
   );
 }

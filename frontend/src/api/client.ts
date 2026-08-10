@@ -190,7 +190,9 @@ export async function registerUser(input: {
 // ---------------- VIDEOS ----------------
 
 export async function getVideos(): Promise<Video[]> {
-  const res = await client.get<Video[]>("/videos");
+  // Trailing slash required: the backend route is "/videos/" and a bare "/videos"
+  // triggers a 307 redirect, which drops the Authorization header in browsers.
+  const res = await client.get<Video[]>("/videos/");
   return res.data;
 }
 

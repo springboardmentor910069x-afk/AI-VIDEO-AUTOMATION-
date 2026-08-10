@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/cn";
 import Avatar from "@/components/ui/Avatar";
 import Menu, { MenuItem } from "@/components/ui/Menu";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { FilmIcon, LogoutIcon, XMarkIcon } from "@/components/Icons";
 
 interface SidebarProps {
@@ -13,6 +15,7 @@ interface SidebarProps {
 export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const navItems = [
     {
@@ -45,7 +48,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Workspace
         </p>
         {navItems.map((item) => (
@@ -84,12 +87,25 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             </span>
           }
         >
-          <MenuItem danger onClick={logout}>
+          <MenuItem danger onClick={() => setLogoutConfirmOpen(true)}>
             <LogoutIcon className="h-4 w-4" />
             Log out
           </MenuItem>
         </Menu>
       </div>
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title="Log out?"
+        message="You will be signed out and will need to sign in again to access your workspace."
+        confirmLabel="Log out"
+        danger
+        onConfirm={() => {
+          setLogoutConfirmOpen(false);
+          logout();
+        }}
+        onCancel={() => setLogoutConfirmOpen(false)}
+      />
     </div>
   );
 

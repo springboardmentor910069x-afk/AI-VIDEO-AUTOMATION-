@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { formatDate, formatDuration, formatFileSize, getTranscript, thumbnailUrl } from "@/api/client";
+import { formatDate, formatDuration, formatFileSize, thumbnailUrl } from "@/api/client";
+import { useTranscript } from "@/hooks/useTranscript";
 import Modal from "@/components/ui/Modal";
 import Badge from "@/components/ui/Badge";
 import TranscriptPanel from "@/components/TranscriptPanel";
 import SummaryPanel from "@/components/SummaryPanel";
 import { DocumentTextIcon, FilmIcon, SparklesIcon } from "@/components/Icons";
-import type { Transcript, Video } from "@/api/types";
+import type { Video } from "@/api/types";
 
 interface VideoDetailModalProps {
   video: Video;
@@ -13,22 +13,16 @@ interface VideoDetailModalProps {
 }
 
 export default function VideoDetailModal({ video, onClose }: VideoDetailModalProps) {
-  const [transcript, setTranscript] = useState<Transcript | null>(null);
+  const {
+    transcript,
+    loading,
+    generating,
+    notFound,
+    error,
+    videoProcessing,
+    generateTranscriptNow,
+  } = useTranscript(video);
   const thumb = thumbnailUrl(video);
-
-  const loadTranscript = useCallback(async () => {
-    try {
-      const data = await getTranscript(video.id);
-      setTranscript(data);
-    } catch {
-      setTranscript(null);
-    }
-  }, [video.id]);
-
-  useEffect(() => {
-    loadTranscript();
-  }, [loadTranscript]);
-
   const transcriptReady = transcript?.status === "complete";
 
   return (
@@ -72,7 +66,15 @@ export default function VideoDetailModal({ video, onClose }: VideoDetailModalPro
             <DocumentTextIcon className="h-4 w-4" />
             Transcript
           </h3>
-          <TranscriptPanel video={video} />
+          <TranscriptPanel
+            transcript={transcript}
+            loading={loading}
+            generating={generating}
+            notFound={notFound}
+            error={error}
+            videoProcessing={videoProcessing}
+            onGenerate={generateTranscriptNow}
+          />
         </section>
 
         <section>

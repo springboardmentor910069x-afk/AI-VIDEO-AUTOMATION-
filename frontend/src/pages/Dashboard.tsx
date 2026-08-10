@@ -302,7 +302,10 @@ export default function Dashboard() {
           ) : (
             <>
               {hasActive && (
-                <div className="mb-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <div
+                  role="status"
+                  className="mb-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"
+                >
                   <span className="h-1.5 w-1.5 animate-ping rounded-full bg-brand-500" />
                   Polling for updates while videos process…
                 </div>
