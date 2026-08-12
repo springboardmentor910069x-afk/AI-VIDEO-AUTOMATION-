@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -35,7 +36,7 @@ ALLOWED_SUFFIXES = {".mp4", ".mov", ".webm", ".avi", ".mkv"}
 ROLES = {"creator", "learner", "educator", "admin"}
 bearer = HTTPBearer()
 
-app = FastAPI(title="ClipMind AI", version="0.1.0", description="Week 1-2 core setup")
+app = FastAPI(title="ClipMind AI", version="0.2.0", description="Weeks 1-4 video processing, transcripts, and summaries")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -71,6 +72,16 @@ def initialize_database() -> None:
           FOREIGN KEY(owner_id) REFERENCES users(id)
         );
         CREATE INDEX IF NOT EXISTS idx_videos_owner ON videos(owner_id);
+        CREATE TABLE IF NOT EXISTS transcripts (
+          id TEXT PRIMARY KEY, video_id TEXT NOT NULL UNIQUE, content TEXT NOT NULL,
+          language TEXT, status TEXT NOT NULL, error TEXT, created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL, FOREIGN KEY(video_id) REFERENCES videos(id)
+        );
+        CREATE TABLE IF NOT EXISTS summaries (
+          id TEXT PRIMARY KEY, video_id TEXT NOT NULL, summary_type TEXT NOT NULL,
+          content TEXT NOT NULL, created_at TEXT NOT NULL,
+          UNIQUE(video_id, summary_type), FOREIGN KEY(video_id) REFERENCES videos(id)
+        );
         """)
 
 
@@ -129,7 +140,7 @@ def user_data(user: sqlite3.Row) -> dict:
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "scope": "week-1-2"}
+    return {"status": "ok", "scope": "weeks-1-4"}
 
 
 @app.post("/api/auth/register", status_code=201)
@@ -224,6 +235,98 @@ def get_video_or_404(video_id: str) -> sqlite3.Row:
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
+
+
+def ensure_video_access(video: sqlite3.Row, user: sqlite3.Row, edit: bool = False) -> None:
+    if user["role"] == "admin": return
+    if edit and video["owner_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="You can only manage your own uploads")
+    if not edit and user["role"] in {"creator", "educator"} and video["owner_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="You can only view your own uploads")
+
+
+def transcript_row(video_id: str) -> sqlite3.Row | None:
+    with db() as connection:
+        return connection.execute("SELECT * FROM transcripts WHERE video_id=?", (video_id,)).fetchone()
+
+
+def transcribe_video(video_id: str, source: Path) -> None:
+    try:
+        import whisper
+        model = whisper.load_model(os.getenv("WHISPER_MODEL", "base"))
+        result = model.transcribe(str(source), fp16=False)
+        content = result.get("text", "").strip()
+        if not content: raise ValueError("Whisper returned an empty transcript")
+        with db() as connection:
+            connection.execute("UPDATE transcripts SET content=?, language=?, status='ready', error=NULL, updated_at=? WHERE video_id=?", (content, result.get("language"), now(), video_id))
+    except Exception as exc:
+        hint = "Install FFmpeg and run pip install -r requirements.txt." if isinstance(exc, (ImportError, FileNotFoundError)) else str(exc)[:220]
+        with db() as connection:
+            connection.execute("UPDATE transcripts SET status='failed', error=?, updated_at=? WHERE video_id=?", (hint, now(), video_id))
+
+
+def summarize_text(text: str, maximum_sentences: int) -> str:
+    sentences = [item.strip() for item in re.split(r"(?<=[.!?])\s+", text) if item.strip()]
+    if not sentences: raise HTTPException(status_code=422, detail="Transcript has no text to summarize")
+    words = re.findall(r"[a-zA-Z]{3,}", text.lower()); frequency = {word: words.count(word) for word in set(words)}
+    scored = [(sum(frequency.get(word, 0) for word in re.findall(r"[a-zA-Z]{3,}", sentence.lower())), index, sentence) for index, sentence in enumerate(sentences)]
+    picked = sorted(sorted(scored, reverse=True)[:min(maximum_sentences, len(sentences))], key=lambda item: item[1])
+    return " ".join(item[2] for item in picked)
+
+
+class TranscriptUpdate(BaseModel):
+    content: str = Field(min_length=1, max_length=200_000)
+
+
+class SummaryRequest(BaseModel):
+    summary_type: Literal["short", "detailed"]
+
+
+@app.post("/api/videos/{video_id}/transcript", status_code=202)
+def generate_transcript(video_id: str, background_tasks: BackgroundTasks, user: sqlite3.Row = Depends(get_user)):
+    video = get_video_or_404(video_id); ensure_video_access(video, user, edit=True); source = UPLOADS / video["stored_name"]
+    if not source.exists(): raise HTTPException(status_code=404, detail="The original uploaded file is not available")
+    with db() as connection:
+        existing = connection.execute("SELECT id FROM transcripts WHERE video_id=?", (video_id,)).fetchone()
+        if existing: connection.execute("UPDATE transcripts SET status='processing', error=NULL, updated_at=? WHERE video_id=?", (now(), video_id))
+        else: connection.execute("INSERT INTO transcripts VALUES (?, ?, '', NULL, 'processing', NULL, ?, ?)", (str(uuid.uuid4()), video_id, now(), now()))
+    background_tasks.add_task(transcribe_video, video_id, source)
+    return {"status": "processing", "message": "Whisper transcription has started."}
+
+
+@app.get("/api/videos/{video_id}/transcript")
+def get_transcript(video_id: str, user: sqlite3.Row = Depends(get_user)):
+    video = get_video_or_404(video_id); ensure_video_access(video, user); transcript = transcript_row(video_id)
+    if not transcript: raise HTTPException(status_code=404, detail="No transcript has been generated yet")
+    return dict(transcript)
+
+
+@app.put("/api/videos/{video_id}/transcript")
+def update_transcript(video_id: str, data: TranscriptUpdate, user: sqlite3.Row = Depends(get_user)):
+    video = get_video_or_404(video_id); ensure_video_access(video, user, edit=True)
+    with db() as connection:
+        existing = connection.execute("SELECT id FROM transcripts WHERE video_id=?", (video_id,)).fetchone()
+        if existing: connection.execute("UPDATE transcripts SET content=?, status='ready', error=NULL, updated_at=? WHERE video_id=?", (data.content.strip(), now(), video_id))
+        else: connection.execute("INSERT INTO transcripts VALUES (?, ?, ?, 'manual', 'ready', NULL, ?, ?)", (str(uuid.uuid4()), video_id, data.content.strip(), now(), now()))
+    return get_transcript(video_id, user)
+
+
+@app.post("/api/videos/{video_id}/summaries", status_code=201)
+def generate_summary(video_id: str, data: SummaryRequest, user: sqlite3.Row = Depends(get_user)):
+    video = get_video_or_404(video_id); ensure_video_access(video, user); transcript = transcript_row(video_id)
+    if not transcript or transcript["status"] != "ready": raise HTTPException(status_code=409, detail="A ready transcript is required before generating a summary")
+    content = summarize_text(transcript["content"], 3 if data.summary_type == "short" else 8)
+    with db() as connection:
+        connection.execute("INSERT INTO summaries VALUES (?, ?, ?, ?, ?) ON CONFLICT(video_id, summary_type) DO UPDATE SET content=excluded.content, created_at=excluded.created_at", (str(uuid.uuid4()), video_id, data.summary_type, content, now()))
+        summary = connection.execute("SELECT * FROM summaries WHERE video_id=? AND summary_type=?", (video_id, data.summary_type)).fetchone()
+    return dict(summary)
+
+
+@app.get("/api/videos/{video_id}/summaries")
+def get_summaries(video_id: str, user: sqlite3.Row = Depends(get_user)):
+    video = get_video_or_404(video_id); ensure_video_access(video, user)
+    with db() as connection:
+        return [dict(row) for row in connection.execute("SELECT * FROM summaries WHERE video_id=? ORDER BY summary_type", (video_id,)).fetchall()]
 
 
 @app.get("/api/videos/{video_id}")
