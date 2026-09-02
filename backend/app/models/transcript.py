@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Enum as SQLEnum, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum, ForeignKey, JSON, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -38,6 +38,13 @@ class Transcript(TimestampMixin, Base):
         index=True,
     )
 
+    # Timestamped segments from Whisper: [{"start": float, "end": float, "text": str}].
+    # Used by the key-moments pipeline for accurate timestamps.
+    segments: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
     status: Mapped[TranscriptStatus] = mapped_column(
         SQLEnum(
             TranscriptStatus,
@@ -47,6 +54,11 @@ class Transcript(TimestampMixin, Base):
         default=TranscriptStatus.PENDING,
         nullable=False,
         index=True,
+    )
+
+    error_message: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
     )
 
     video: Mapped["Video"] = relationship(

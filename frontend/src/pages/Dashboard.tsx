@@ -1,17 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getApiErrorDetail, getTranscript, getVideos } from "@/api/client";
+import { useNavigate } from "react-router-dom";
+import {
+  deleteVideo,
+  getApiErrorDetail,
+  getSummaries,
+  getTranscript,
+  getVideos,
+} from "@/api/client";
+
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/Toast";
 import { useDebounce } from "@/hooks/useDebounce";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Field";
 import StatCard from "@/components/ui/StatCard";
 import EmptyState from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+
 import { cn } from "@/lib/cn";
+
 import UploadModal from "@/components/UploadModal";
 import VideoCard from "@/components/VideoCard";
-import VideoDetailModal from "@/components/VideoDetailModal";
+
 import {
   AlertTriangleIcon,
   BoltIcon,
@@ -21,10 +32,13 @@ import {
   SearchIcon,
   UploadIcon,
 } from "@/components/Icons";
-import type { Video } from "@/api/types";
+
+import type { Summary, Transcript, Video } from "@/api/types";
 
 const POLL_INTERVAL_MS = 4000;
+
 const ACTIVE_UPLOAD_STATUSES = new Set(["pending", "processing"]);
+
 const FINAL_STATUSES = new Set(["ready", "failed"]);
 
 type Filter = "all" | "processing" | "ready" | "failed";
@@ -47,22 +61,20 @@ function greeting(): string {
 export default function Dashboard() {
   const { user } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [selected, setSelected] = useState<Video | null>(null);
-
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<SortOrder>("newest");
 
-  const [transcriptReady, setTranscriptReady] = useState<Record<string, boolean>>({});
-  const checkedTranscripts = useRef<Set<string>>(new Set());
-  const mounted = useRef(true);
+  const [transcripts, setTranscripts] = useState<Record<string, Transcript | null>>({});
+  const [summaries, setSummaries] = useState<Record<string, Summary[]>>({});
 
+  const mounted = useRef(true);
   const debouncedSearch = useDebounce(search, 250);
 
   const fetchVideos = useCallback(async (): Promise<Video[]> => {
@@ -71,63 +83,126 @@ export default function Dashboard() {
     return data;
   }, []);
 
+  const loadAIData = useCallback(async (videoId: string) => {
+    try {
+      const transcript = await getTranscript(videoId);
+      if (mounted.current) {
+        setTranscripts((previous) => ({ ...previous, [videoId]: transcript }));
+      }
+      if (transcript.status === "complete" && Boolean(transcript.transcript)) {
+        try {
+          const data = await getSummaries(videoId);
+          if (mounted.current) {
+            setSummaries((previous) => ({ ...previous, [videoId]: data }));
+          }
+        } catch {
+          // Summaries are optional — a failure here should not block the dashboard.
+        }
+      }
+    } catch {
+      if (mounted.current) {
+        setTranscripts((previous) => ({ ...previous, [videoId]: null }));
+      }
+    }
+  }, []);
+
   useEffect(() => {
     mounted.current = true;
+
     let cancelled = false;
-    (async () => {
+
+    const load = async () => {
       try {
         const data = await getVideos();
         if (!cancelled) {
           setVideos(data);
           setError(null);
+          const readyVideos = data.filter((video) => FINAL_STATUSES.has(video.upload_status));
+          await Promise.all(readyVideos.map((video) => loadAIData(video.id)));
         }
       } catch (err) {
         if (!cancelled) setError(getApiErrorDetail(err));
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+
+    void load();
+
     return () => {
       cancelled = true;
       mounted.current = false;
     };
-  }, []);
+  }, [loadAIData]);
 
-  const hasActive = videos.some((v) => ACTIVE_UPLOAD_STATUSES.has(v.upload_status));
+  const hasActive = videos.some((video) => ACTIVE_UPLOAD_STATUSES.has(video.upload_status));
+
+  // A video needs AI data refreshed while it is still being processed in the
+  // background (upload pending/processing) OR once it is ready but its
+  // transcript is not yet complete (the backend marks a video "ready" before
+  // the transcript row is finalized). Terminal videos are never re-fetched.
+  const needsAIData = useCallback(
+    (video: Video): boolean => {
+      if (ACTIVE_UPLOAD_STATUSES.has(video.upload_status)) return true;
+      if (video.upload_status !== "ready") return false;
+      const t = transcripts[video.id];
+      if (t === undefined) return true;
+      if (t === null) return true;
+      return t.status !== "complete" && t.status !== "failed";
+    },
+    [transcripts],
+  );
+
+  const shouldPollDashboard = videos.some(needsAIData);
 
   useEffect(() => {
-    if (!hasActive) return;
-    const id = window.setInterval(() => {
-      fetchVideos().catch(() => {
-        // transient polling errors are ignored; keep last known state
-      });
-    }, POLL_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [hasActive, fetchVideos]);
+    if (!shouldPollDashboard) return;
 
-  useEffect(() => {
-    const readyVideos = videos.filter(
-      (v) => FINAL_STATUSES.has(v.upload_status) && !checkedTranscripts.current.has(v.id),
-    );
-    if (!readyVideos.length) return;
-
-    readyVideos.forEach(async (video) => {
-      checkedTranscripts.current.add(video.id);
+    const intervalId = window.setInterval(async () => {
       try {
-        const transcript = await getTranscript(video.id);
-        if (mounted.current && transcript.status === "complete") {
-          setTranscriptReady((prev) => ({ ...prev, [video.id]: true }));
-        }
+        const updatedVideos = await fetchVideos();
+        // Only refresh AI data for videos that are still in flight; do not
+        // re-fetch transcripts of already-completed videos on every tick.
+        const pending = updatedVideos.filter(needsAIData);
+        await Promise.all(pending.map((video) => loadAIData(video.id)));
       } catch {
-        // transcript not available yet — leave marked as not ready
+        // Ignore temporary polling errors; polling stops via shouldPollDashboard.
       }
-    });
-  }, [videos]);
+    }, POLL_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [shouldPollDashboard, fetchVideos, needsAIData, loadAIData]);
 
   const handleUploaded = useCallback(
     (video: Video) => {
-      setVideos((prev) => [video, ...prev.filter((v) => v.id !== video.id)]);
+      setVideos((previous) => [video, ...previous.filter((item) => item.id !== video.id)]);
       toast.success(`"${video.title}" uploaded — processing started.`);
+    },
+    [toast],
+  );
+
+  const handleDeleteVideo = useCallback(
+    async (video: Video) => {
+      try {
+        await deleteVideo(video.id);
+        if (mounted.current) {
+          setVideos((previous) => previous.filter((item) => item.id !== video.id));
+          setTranscripts((previous) => {
+            const next = { ...previous };
+            delete next[video.id];
+            return next;
+          });
+          setSummaries((previous) => {
+            const next = { ...previous };
+            delete next[video.id];
+            return next;
+          });
+        }
+        toast.success(`"${video.title}" deleted.`);
+      } catch (err) {
+        toast.error(getApiErrorDetail(err));
+        throw err;
+      }
     },
     [toast],
   );
@@ -135,20 +210,39 @@ export default function Dashboard() {
   const retry = useCallback(() => {
     setLoading(true);
     setError(null);
+
     fetchVideos()
       .catch((err) => setError(getApiErrorDetail(err)))
       .finally(() => setLoading(false));
   }, [fetchVideos]);
 
+  const handleViewDetails = useCallback(
+    (currentVideo: Video) => navigate(`/dashboard/videos/${currentVideo.id}`),
+    [navigate],
+  );
+
   const stats = useMemo(() => {
-    const processing = videos.filter((v) => ACTIVE_UPLOAD_STATUSES.has(v.upload_status)).length;
-    const ready = videos.filter((v) => v.upload_status === "ready").length;
-    const transcripts = videos.filter((v) => transcriptReady[v.id]).length;
-    return { total: videos.length, processing, ready, transcripts };
-  }, [videos, transcriptReady]);
+    const processing = videos.filter((video) => ACTIVE_UPLOAD_STATUSES.has(video.upload_status)).length;
+    const ready = videos.filter((video) => video.upload_status === "ready").length;
+    const transcriptCount = Object.values(transcripts).filter(
+      (transcript) => transcript?.status === "complete" && Boolean(transcript.transcript),
+    ).length;
+    const summaryCount = Object.values(summaries)
+      .flat()
+      .filter((summary) => summary.status === "complete" && Boolean(summary.summary)).length;
+
+    return {
+      total: videos.length,
+      processing,
+      ready,
+      transcripts: transcriptCount,
+      summaries: summaryCount,
+    };
+  }, [videos, transcripts, summaries]);
 
   const visibleVideos = useMemo(() => {
     const query = debouncedSearch.trim().toLowerCase();
+
     const result = videos.filter((video) => {
       if (filter !== "all" && video.upload_status !== filter) return false;
       if (!query) return true;
@@ -157,10 +251,9 @@ export default function Dashboard() {
         video.original_filename.toLowerCase().includes(query)
       );
     });
+
     return result.sort((a, b) =>
-      sort === "newest"
-        ? b.created_at.localeCompare(a.created_at)
-        : a.created_at.localeCompare(b.created_at),
+      sort === "newest" ? b.created_at.localeCompare(a.created_at) : a.created_at.localeCompare(b.created_at),
     );
   }, [videos, filter, debouncedSearch, sort]);
 
@@ -184,6 +277,7 @@ export default function Dashboard() {
             Upload a video and let AI transcribe and summarize it for you.
           </p>
         </div>
+
         <Button size="lg" icon={<UploadIcon className="h-4 w-4" />} onClick={() => setUploadOpen(true)}>
           Upload video
         </Button>
@@ -194,8 +288,8 @@ export default function Dashboard() {
         <StatCard label="Processing" value={stats.processing} icon={<BoltIcon className="h-5 w-5" />} accent="blue" />
         <StatCard label="Ready" value={stats.ready} icon={<ClockIcon className="h-5 w-5" />} accent="emerald" />
         <StatCard
-          label="Transcripts"
-          value={stats.transcripts}
+          label="Transcripts / Summaries"
+          value={`${stats.transcripts} / ${stats.summaries}`}
           icon={<DocumentTextIcon className="h-5 w-5" />}
           accent="amber"
         />
@@ -204,22 +298,31 @@ export default function Dashboard() {
       <section className="mt-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            {FILTERS.map((f) => {
-              const count = f.value === "all" ? videos.length : videos.filter((v) => v.upload_status === f.value).length;
+            {FILTERS.map((item) => {
+              const count =
+                item.value === "all"
+                  ? videos.length
+                  : videos.filter((video) => video.upload_status === item.value).length;
+
               return (
                 <button
-                  key={f.value}
+                  key={item.value}
                   type="button"
-                  onClick={() => setFilter(f.value)}
+                  onClick={() => setFilter(item.value)}
                   className={cn(
                     "rounded-lg px-3 py-1.5 text-sm font-medium transition",
-                    filter === f.value
+                    filter === item.value
                       ? "bg-brand-600 text-white shadow-sm dark:bg-brand-500"
                       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
                   )}
                 >
-                  {f.label}
-                  <span className={cn("ml-1.5 text-xs", filter === f.value ? "text-white/80" : "text-slate-400")}>
+                  {item.label}
+                  <span
+                    className={cn(
+                      "ml-1.5 text-xs",
+                      filter === item.value ? "text-white/80" : "text-slate-400",
+                    )}
+                  >
                     {count}
                   </span>
                 </button>
@@ -239,17 +342,15 @@ export default function Dashboard() {
                 aria-label="Search videos"
               />
             </div>
-            <label className="sr-only" htmlFor="sort-order">
-              Sort order
-            </label>
+
             <select
               id="sort-order"
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOrder)}
-              className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-600/25 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
             </select>
           </div>
         </div>
@@ -257,9 +358,9 @@ export default function Dashboard() {
         <div className="mt-6">
           {loading ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 6 }).map((_, index) => (
                 <div
-                  key={i}
+                  key={index}
                   className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
                 >
                   <Skeleton className="aspect-video w-full rounded-none" />
@@ -307,18 +408,26 @@ export default function Dashboard() {
                   className="mb-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"
                 >
                   <span className="h-1.5 w-1.5 animate-ping rounded-full bg-brand-500" />
-                  Polling for updates while videos process…
+                  Processing videos…
                 </div>
               )}
+
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleVideos.map((video) => (
-                  <VideoCard
-                    key={video.id}
-                    video={video}
-                    transcriptReady={transcriptReady[video.id] ?? false}
-                    onViewDetails={(v) => setSelected(v)}
-                  />
-                ))}
+                {visibleVideos.map((video) => {
+                  const transcript = transcripts[video.id] ?? null;
+                  return (
+                    <VideoCard
+                      key={video.id}
+                      video={video}
+                      transcriptReady={
+                        transcript?.status === "complete" && Boolean(transcript.transcript)
+                      }
+                      summaryCount={summaries[video.id]?.length ?? 0}
+                      onViewDetails={handleViewDetails}
+                      onDelete={handleDeleteVideo}
+                    />
+                  );
+                })}
               </div>
             </>
           )}
@@ -326,7 +435,6 @@ export default function Dashboard() {
       </section>
 
       {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} onUploaded={handleUploaded} />}
-      {selected && <VideoDetailModal video={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }

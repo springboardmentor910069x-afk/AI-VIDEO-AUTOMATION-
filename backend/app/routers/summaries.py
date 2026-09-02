@@ -70,7 +70,7 @@ async def generate_video_summary(
             detail="Transcript is empty",
         )
 
-    # 4. Generate summary using BART
+    # 4. Generate summary using Groq
     try:
         result = await generate_summary(
             transcript.transcript,

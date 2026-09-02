@@ -95,10 +95,28 @@ class Video(TimestampMixin, Base):
         back_populates="video",
         uselist=False,
         cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     summaries: Mapped[list["Summary"]] = relationship(
         "Summary",
         back_populates="video",
         cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    key_moment_set: Mapped["KeyMomentSet | None"] = relationship(
+        "KeyMomentSet",
+        back_populates="video",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    keyword_set: Mapped["KeywordSet | None"] = relationship(
+        "KeywordSet",
+        back_populates="video",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )

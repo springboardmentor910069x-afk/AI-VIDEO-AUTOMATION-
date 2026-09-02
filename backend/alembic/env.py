@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.database.base import Base
-from app.models import user, video, transcript, summary
+from app.models import user, video, transcript, summary, key_moment, keyword
 
 config = context.config
 settings = get_settings()

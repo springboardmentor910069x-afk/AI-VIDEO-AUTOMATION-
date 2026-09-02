@@ -62,8 +62,12 @@ export default function Modal({
     document.addEventListener("keydown", onKeyDown, true);
     document.body.style.overflow = "hidden";
     const previousFocus = document.activeElement as HTMLElement | null;
-    panelRef.current?.querySelector<HTMLElement>("[autofocus]")?.focus() ??
+    const autofocusEl = panelRef.current?.querySelector<HTMLElement>("[autofocus]");
+    if (autofocusEl) {
+      autofocusEl.focus();
+    } else {
       panelRef.current?.focus();
+    }
 
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);

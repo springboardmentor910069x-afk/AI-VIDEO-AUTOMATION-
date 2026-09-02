@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/cn";
 import Avatar from "@/components/ui/Avatar";
 import Menu, { MenuItem } from "@/components/ui/Menu";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { FilmIcon, LogoutIcon, XMarkIcon } from "@/components/Icons";
+import { FilmIcon, ChartBarIcon, LogoutIcon, XMarkIcon } from "@/components/Icons";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -15,14 +13,20 @@ interface SidebarProps {
 export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navItems = [
     {
       to: "/dashboard",
       label: "Videos",
       icon: FilmIcon,
-      current: location.pathname === "/dashboard",
+      current: location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard/videos"),
+    },
+    {
+      to: "/dashboard/analytics",
+      label: "Analytics",
+      icon: ChartBarIcon,
+      current: location.pathname.startsWith("/dashboard/analytics"),
     },
   ];
 
@@ -87,25 +91,18 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             </span>
           }
         >
-          <MenuItem danger onClick={() => setLogoutConfirmOpen(true)}>
+          <MenuItem
+            danger
+            onClick={() => {
+              logout();
+              navigate("/login", { replace: true });
+            }}
+          >
             <LogoutIcon className="h-4 w-4" />
             Log out
           </MenuItem>
         </Menu>
       </div>
-
-      <ConfirmDialog
-        open={logoutConfirmOpen}
-        title="Log out?"
-        message="You will be signed out and will need to sign in again to access your workspace."
-        confirmLabel="Log out"
-        danger
-        onConfirm={() => {
-          setLogoutConfirmOpen(false);
-          logout();
-        }}
-        onCancel={() => setLogoutConfirmOpen(false)}
-      />
     </div>
   );
 

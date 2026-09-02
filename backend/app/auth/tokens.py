@@ -39,3 +39,26 @@ def decode_token(token: str) -> dict | None:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except JWTError:
         return None
+
+
+def create_media_token(
+    subject: str,
+    expires_delta: timedelta | None = None,
+) -> str:
+    """Create a short-lived, single-resource token for authenticated media access."""
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(hours=settings.MEDIA_TOKEN_EXPIRE_HOURS)
+    )
+    payload = {"sub": subject, "media": True, "exp": expire}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def decode_media_token(token: str) -> dict | None:
+    """Decode a media token, returning None for non-media or invalid tokens."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        return None
+    if not payload.get("media"):
+        return None
+    return payload

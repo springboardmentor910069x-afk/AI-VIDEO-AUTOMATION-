@@ -24,8 +24,12 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/clipmind
       SYNC_DATABASE_URL: postgresql://postgres:postgres@db:5432/clipmind
-      SECRET_KEY: change-me-in-production
-      DEBUG: "true"
+      # SECURITY: override with a strong unique value in production. This is a
+      # documented development placeholder only (32+ chars, unknown to the
+      # hardened config validator).
+      SECRET_KEY: dev-only-unsafe-secret-key-change-me-0000000000000000000000
+      # SECURITY: debug stays off in the compose/dev stack by default.
+      DEBUG: "false"
       CORS_ORIGINS: '["http://localhost:5173"]'
     depends_on:
       db:
@@ -35,7 +39,7 @@ services:
     build:
       context: ./frontend
       args:
-        # Empty = same-origin. nginx proxies /api and /uploads to the backend.
+        # Empty = same-origin. nginx proxies /api to the backend.
         VITE_API_URL: ""
     restart: unless-stopped
     ports:

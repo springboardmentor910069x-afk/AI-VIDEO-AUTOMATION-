@@ -5,7 +5,14 @@ import Topbar from "@/components/Topbar";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Videos",
+  "/dashboard/analytics": "Analytics",
+  "/dashboard/videos": "Video details",
 };
+
+function pageTitle(pathname: string): string {
+  if (pathname.startsWith("/dashboard/videos/")) return "Video details";
+  return PAGE_TITLES[pathname] ?? "Workspace";
+}
 
 export default function AppShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -20,7 +27,7 @@ export default function AppShell() {
       <Sidebar mobileOpen={mobileNavOpen} onCloseMobile={() => setMobileNavOpen(false)} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar title={PAGE_TITLES[location.pathname] ?? "Workspace"} onOpenMobileNav={() => setMobileNavOpen(true)} />
+        <Topbar title={pageTitle(location.pathname)} onOpenMobileNav={() => setMobileNavOpen(true)} />
         <main className="flex-1">
           <Outlet />
         </main>

@@ -9,6 +9,8 @@ import Spinner from "@/components/ui/Spinner";
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const VideoDetails = lazy(() => import("@/pages/VideoDetails"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
 
 function RouteFallback() {
   return (
@@ -31,6 +33,8 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/analytics" element={<Analytics />} />
+            <Route path="/dashboard/videos/:videoId" element={<VideoDetails />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

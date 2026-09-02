@@ -1,12 +1,16 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiErrorDetail, uploadVideo } from "@/api/client";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import FileDropZone from "@/components/FileDropZone";
+import Spinner from "@/components/ui/Spinner";
+import { CheckIcon } from "@/components/Icons";
 import type { Video } from "@/api/types";
 
 const ACCEPTED_EXTENSIONS = ["mp4", "mov", "avi", "mkv", "webm"];
 const MAX_SIZE_MB = 500;
+
+const SUCCESS_HOLD_MS = 1600;
 
 interface UploadFormProps {
   onUploaded: (video: Video) => void;
@@ -22,6 +26,14 @@ export default function UploadForm({ onUploaded, onCancel }: UploadFormProps) {
   const [progress, setProgress] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const successTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (successTimer.current !== null) window.clearTimeout(successTimer.current);
+    };
+  }, []);
 
   const resetForm = () => {
     setTitle("");
@@ -75,8 +87,13 @@ export default function UploadForm({ onUploaded, onCancel }: UploadFormProps) {
         file,
         onUploadProgress: setProgress,
       });
-      onUploaded(video);
-      resetForm();
+
+      // Show a short success confirmation before handing the video back.
+      setSuccess(true);
+      successTimer.current = window.setTimeout(() => {
+        onUploaded(video);
+        resetForm();
+      }, SUCCESS_HOLD_MS);
     } catch (err) {
       setError(getApiErrorDetail(err));
     } finally {
@@ -84,6 +101,28 @@ export default function UploadForm({ onUploaded, onCancel }: UploadFormProps) {
       setProgress(null);
     }
   };
+
+  if (success) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-8 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+          <CheckIcon className="h-7 w-7" />
+        </span>
+        <div>
+          <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            Video uploaded successfully
+          </p>
+          <p className="mt-1 flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <Spinner className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+            Processing video…
+          </p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            You'll be able to view the transcript and AI summary once processing completes.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">

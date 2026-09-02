@@ -19,6 +19,7 @@ class TranscriptRead(TranscriptBase):
     id: uuid.UUID
     video_id: uuid.UUID
     status: TranscriptStatus
+    error_message: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -29,3 +30,4 @@ class TranscriptUpdate(BaseModel):
     transcript: str | None = None
     language: str | None = None
     status: TranscriptStatus | None = None
+    error_message: str | None = None

@@ -11,12 +11,14 @@ async def create_transcript(
     video_id: uuid.UUID,
     transcript: str | None = None,
     language: str | None = None,
+    segments: list | None = None,
     status: TranscriptStatus = TranscriptStatus.PENDING,
 ) -> Transcript:
     transcript_model = Transcript(
         video_id=video_id,
         transcript=transcript,
         language=language,
+        segments=segments,
         status=status,
     )
 
@@ -29,7 +31,7 @@ async def create_transcript(
 
 async def get_transcript_by_video_id(
     db: AsyncSession,
-    video_id: uuid.UUID,
+    video_id: uuid.UUID, 
 ) -> Transcript | None:
     result = await db.execute(
         select(Transcript).where(Transcript.video_id == video_id)
@@ -53,6 +55,7 @@ async def update_transcript(
     *,
     transcript: str | None = None,
     language: str | None = None,
+    segments: list | None = None,
 ) -> Transcript | None:
     transcript_model = await get_transcript_by_id(db, transcript_id)
 
@@ -64,6 +67,9 @@ async def update_transcript(
 
     if language is not None:
         transcript_model.language = language
+
+    if segments is not None:
+        transcript_model.segments = segments
 
     await db.flush()
     await db.refresh(transcript_model)

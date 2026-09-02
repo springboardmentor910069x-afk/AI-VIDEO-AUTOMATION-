@@ -52,3 +52,7 @@ uploads/
 
 # Whisper cache (optional)
 /models/
+
+# Test audio
+*.mp3
+backend/test_groq.py

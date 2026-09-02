@@ -4,6 +4,10 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 import type {
+  AnalyticsDashboard,
+  KeyMomentSet,
+  KeywordSet,
+  MediaTokenResponse,
   Summary,
   SummaryType,
   TokenResponse,
@@ -13,7 +17,7 @@ import type {
 } from "@/api/types";
 
 // Resolved at build time. Empty string = same-origin (behind a reverse proxy that
-// forwards /api and /uploads to the backend). Never bake secrets into this value.
+// forwards /api to the backend). Never bake secrets into this value.
 export const API_ORIGIN = import.meta.env.VITE_API_URL ?? "";
 export const API_BASE_URL = `${API_ORIGIN}/api/v1`;
 
@@ -33,6 +37,7 @@ function getStoredRefreshToken(): string | null {
 export function clearStoredTokens(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  mediaTokenCache.clear();
 }
 
 export function storeTokens(tokens: TokenResponse): void {
@@ -182,6 +187,7 @@ export async function registerUser(input: {
   username: string;
   full_name?: string;
   password: string;
+  role?: string;
 }): Promise<User> {
   const res = await client.post<User>("/auth/register", input);
   return res.data;
@@ -261,6 +267,51 @@ export async function getSummaries(videoId: string): Promise<Summary[]> {
   return res.data;
 }
 
+// ---------------- KEY MOMENTS ----------------
+
+export async function getKeyMomentSet(videoId: string): Promise<KeyMomentSet> {
+  const res = await client.get<KeyMomentSet>(`/key-moments/video/${videoId}`);
+  return res.data;
+}
+
+export async function generateKeyMoments(videoId: string): Promise<KeyMomentSet> {
+  const res = await client.post<KeyMomentSet>(`/key-moments/video/${videoId}`);
+  return res.data;
+}
+
+// ---------------- KEYWORDS ----------------
+
+export async function getKeywordSet(videoId: string): Promise<KeywordSet> {
+  const res = await client.get<KeywordSet>(`/keywords/video/${videoId}`);
+  return res.data;
+}
+
+export async function generateKeywords(videoId: string): Promise<KeywordSet> {
+  const res = await client.post<KeywordSet>(`/keywords/video/${videoId}`);
+  return res.data;
+}
+
+// ---------------- ANALYTICS ----------------
+
+export async function getAnalyticsDashboard(): Promise<AnalyticsDashboard> {
+  const res = await client.get<AnalyticsDashboard>("/analytics/dashboard");
+  return res.data;
+}
+
+// ---------------- DELETION ----------------
+
+export async function deleteVideo(videoId: string): Promise<void> {
+  await client.delete(`/videos/${videoId}`);
+}
+
+export async function deleteTranscript(transcriptId: string): Promise<void> {
+  await client.delete(`/transcripts/${transcriptId}`);
+}
+
+export async function deleteSummary(summaryId: string): Promise<void> {
+  await client.delete(`/summaries/${summaryId}`);
+}
+
 // ---------------- HELPERS ----------------
 
 export function getApiErrorDetail(error: unknown): string {
@@ -293,12 +344,51 @@ export function getApiErrorDetail(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export function thumbnailUrl(video: Pick<Video, "thumbnail_path">): string | null {
-  const path = video.thumbnail_path;
+export function mediaUrl(path: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//.test(path)) return path;
   if (!API_ORIGIN) return path.startsWith("/") ? path : `/${path}`;
   return `${API_ORIGIN}/${path.replace(/^\/+/, "")}`;
+}
+
+/**
+ * Short-lived signed tokens used to authorize <video>/<img> requests, which
+ * cannot send Authorization headers. Issued per video by the backend and
+ * cached until near expiry.
+ */
+const mediaTokenCache = new Map<string, { token: string; expiresAt: number }>();
+const MEDIA_TOKEN_SKEW_SECONDS = 60;
+
+export async function getMediaToken(videoId: string): Promise<string> {
+  const now = Date.now();
+  const cached = mediaTokenCache.get(videoId);
+  if (cached && cached.expiresAt > now) return cached.token;
+
+  const res = await client.post<MediaTokenResponse>(`/videos/${videoId}/media-token`);
+  const expiresAt =
+    now + Math.max(0, res.data.expires_in - MEDIA_TOKEN_SKEW_SECONDS) * 1000;
+  mediaTokenCache.set(videoId, { token: res.data.token, expiresAt });
+  return res.data.token;
+}
+
+export async function buildMediaUrl(
+  videoId: string,
+  kind: "media" | "thumbnail",
+): Promise<string | null> {
+  try {
+    const token = await getMediaToken(videoId);
+    return `${API_BASE_URL}/videos/${videoId}/${kind}?media_token=${encodeURIComponent(token)}`;
+  } catch {
+    return null;
+  }
+}
+
+export async function thumbnailUrl(video: Pick<Video, "id">): Promise<string | null> {
+  return buildMediaUrl(video.id, "thumbnail");
+}
+
+export async function videoUrl(video: Pick<Video, "id">): Promise<string | null> {
+  return buildMediaUrl(video.id, "media");
 }
 
 export function formatFileSize(bytes: number | null): string {

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getApiErrorDetail, registerUser } from "@/api/client";
+import { PUBLIC_REGISTRATION_ROLES, type PublicRegistrationRole } from "@/api/types";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Field";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { EyeIcon, EyeOffIcon } from "@/components/Icons";
 import { useToast } from "@/components/ui/Toast";
 
@@ -15,6 +16,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<PublicRegistrationRole>("learner");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +60,7 @@ export default function Register() {
         username: username.trim(),
         full_name: fullName.trim() || undefined,
         password,
+        role,
       });
       toast.success("Account created. Sign in to continue.");
       navigate("/login", { replace: true });
@@ -120,6 +123,21 @@ export default function Register() {
             placeholder="Jane Doe"
             disabled={submitting}
           />
+        </Field>
+
+        <Field label="I am a…" htmlFor="register-role" required>
+          <Select
+            id="register-role"
+            value={role}
+            onChange={(event) => setRole(event.target.value as PublicRegistrationRole)}
+            disabled={submitting}
+          >
+            {PUBLIC_REGISTRATION_ROLES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </Select>
         </Field>
 
         <Field label="Password" htmlFor="register-password" error={errors.password} required>
