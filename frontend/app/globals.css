@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: #071312;
+  color: #f5fff7;
+}
+
+.clipmind-shell {
+  background-color: #132b29;
+  background-image:
+    linear-gradient(rgba(91, 171, 147, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91, 171, 147, 0.09) 1px, transparent 1px),
+    radial-gradient(circle at 18% 10%, rgba(71, 184, 148, 0.18), transparent 30%),
+    linear-gradient(135deg, #102523 0%, #163431 52%, #0d1d1c 100%);
+  background-size: 34px 34px, 34px 34px, auto, auto;
+}
+
+.dashboard-stage {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(143, 240, 199, 0.13), transparent 26%),
+    radial-gradient(circle at 82% 18%, rgba(15, 160, 113, 0.12), transparent 28%),
+    linear-gradient(135deg, #081917 0%, #122d29 48%, #071312 100%);
+}
+
+.dashboard-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(143, 240, 199, 0.085) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 240, 199, 0.085) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(90deg, transparent 0%, black 7%, black 93%, transparent 100%);
+}
+
+.dashboard-stage::after {
+  content: "";
+  position: absolute;
+  inset: -22% -10%;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0%, rgba(143, 240, 199, 0.08) 38%, transparent 54%),
+    radial-gradient(circle at 46% 34%, rgba(143, 240, 199, 0.1), transparent 18%);
+  opacity: 0.68;
+  transform: translate3d(-6%, 0, 0);
+  animation: dashboard-scan 9s ease-in-out infinite;
+}
+
+.dashboard-stage:hover::after {
+  animation-duration: 4.8s;
+  opacity: 0.95;
+}
+
+.glass-panel {
+  border: 1px solid rgba(143, 240, 199, 0.19);
+  background: rgba(13, 43, 38, 0.76);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(245, 255, 247, 0.035);
+  backdrop-filter: blur(18px);
+  transition: transform 220ms ease, border-color 220ms ease, background 220ms ease, box-shadow 220ms ease;
+}
+
+.glass-panel:hover {
+  transform: translateY(-3px);
+  border-color: rgba(143, 240, 199, 0.42);
+  background: rgba(16, 55, 48, 0.82);
+  box-shadow: 0 28px 74px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(15, 209, 150, 0.05);
+}
+
+.landing-stage {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(71, 184, 148, 0.16), transparent 30%),
+    linear-gradient(135deg, #122725 0%, #173431 48%, #0d1d1c 100%);
+}
+
+.landing-headline {
+  font-family: Impact, "Arial Narrow", "Haettenschweiler", sans-serif;
+  letter-spacing: -0.018em;
+  word-spacing: 0.08em;
+}
+
+.landing-marquee {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.landing-marquee-track {
+  display: inline-flex;
+  min-width: max-content;
+  animation: clipmind-roll 18s linear infinite;
+}
+
+.landing-marquee-track span {
+  margin-right: 2rem;
+  font-family: Impact, "Arial Narrow", "Haettenschweiler", sans-serif;
+  font-size: clamp(3.5rem, 9vw, 8.5rem);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: #fcfdfc;
+  text-shadow: 0 0 18px rgba(143, 240, 199, 0.18);
+}
+
+.landing-visual {
+  animation: landing-float 7s ease-in-out infinite;
+}
+
+.landing-visual-main {
+  animation-delay: -1.7s;
+}
+
+@keyframes clipmind-roll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-12px, -16px, 0);
+  }
+}
+
+@keyframes dashboard-scan {
+  0%,
+  100% {
+    transform: translate3d(-7%, -1%, 0);
+  }
+  50% {
+    transform: translate3d(7%, 3%, 0);
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

@@ -1,0 +1,54 @@
+{
+  "info": {
+    "name": "ClipMind AI API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/register",
+        "body": { "mode": "raw", "raw": "{\"name\":\"Demo Creator\",\"email\":\"creator@example.com\",\"password\":\"password123\",\"role\":\"creator\"}" }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/auth/login",
+        "body": { "mode": "raw", "raw": "{\"email\":\"creator@example.com\",\"password\":\"password123\"}" }
+      }
+    },
+    {
+      "name": "List Videos",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/videos"
+      }
+    },
+    {
+      "name": "Upload Video",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/videos",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "title", "value": "Demo lecture", "type": "text" },
+            { "key": "file", "type": "file", "src": "" }
+          ]
+        }
+      }
+    }
+  ]
+}
+

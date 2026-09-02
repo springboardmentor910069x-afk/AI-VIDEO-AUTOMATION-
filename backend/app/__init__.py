@@ -1,0 +1,2 @@
+"""ClipMind AI backend package."""
+
