@@ -1,49 +1,65 @@
+﻿version: '3.8'
+
 services:
+  # MySQL Database Container
   db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
+    image: mysql:8.0
+    container_name: clipmind-db
+    restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-clipmind}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clipmind_dev}
-      POSTGRES_DB: ${POSTGRES_DB:-clipmind}
+      MYSQL_DATABASE: clipmind_db
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: clipmind_user
+      MYSQL_PASSWORD: clipmind_pass
+    ports:
+      - "3306:3306"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clipmind}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - db_data:/var/lib/mysql
+    networks:
+      - clipmind-network
 
-  api:
+  # Spring Boot Backend with FFmpeg
+  backend:
     build:
-      context: ./services/api
+      context: ./backend
       dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-clipmind}:${POSTGRES_PASSWORD:-clipmind_dev}@db:5432/${POSTGRES_DB:-clipmind}
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
-      JWT_ACCESS_TTL_MINUTES: ${JWT_ACCESS_TTL_MINUTES:-15}
-      JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
+    container_name: clipmind-backend
+    restart: always
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/clipmind_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: clipmind_user
+      SPRING_DATASOURCE_PASSWORD: clipmind_pass
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      CLIPMIND_JWT_SECRET: clipmind_ai_processing_platform_secure_jwt_secret_key_2026_spring_boot_react_ffmpeg_milestone
+      CLIPMIND_FFMPEG_PATH: ffmpeg
+      CLIPMIND_FFPROBE_PATH: ffprobe
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - clipmind-network
 
-  web:
+  # Next.js / React Frontend with Nginx Reverse Proxy
+  frontend:
     build:
-      context: ./apps/web
+      context: ./frontend
       dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: clipmind-frontend
+    restart: always
     depends_on:
-      - api
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - clipmind-network
+
+networks:
+  clipmind-network:
+    driver: bridge
 
 volumes:
-  pgdata:
+  db_data:
+  backend_uploads:
