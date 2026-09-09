@@ -9,9 +9,30 @@ const API = import.meta.env.VITE_API_URL || (
 );
 const ROLES = ['creator', 'learner', 'educator', 'admin'];
 
+function getSafeStoredUser() {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('clipmind_user') : null;
+    if (!raw || raw === 'undefined' || raw === 'null') return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    try { localStorage.removeItem('clipmind_user'); } catch (_) {}
+    return null;
+  }
+}
+
+function getSafeStoredToken() {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('clipmind_token') : null;
+    if (!raw || raw === 'undefined' || raw === 'null') return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('clipmind_token'));
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('clipmind_user') || 'null'));
+  const [token, setToken] = useState(getSafeStoredToken);
+  const [user, setUser] = useState(getSafeStoredUser);
   const [authMode, setAuthMode] = useState('login');
   const [currentTab, setCurrentTab] = useState('workspace'); // workspace, analytics, bookmarks, educator, admin
   
@@ -211,11 +232,15 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
-      localStorage.setItem('clipmind_token', res.access_token);
-      localStorage.setItem('clipmind_user', JSON.stringify(res.user));
-      setToken(res.access_token);
-      setUser(res.user);
-      setNotice(`Welcome, ${res.user.name}!`);
+      if (res && res.access_token) {
+        localStorage.setItem('clipmind_token', res.access_token);
+        setToken(res.access_token);
+      }
+      if (res && res.user) {
+        localStorage.setItem('clipmind_user', JSON.stringify(res.user));
+        setUser(res.user);
+        setNotice(`Welcome, ${res.user.name || res.user.email || 'User'}!`);
+      }
     } catch (e) {
       setNotice(e.message);
     } finally {
