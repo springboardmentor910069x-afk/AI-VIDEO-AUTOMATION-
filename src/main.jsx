@@ -54,19 +54,36 @@ function App() {
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   async function request(path, options = {}) {
-    const res = await fetch(`${API}${path}`, {
-      ...options,
-      headers: { ...headers, ...(options.headers || {}) }
-    });
+    let res;
+    try {
+      res = await fetch(`${API}${path}`, {
+        ...options,
+        headers: { ...headers, ...(options.headers || {}) }
+      });
+    } catch (netErr) {
+      throw new Error(`Unable to connect to backend (${API}). Please verify backend is active.`);
+    }
+
     if (res.status === 204) return null;
-    const data = await res.json();
+
+    let data;
+    const text = await res.text();
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      if (res.status >= 500) {
+        throw new Error('Backend server is starting up. Please wait 15 seconds and try again.');
+      }
+      throw new Error(`Server returned status ${res.status}: ${text.slice(0, 100)}`);
+    }
+
     if (res.status === 401 && token) {
       localStorage.removeItem('clipmind_token');
       localStorage.removeItem('clipmind_user');
       setToken(null);
       setUser(null);
     }
-    if (!res.ok) throw new Error(data.detail || 'Request failed');
+    if (!res.ok) throw new Error(data.detail || `Request failed with status ${res.status}`);
     return data;
   }
 
