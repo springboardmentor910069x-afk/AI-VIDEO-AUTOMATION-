@@ -1,0 +1,59 @@
+# ==========================================
+# ClipMind AI - Production Docker Compose
+# ==========================================
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: clipmind-backend:latest
+    container_name: clipmind-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////app/data/clipmind.db
+      - JWT_SECRET=${JWT_SECRET:-clipmind-production-secure-key-2026}
+      - MAX_UPLOAD_MB=500
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - clipmind_db:/app/data
+      - clipmind_uploads:/app/uploads
+      - clipmind_thumbnails:/app/thumbnails
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - clipmind_network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: clipmind-frontend:latest
+    container_name: clipmind-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - clipmind_network
+
+volumes:
+  clipmind_db:
+    name: clipmind_db_data
+  clipmind_uploads:
+    name: clipmind_uploads_data
+  clipmind_thumbnails:
+    name: clipmind_thumbnails_data
+
+networks:
+  clipmind_network:
+    driver: bridge

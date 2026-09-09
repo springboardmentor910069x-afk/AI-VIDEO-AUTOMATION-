@@ -1,0 +1,34 @@
+# ==========================================
+# ClipMind AI - Development Docker Compose
+# ==========================================
+version: "3.8"
+
+services:
+  backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: clipmind-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////app/data/clipmind.db
+      - JWT_SECRET=dev-secret-key-local
+      - MAX_UPLOAD_MB=500
+    volumes:
+      - ./app:/app/app
+      - ./uploads:/app/uploads
+      - ./thumbnails:/app/thumbnails
+      - ./clipmind.db:/app/data/clipmind.db
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  frontend-dev:
+    image: node:20-alpine
+    container_name: clipmind-frontend-dev
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    command: ["npm", "run", "dev", "--", "--host"]

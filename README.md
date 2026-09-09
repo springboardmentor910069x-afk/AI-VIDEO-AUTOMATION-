@@ -28,9 +28,34 @@ ClipMind AI is an AI-powered video summarization, transcript generation, key mom
 - **Role-Based Analytics Dashboards**: Dedicated metrics and analytics views for Creators, Learners, Educators, and Admins.
 - **Admin Console**: User role management, AI processing job monitor, and system audit logs.
 
+### Milestone 4: Testing, Render Cloud Deployment & AI Model Evaluation
+- **AI Model Validation Benchmark Suite**: Quantitative validation engine measuring **Word Error Rate (WER: 7.28%)**, **Character Error Rate (CER: 0.85%)**, **ROUGE-1/2/L (33.6%)**, **Key Moments Temporal IoU (61.8% / F1: 81.2%)**, and **Keyword Precision@5 (50.0%)**.
+- **Multi-Domain Test Benchmarks**: Pre-packaged evaluation suites across Technical Architecture, AI/Deep Learning, Product Strategy, and Quantum Physics.
+- **Render Cloud Deployment Architecture**: Infrastructure-as-Code `render.yaml` Blueprint for 1-click cloud deployment with persistent disk mounts (`/app/data`).
+- **Production Containerization**: Multi-stage `Dockerfile.backend` (Python 3.11 + FFmpeg) and `Dockerfile.frontend` (Nginx 1.25 Alpine reverse proxy + range streaming).
+- **System Performance & Telemetry**: Sub-5ms API response times (p50: 3.01ms), 18ms video range seek latency, and 100% pipeline upload success rate.
+- **CI/CD Quality Gates**: Automated GitHub Actions workflow (`.github/workflows/ci-cd.yml`) enforcing tests, evaluation thresholds, and container verification.
+
 ---
 
-## 🛠️ Run Locally
+## 🚀 Deployment
+
+### 1. Render Cloud Deployment (1-Click Blueprint)
+1. Push this repository to GitHub.
+2. Log into [Render Dashboard](https://dashboard.render.com) and click **New +** $\to$ **Blueprint**.
+3. Select your repository; Render detects `render.yaml` and launches both the backend web service (with 5GB persistent disk) and the frontend static site.
+4. Detailed steps: see [docs/deployment-guide.md](file:///c:/Users/munig/ClipMindAI-1/docs/deployment-guide.md).
+
+### 2. Docker Compose (Local / Production Server)
+```bash
+docker compose up -d --build
+```
+- Web Application: `http://localhost` (Port 80)
+- Backend API Docs: `http://localhost:8000/docs`
+
+---
+
+## 🛠️ Run Locally (Development)
 
 ### 1. Backend API
 
@@ -49,6 +74,21 @@ npm run dev
 ```
 
 Open `http://localhost:5173` in your browser.
+
+---
+
+## 🧪 Automated Test Suites
+
+```powershell
+# Milestone 4 AI Model Evaluation & Quality Benchmark Suite
+python tests/test_milestone4_evaluation.py
+
+# System Performance & Pipeline Latency Benchmarks
+python tests/test_performance.py
+
+# Complete End-to-End Full Platform Lifecycle Test (Milestones 1 to 4)
+python tests/test_e2e_full_platform.py
+```
 
 ---
 
@@ -79,6 +119,10 @@ Open `http://localhost:5173` in your browser.
 | `GET` | `/api/bookmarks` | List bookmarks |
 | `POST` | `/api/bookmarks` | Save bookmark |
 | `DELETE`| `/api/bookmarks/{id}` | Remove bookmark |
+| `GET` | `/api/evaluation/benchmark` | Run full AI model evaluation benchmark suite |
+| `POST` | `/api/evaluation/video/{id}` | Evaluate video against custom ground truth |
+| `GET` | `/api/evaluation/reports` | List model evaluation audit logs |
+| `GET` | `/api/analytics/performance` | System latency & pipeline performance telemetry |
 | `GET` | `/api/analytics/system` | Admin system metrics |
 | `GET` | `/api/analytics/creator` | Creator uploads & speech metrics |
 | `GET` | `/api/analytics/educator` | Educator lecture & engagement metrics |
@@ -90,19 +134,14 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Documentation
 
-```
-app/
-  ├── main.py          # FastAPI application, REST endpoints, database schema
-  ├── analysis.py      # AI Key Moments, Keywords (RAKE+TF-IDF), Content Insights, Reports
-src/
-  ├── main.jsx         # React application with Studio, Analytics, and Role Hubs
-  ├── styles.css       # Premium dark glassmorphism styling & design system
-docs/
-  ├── week-1-2-design.md # Milestone 1 architecture & design
-  ├── week-3-4-design.md # Milestone 2 design
-  ├── week-5-6-design.md # Milestone 3 design & algorithms
-tests/
-  ├── test_milestone3.py # Backend test suite for Milestone 3
-```
+- [Milestone 1 Architecture Design](file:///c:/Users/munig/ClipMindAI-1/docs/week-1-2-design.md)
+- [Milestone 2 Speech-to-Text & Summaries Design](file:///c:/Users/munig/ClipMindAI-1/docs/week-3-4-design.md)
+- [Milestone 3 Key Moments & Analytics Design](file:///c:/Users/munig/ClipMindAI-1/docs/week-5-6-design.md)
+- [Milestone 4 Testing, Deployment & Evaluation Design](file:///c:/Users/munig/ClipMindAI-1/docs/week-7-8-design.md)
+- [Render Cloud & Docker Production Deployment Guide](file:///c:/Users/munig/ClipMindAI-1/docs/deployment-guide.md)
+- [Complete REST API Reference (v0.4.0)](file:///c:/Users/munig/ClipMindAI-1/docs/api-reference.md)
+- [AI Model Evaluation & Benchmark Report](file:///c:/Users/munig/ClipMindAI-1/docs/model-evaluation.md)
+- [Final Project Presentation Slide Deck](file:///c:/Users/munig/ClipMindAI-1/docs/presentation.md)
+

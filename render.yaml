@@ -1,0 +1,42 @@
+# ==========================================
+# ClipMind AI - Render Cloud Deployment Blueprint
+# ==========================================
+# Use this Infrastructure-as-Code file to deploy ClipMind AI onto Render
+# with one click (New Blueprint Instance in Render Dashboard).
+services:
+  # 1. FastAPI Python Backend Service (100% Free Tier)
+  - type: web
+    name: clipmind-backend
+    runtime: docker
+    dockerfilePath: Dockerfile.backend
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./clipmind.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MAX_UPLOAD_MB
+        value: 100
+      - key: PYTHONUNBUFFERED
+        value: 1
+
+  # 2. React + Vite Frontend Static Site
+  - type: web
+    name: clipmind-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    region: oregon
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: clipmind-backend
+          property: url
+          postfix: /api

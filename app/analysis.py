@@ -242,24 +242,40 @@ def extract_keywords_rake(text: str, top_n: int = 15) -> list[dict[str, Any]]:
     return results
 
 
-def detect_key_moments(transcript: str, segments: list[dict[str, Any]], duration_seconds: float = 0.0) -> list[dict[str, Any]]:
+def detect_key_moments(
+    transcript_or_segments: str | list[dict[str, Any]],
+    segments: list[dict[str, Any]] | float | None = None,
+    duration_seconds: float = 0.0
+) -> list[dict[str, Any]]:
     """
     Detect important video segments and timestamps using lexical salience,
     discourse marker heuristics, and information density scoring.
+    Supports passing (transcript, segments, duration), (segments, duration), or (transcript, duration).
     """
-    if not segments:
-        segments = extract_or_generate_segments(transcript, duration_seconds)
-    if not segments:
+    if isinstance(transcript_or_segments, list):
+        actual_segments = transcript_or_segments
+        actual_duration = float(segments) if isinstance(segments, (int, float)) else duration_seconds
+        transcript_text = " ".join(s.get("text", "") for s in actual_segments)
+    else:
+        transcript_text = str(transcript_or_segments or "")
+        if isinstance(segments, list):
+            actual_segments = segments
+            actual_duration = float(duration_seconds or 0.0)
+        else:
+            actual_duration = float(segments) if isinstance(segments, (int, float)) else float(duration_seconds or 0.0)
+            actual_segments = extract_or_generate_segments(transcript_text, actual_duration)
+
+    if not actual_segments:
         return []
 
-    words = re.findall(r"\b[a-zA-Z]{3,}\b", transcript.lower())
+    words = re.findall(r"\b[a-zA-Z]{3,}\b", transcript_text.lower())
     word_freq = Counter(w for w in words if w not in STOPWORDS)
 
     candidate_windows: list[dict[str, Any]] = []
     current_chunk: list[dict[str, Any]] = []
-    current_start = segments[0]["start"]
+    current_start = actual_segments[0]["start"]
 
-    for seg in segments:
+    for seg in actual_segments:
         current_chunk.append(seg)
         chunk_duration = seg["end"] - current_start
         if chunk_duration >= 25.0 or len(current_chunk) >= 4:
