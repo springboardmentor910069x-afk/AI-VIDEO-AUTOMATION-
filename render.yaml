@@ -28,7 +28,6 @@ services:
     runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    region: oregon
     routes:
       - type: rewrite
         source: /*
@@ -38,5 +37,6 @@ services:
         fromService:
           type: web
           name: clipmind-backend
-          property: url
+          property: host
+          prefix: https://
           postfix: /api
