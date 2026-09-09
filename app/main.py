@@ -60,8 +60,8 @@ bearer = HTTPBearer()
 app = FastAPI(title="ClipMind AI", version="0.4.0", description="AI Video Summarization, Key Moments Detection, Analytics & Model Evaluation Platform")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "*"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -235,6 +235,18 @@ class VideoEvaluationInput(BaseModel):
 
 def user_data(user: sqlite3.Row) -> dict:
     return {key: user[key] for key in ("id", "email", "name", "role", "created_at")}
+
+
+@app.get("/")
+def root():
+    return {
+        "platform": "ClipMind AI API",
+        "status": "online",
+        "version": "0.4.0",
+        "milestone": "milestone-4",
+        "docs_url": "/docs",
+        "health_url": "/api/health"
+    }
 
 
 @app.get("/api/health")

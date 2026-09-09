@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API = import.meta.env.VITE_API_URL || (
+  typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')
+    ? 'https://clipmind-backend-r863.onrender.com/api'
+    : 'http://localhost:8000/api'
+);
 const ROLES = ['creator', 'learner', 'educator', 'admin'];
 
 function App() {
