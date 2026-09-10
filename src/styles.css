@@ -1071,7 +1071,7 @@ header.navbar {
   text-transform: uppercase;
 }
 
-/* Milestone 4: AI Benchmark & Telemetry Styling */
+/* AI Benchmark & Telemetry Styling */
 .benchmark-banner {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
