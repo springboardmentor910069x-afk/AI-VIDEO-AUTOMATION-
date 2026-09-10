@@ -19,6 +19,7 @@ from fastapi import BackgroundTasks, Depends, FastAPI, File, Header, HTTPExcepti
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field
 
 from app.analysis import (
@@ -50,6 +51,7 @@ for directory in (UPLOADS, THUMBNAILS):
 DB_PATH = Path(os.getenv("DATABASE_URL", "sqlite:///./clipmind.db").replace("sqlite:///", ""))
 if not DB_PATH.is_absolute():
     DB_PATH = ROOT / DB_PATH
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 JWT_SECRET = os.getenv("JWT_SECRET", "development-secret-change-me")
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_MB", "500")) * 1024 * 1024
 ALLOWED_TYPES = {"video/mp4", "video/quicktime", "video/webm", "video/x-msvideo", "video/x-matroska"}
@@ -1254,3 +1256,32 @@ def delete_video(video_id: str, user: sqlite3.Row = Depends(get_user)):
     (UPLOADS / video["stored_name"]).unlink(missing_ok=True)
     if video["thumbnail_name"]:
         (THUMBNAILS / video["thumbnail_name"]).unlink(missing_ok=True)
+
+
+@app.get("/api")
+def api_info():
+    return {
+        "platform": "ClipMind AI API",
+        "status": "online",
+        "version": "0.4.0",
+        "milestone": "milestone-4",
+        "docs_url": "/docs",
+        "health_url": "/api/health"
+    }
+
+
+DIST_DIR = ROOT / "dist"
+if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
+    assets_dir = DIST_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def serve_frontend_spa(full_path: str):
+        if full_path.startswith("api") or full_path.startswith("docs") or full_path.startswith("openapi"):
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        target_file = DIST_DIR / full_path
+        if target_file.is_file():
+            return FileResponse(target_file)
+        return FileResponse(DIST_DIR / "index.html")
+

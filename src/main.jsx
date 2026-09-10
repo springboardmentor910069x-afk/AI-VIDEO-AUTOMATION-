@@ -2,11 +2,51 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-const API = import.meta.env.VITE_API_URL || (
-  typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')
-    ? 'https://clipmind-backend-r863.onrender.com/api'
-    : 'http://localhost:8000/api'
-);
+function normalizeApiUrl(url) {
+  if (!url || typeof url !== 'string') return 'http://localhost:8000/api';
+  let clean = url.trim().replace(/\/+$/, '');
+  if (!clean.startsWith('http://') && !clean.startsWith('https://') && !clean.startsWith('/')) {
+    clean = `https://${clean}`;
+  }
+  if (!clean.endsWith('/api') && !clean.endsWith('/api/')) {
+    clean = `${clean}/api`;
+  }
+  return clean.replace(/\/+$/, '');
+}
+
+function getDefaultApiUrl() {
+  if (typeof window === 'undefined') return 'http://localhost:8000/api';
+  
+  // 1. Saved preference in localStorage
+  try {
+    const saved = localStorage.getItem('clipmind_api_url');
+    if (saved && saved.trim()) return normalizeApiUrl(saved);
+  } catch (_) {}
+
+  // 2. Build-time environment variable (if set and not legacy placeholder)
+  const envUrl = import.meta.env?.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim() && !envUrl.includes('clipmind-backend-r863')) {
+    return normalizeApiUrl(envUrl);
+  }
+
+  // 3. Render automatic host derivation
+  const host = window.location.hostname;
+  if (host.includes('onrender.com')) {
+    const backendGuess = host.replace('frontend', 'backend');
+    if (backendGuess !== host) {
+      return `https://${backendGuess}/api`;
+    }
+    return `${window.location.origin}/api`;
+  }
+
+  // 4. Localhost / default
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return 'http://localhost:8000/api';
+  }
+
+  return `${window.location.origin}/api`;
+}
+
 const ROLES = ['creator', 'learner', 'educator', 'admin'];
 
 function getSafeStoredUser() {
@@ -31,6 +71,14 @@ function getSafeStoredToken() {
 }
 
 function App() {
+  const [apiUrl, setApiUrl] = useState(getDefaultApiUrl);
+  const [serverStatus, setServerStatus] = useState({ state: 'checking', latency: null, message: '' });
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [tempApiUrl, setTempApiUrl] = useState(getDefaultApiUrl);
+  const [wakeCountdown, setWakeCountdown] = useState(0);
+
+  const API = apiUrl;
+
   const [token, setToken] = useState(getSafeStoredToken);
   const [user, setUser] = useState(getSafeStoredUser);
   const [authMode, setAuthMode] = useState('login');
@@ -74,6 +122,96 @@ function App() {
 
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+  // Check Backend Server Health
+  async function checkBackendHealth(targetUrl = apiUrl) {
+    const normalized = normalizeApiUrl(targetUrl);
+    setServerStatus({ state: 'checking', latency: null, message: `Pinging ${normalized}...` });
+    const start = performance.now();
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`${normalized}/health`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      const end = performance.now();
+      const latency = Math.round(end - start);
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setServerStatus({
+          state: 'online',
+          latency,
+          message: `Connected (${latency}ms) - ${data.platform || 'FastAPI'} v${data.version || '0.4.0'}`
+        });
+        return true;
+      } else {
+        setServerStatus({
+          state: 'offline',
+          latency,
+          message: `HTTP ${res.status}: ${res.statusText || 'Server error'}`
+        });
+        return false;
+      }
+    } catch (err) {
+      setServerStatus({
+        state: 'offline',
+        latency: null,
+        message: err.name === 'AbortError' ? 'Connection timed out (backend may be asleep)' : 'Cannot reach backend server'
+      });
+      return false;
+    }
+  }
+
+  // Wake Up Render Backend Free Tier Container
+  function handleWakeUpBackend() {
+    setServerStatus({ state: 'waking', latency: null, message: 'Waking up Render container (~45s)...' });
+    setWakeCountdown(45);
+    setNotice('⏳ Waking up Render free-tier container. This takes ~30-50s on first load...');
+    
+    let elapsed = 0;
+    const interval = setInterval(async () => {
+      elapsed += 3;
+      const remaining = Math.max(0, 45 - elapsed);
+      setWakeCountdown(remaining);
+      
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(`${apiUrl}/health`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          clearInterval(interval);
+          setWakeCountdown(0);
+          setServerStatus({ state: 'online', latency: 120, message: 'Backend is awake and online!' });
+          setNotice('🟢 Backend is awake and ready! You can now log in or create an account.');
+        }
+      } catch (_) {}
+
+      if (elapsed >= 55) {
+        clearInterval(interval);
+        setWakeCountdown(0);
+        setServerStatus({ state: 'offline', latency: null, message: 'Backend still not responding. Check URL.' });
+      }
+    }, 3000);
+  }
+
+  function saveCustomApiUrl(newUrl) {
+    const clean = normalizeApiUrl(newUrl);
+    try {
+      localStorage.setItem('clipmind_api_url', clean);
+    } catch (_) {}
+    setApiUrl(clean);
+    setTempApiUrl(clean);
+    setShowConfigModal(false);
+    setNotice(`Updated backend server URL to: ${clean}`);
+    checkBackendHealth(clean);
+  }
+
+  useEffect(() => {
+    checkBackendHealth(apiUrl);
+  }, []);
+
   async function request(path, options = {}) {
     let res;
     try {
@@ -82,7 +220,8 @@ function App() {
         headers: { ...headers, ...(options.headers || {}) }
       });
     } catch (netErr) {
-      throw new Error(`Unable to connect to backend (${API}). Please verify backend is active.`);
+      setServerStatus({ state: 'offline', latency: null, message: `Failed to connect to ${API}` });
+      throw new Error(`Unable to connect to backend (${API}). If deployed on Render free tier, the backend may be sleeping or URL needs updating.`);
     }
 
     if (res.status === 204) return null;
@@ -541,6 +680,99 @@ function App() {
   }
 
   // ==========================================
+  // BACKEND CONFIGURATION MODAL
+  // ==========================================
+  function renderConfigModal() {
+    if (!showConfigModal) return null;
+
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isRender = currentHost.includes('onrender.com');
+    const guessedRenderBackend = isRender ? `https://${currentHost.replace('frontend', 'backend')}/api` : '';
+
+    return (
+      <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setShowConfigModal(false); }}>
+        <div className="config-modal">
+          <div className="config-modal-header">
+            <h3>⚙️ Backend Server Settings</h3>
+            <button className="sm secondary" onClick={() => setShowConfigModal(false)}>✕</button>
+          </div>
+
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            Configure the FastAPI backend API endpoint for ClipMind AI. When deploying to Render, verify that this URL matches your backend Web Service.
+          </p>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Backend API Base URL</label>
+            <input 
+              value={tempApiUrl} 
+              onChange={(e) => setTempApiUrl(e.target.value)} 
+              placeholder="https://clipmind-backend.onrender.com/api" 
+              style={{ width: '100%', fontFamily: 'var(--font-mono)' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>Quick Presets:</label>
+            <div className="preset-pills">
+              {isRender && guessedRenderBackend && (
+                <button type="button" className="preset-pill" onClick={() => setTempApiUrl(guessedRenderBackend)}>
+                  Render Derived ({guessedRenderBackend.split('//')[1].split('/')[0]})
+                </button>
+              )}
+              <button type="button" className="preset-pill" onClick={() => setTempApiUrl(`${typeof window !== 'undefined' ? window.location.origin : ''}/api`)}>
+                Same Host ({typeof window !== 'undefined' ? window.location.host : ''}/api)
+              </button>
+              <button type="button" className="preset-pill" onClick={() => setTempApiUrl('http://localhost:8000/api')}>
+                Localhost (http://localhost:8000/api)
+              </button>
+            </div>
+          </div>
+
+          {/* Status feedback */}
+          <div className="status-feedback-box">
+            <span className={`status-dot ${serverStatus.state}`}></span>
+            <div style={{ fontSize: '12px', flex: 1 }}>
+              <div style={{ fontWeight: 600 }}>
+                {serverStatus.state === 'online' ? '🟢 Backend Online' : serverStatus.state === 'waking' ? '⏳ Backend Waking Up...' : serverStatus.state === 'checking' ? '🟡 Checking Server...' : '🔴 Backend Unreachable'}
+              </div>
+              <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>
+                {serverStatus.message || (serverStatus.state === 'online' ? `Latency: ${serverStatus.latency}ms` : 'Click "Test Ping" or "Wake Up"')}
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              className="secondary sm" 
+              onClick={() => checkBackendHealth(tempApiUrl)}
+              disabled={serverStatus.state === 'checking' || serverStatus.state === 'waking'}
+            >
+              🔍 Test Connection
+            </button>
+            <button 
+              type="button" 
+              className="secondary sm" 
+              onClick={handleWakeUpBackend}
+              disabled={wakeCountdown > 0}
+            >
+              {wakeCountdown > 0 ? `⏳ Waking (${wakeCountdown}s)...` : '⚡ Wake Up Server'}
+            </button>
+            <button 
+              type="button" 
+              className="primary sm" 
+              onClick={() => saveCustomApiUrl(tempApiUrl)}
+            >
+              💾 Save & Apply URL
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
   // AUTH VIEW (LOGIN & REGISTER)
   // ==========================================
   if (!user) {
@@ -548,7 +780,7 @@ function App() {
       <main className="auth-wrapper">
         <div className="auth-card">
           <div className="auth-header">
-            <div className="logo-badge">⚡ CLIPMIND AI • MILESTONE 3</div>
+            <div className="logo-badge">⚡ CLIPMIND AI • MILESTONE 3 & 4</div>
             <h1>ClipMind AI</h1>
             <p>Video Intelligence, Key Moments Detection & Analytics Platform</p>
           </div>
@@ -589,12 +821,48 @@ function App() {
             </div>
 
             <button className="primary" style={{ width: '100%', marginTop: '8px' }} disabled={busy}>
-              {busy ? 'Processing...' : authMode === 'login' ? 'Sign In to Workspace' : 'Create Account'}
+              {busy ? (serverStatus.state === 'waking' ? 'Waking backend...' : 'Processing...') : authMode === 'login' ? 'Sign In to Workspace' : 'Create Account'}
             </button>
           </form>
 
-          {notice && <p className="notice" style={{ marginTop: '16px', textAlign: 'center' }}>{notice}</p>}
+          {/* Diagnostic Error Banner */}
+          {notice && (
+            <div className={`auth-notice-banner ${notice.includes('Welcome') || notice.includes('success') ? 'success' : notice.includes('Waking') || notice.includes('checking') ? 'info' : 'error'}`}>
+              <div>{notice}</div>
+              {(notice.includes('Unable to connect') || notice.includes('Failed to fetch') || serverStatus.state === 'offline') && (
+                <div className="auth-notice-actions">
+                  <button type="button" className="sm primary" onClick={() => { setTempApiUrl(apiUrl); setShowConfigModal(true); }}>
+                    ⚙️ Configure Backend URL
+                  </button>
+                  <button type="button" className="sm secondary" onClick={handleWakeUpBackend} disabled={wakeCountdown > 0}>
+                    {wakeCountdown > 0 ? `⏳ Waking (${wakeCountdown}s)...` : '⚡ Wake Up Backend'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Server Status Bar */}
+          <div className="server-bar">
+            <div className="server-bar-left">
+              <span className={`status-dot ${serverStatus.state}`}></span>
+              <span>Server:</span>
+              <span className="server-url-tag" title={apiUrl}>{apiUrl}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {serverStatus.state === 'offline' && (
+                <button type="button" className="sm secondary" style={{ padding: '2px 8px', fontSize: '11px' }} onClick={handleWakeUpBackend} disabled={wakeCountdown > 0}>
+                  {wakeCountdown > 0 ? `⏳ ${wakeCountdown}s` : '⚡ Wake'}
+                </button>
+              )}
+              <button type="button" className="sm secondary" style={{ padding: '2px 8px', fontSize: '11px' }} onClick={() => { setTempApiUrl(apiUrl); setShowConfigModal(true); }}>
+                ⚙️ Change
+              </button>
+            </div>
+          </div>
         </div>
+
+        {renderConfigModal()}
       </main>
     );
   }
@@ -653,6 +921,17 @@ function App() {
         </nav>
 
         <div className="user-profile">
+          <div 
+            className="server-status-pill" 
+            title={`Backend API: ${apiUrl} (${serverStatus.message || serverStatus.state})`}
+            onClick={() => { setTempApiUrl(apiUrl); setShowConfigModal(true); }}
+          >
+            <span className={`status-dot ${serverStatus.state}`}></span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
+              {serverStatus.state === 'online' ? `API: ${serverStatus.latency}ms` : serverStatus.state === 'waking' ? 'Waking...' : 'API Status'}
+            </span>
+            <span>⚙️</span>
+          </div>
           <span className={`role-pill ${user.role}`}>{user.role}</span>
           <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</span>
           <button className="secondary sm" onClick={handleLogout}>Sign out</button>
@@ -1723,6 +2002,8 @@ function App() {
           )}
         </section>
       )}
+
+      {renderConfigModal()}
     </div>
   );
 }
