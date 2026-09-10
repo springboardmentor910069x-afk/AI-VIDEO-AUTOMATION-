@@ -14,8 +14,10 @@ function normalizeApiUrl(url) {
   return clean.replace(/\/+$/, '');
 }
 
+const DEFAULT_BACKEND_URL = 'https://clipmind-backend-r863.onrender.com/api';
+
 function getDefaultApiUrl() {
-  if (typeof window === 'undefined') return 'http://localhost:8000/api';
+  if (typeof window === 'undefined') return DEFAULT_BACKEND_URL;
   
   // 1. Saved preference in localStorage
   try {
@@ -23,28 +25,20 @@ function getDefaultApiUrl() {
     if (saved && saved.trim()) return normalizeApiUrl(saved);
   } catch (_) {}
 
-  // 2. Build-time environment variable (if set and not legacy placeholder)
+  // 2. Build-time environment variable (if explicitly set)
   const envUrl = import.meta.env?.VITE_API_URL;
-  if (envUrl && typeof envUrl === 'string' && envUrl.trim() && !envUrl.includes('clipmind-backend-r863')) {
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
     return normalizeApiUrl(envUrl);
   }
 
-  // 3. Render automatic host derivation
+  // 3. Localhost development
   const host = window.location.hostname;
-  if (host.includes('onrender.com')) {
-    const backendGuess = host.replace('frontend', 'backend');
-    if (backendGuess !== host) {
-      return `https://${backendGuess}/api`;
-    }
-    return `${window.location.origin}/api`;
-  }
-
-  // 4. Localhost / default
   if (host === 'localhost' || host === '127.0.0.1') {
     return 'http://localhost:8000/api';
   }
 
-  return `${window.location.origin}/api`;
+  // 4. Default directly to production Render backend
+  return DEFAULT_BACKEND_URL;
 }
 
 const ROLES = ['creator', 'learner', 'educator', 'admin'];
