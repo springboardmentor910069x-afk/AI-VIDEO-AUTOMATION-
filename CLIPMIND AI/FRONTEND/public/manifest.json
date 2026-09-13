@@ -1,0 +1,19 @@
+{
+  "short_name": "ClipMind AI",
+  "name": "ClipMind AI — Video Intelligence Platform",
+  "description": "Video summarization, key moments detection, and interactive study rooms powered by AI.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "48x48 72x72 96x96 128x128 256x256 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/dashboard",
+  "background_color": "#0d0f17",
+  "theme_color": "#6366f1",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "education", "utilities"]
+}

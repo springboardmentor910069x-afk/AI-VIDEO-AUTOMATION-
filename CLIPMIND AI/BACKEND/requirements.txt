@@ -1,0 +1,42 @@
+# FastAPI Core
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+
+# Database - MongoDB (Primary & Cloud Atlas)
+motor>=3.5.0
+pymongo>=4.8.0
+beanie>=1.26.0
+dnspython>=2.4.0
+
+# Database - PostgreSQL (Optional backup)
+sqlalchemy>=2.0.35
+psycopg2-binary>=2.9.0
+
+# Authentication & Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+pydantic>=2.9.2
+pydantic-settings>=2.6.0
+email-validator>=2.2.0
+google-auth>=2.0.0
+
+# AI/ML Dependencies (Production-Ready)
+# Note: For production, install torch with CUDA support if GPU available
+torch>=2.0.0
+transformers>=4.30.0
+faster-whisper>=1.0.0
+accelerate>=0.20.0
+opencv-python>=4.8.0
+
+# Export Dependencies
+reportlab>=4.0.0
+python-docx>=1.0.0
+
+# Utilities & HTTP Client
+aiofiles>=24.0.0
+websockets>=14.0
+yt-dlp>=2024.0.0
+youtube-transcript-api>=0.6.2
+psutil>=5.9.0
+httpx>=0.25.0

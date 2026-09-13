@@ -1,0 +1,61 @@
+# ==============================================================================
+# ClipMind AI — Consolidated Unified .gitignore
+# Single source of truth for repository ignore rules across Frontend & Backend
+# ==============================================================================
+
+# Python Bytecode, Caches & Packaging
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Node.js & Frontend Builds
+node_modules/
+.vite/
+*.tsbuildinfo
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+vite.config.*.timestamp-*
+
+# Databases & Local DB Storage
+*.db
+*.sqlite
+*.sqlite3
+clipmind.db
+
+# Secrets & Environment Configurations
+.env
+.env.*
+!.env.example
+
+# Media Uploads, Transcodes & Cache
+**/uploads/*
+!**/uploads/.gitkeep
+!**/uploads/thumbnails/
+!**/uploads/thumbnails/.gitkeep
+!**/uploads/exports/
+!**/uploads/exports/.gitkeep
+
+# IDEs & System Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
