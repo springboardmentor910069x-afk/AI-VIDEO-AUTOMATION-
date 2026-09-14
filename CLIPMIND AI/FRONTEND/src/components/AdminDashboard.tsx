@@ -213,13 +213,13 @@ export default function AdminDashboard() {
 
   // Filtered lists
   const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(searchUser.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchUser.toLowerCase()) ||
-    u.role.toLowerCase().includes(searchUser.toLowerCase())
+    (u.name || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+    (u.role || '').toLowerCase().includes(searchUser.toLowerCase())
   )
 
   const filteredVideos = videos.filter(v =>
-    v.title.toLowerCase().includes(searchVideo.toLowerCase())
+    (v.title || '').toLowerCase().includes(searchVideo.toLowerCase())
   )
 
   return (

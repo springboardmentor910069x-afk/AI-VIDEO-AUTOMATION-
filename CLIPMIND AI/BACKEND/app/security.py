@@ -126,7 +126,7 @@ def require_roles(allowed_roles: List[str]):
 
 def verify_ownership(resource_owner_id: str, current_user: Optional[User]) -> bool:
     """
-    Verifies that the current user owns the resource or has an admin role.
+    Verifies that the current user owns the resource or has an authorized management role (Admin, Creator, Educator).
     If current_user is None (optional route), access is allowed.
     """
     if current_user is None:
@@ -134,8 +134,13 @@ def verify_ownership(resource_owner_id: str, current_user: Optional[User]) -> bo
     user_id = str(getattr(current_user, "id", ""))
     raw_role = getattr(current_user, "role", "")
     user_role = str(getattr(raw_role, "value", raw_role)).lower()
-    if user_role == "admin" or not resource_owner_id or resource_owner_id in ["None", "", "demo-user"]:
+    if user_role.startswith("userrole."):
+        user_role = user_role.split(".", 1)[1]
+
+    # Admins, Creators, and Educators can manage workspace video assets
+    if user_role in ("admin", "creator", "educator") or not resource_owner_id or str(resource_owner_id) in ["None", "", "demo-user"]:
         return True
+
     if user_id != str(resource_owner_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import React, { Component, ErrorInfo, ReactNode, createContext, useContext, useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AuthPage from './components/AuthPage'
 import DashboardShell from './components/DashboardShell'
@@ -13,6 +13,7 @@ import EducatorEditor from './components/EducatorEditor'
 import BookmarksPage from './components/BookmarksPage'
 import SettingsPage from './components/SettingsPage'
 import { ToastProvider } from './components/Toast'
+import ErrorBoundary from './components/ErrorBoundary'
 
 type Theme = 'dark' | 'light'
 
@@ -129,91 +130,93 @@ export default function App() {
     <ToastProvider>
       <ThemeProvider>
         <BrowserRouter>
-          <Routes>
-            {/* Direct App Root */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/login" element={<AuthPage mode="login" />} />
-            <Route path="/register" element={<AuthPage mode="register" />} />
+          <ErrorBoundary>
+            <Routes>
+              {/* Direct App Root */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/login" element={<AuthPage mode="login" />} />
+              <Route path="/register" element={<AuthPage mode="register" />} />
 
 
-            {/* Dashboard (authenticated shell) */}
-            <Route path="/dashboard" element={
-              <AuthGuard>
-                <DashboardShell />
-              </AuthGuard>
-            }>
-              <Route index element={<RoleDashboardIndex />} />
-              <Route path="upload" element={
-                <RoleGuard allowedRoles={['Learner', 'Creator', 'Educator', 'Admin']}>
-                  <UploadStudio />
-                </RoleGuard>
-              } />
-              <Route path="videos" element={<VideoLibrary />} />
-              <Route path="videos/:id" element={<VideoIntelligenceCenter />} />
-              <Route path="analytics" element={<AnalyticsDashboard />} />
-              <Route path="bookmarks" element={<BookmarksPage />} />
-              <Route path="settings" element={<SettingsPage />} />
+              {/* Dashboard (authenticated shell) */}
+              <Route path="/dashboard" element={
+                <AuthGuard>
+                  <DashboardShell />
+                </AuthGuard>
+              }>
+                <Route index element={<RoleDashboardIndex />} />
+                <Route path="upload" element={
+                  <RoleGuard allowedRoles={['Learner', 'Creator', 'Educator', 'Admin']}>
+                    <UploadStudio />
+                  </RoleGuard>
+                } />
+                <Route path="videos" element={<VideoLibrary />} />
+                <Route path="videos/:id" element={<VideoIntelligenceCenter />} />
+                <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="bookmarks" element={<BookmarksPage />} />
+                <Route path="settings" element={<SettingsPage />} />
 
-              {/* Role specific primary routes inside DashboardShell */}
-              <Route path="learner" element={
-                <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
-                  <LearnerDashboard />
-                </RoleGuard>
-              } />
-              <Route path="learner/dashboard" element={
-                <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
-                  <LearnerDashboard />
-                </RoleGuard>
-              } />
-              <Route path="learner/study" element={
-                <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
-                  <LearnerStudyRoom />
-                </RoleGuard>
-              } />
-              <Route path="learner/study/:id" element={
-                <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
-                  <LearnerStudyRoom />
-                </RoleGuard>
-              } />
-              <Route path="educator/lectures" element={
-                <RoleGuard allowedRoles={['Educator', 'Admin']}>
-                  <EducatorEditor />
-                </RoleGuard>
-              } />
-              <Route path="educator/lectures/:id/edit" element={
-                <RoleGuard allowedRoles={['Educator', 'Admin']}>
-                  <EducatorEditor />
-                </RoleGuard>
-              } />
-              <Route path="educator/editor/:id" element={
-                <RoleGuard allowedRoles={['Educator', 'Admin']}>
-                  <EducatorEditor />
-                </RoleGuard>
-              } />
-              <Route path="admin" element={
-                <RoleGuard allowedRoles={['Admin']}>
-                  <AdminDashboard />
-                </RoleGuard>
-              } />
-              <Route path="admin/dashboard" element={
-                <RoleGuard allowedRoles={['Admin']}>
-                  <AdminDashboard />
-                </RoleGuard>
-              } />
-            </Route>
+                {/* Role specific primary routes inside DashboardShell */}
+                <Route path="learner" element={
+                  <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
+                    <LearnerDashboard />
+                  </RoleGuard>
+                } />
+                <Route path="learner/dashboard" element={
+                  <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
+                    <LearnerDashboard />
+                  </RoleGuard>
+                } />
+                <Route path="learner/study" element={
+                  <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
+                    <LearnerStudyRoom />
+                  </RoleGuard>
+                } />
+                <Route path="learner/study/:id" element={
+                  <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
+                    <LearnerStudyRoom />
+                  </RoleGuard>
+                } />
+                <Route path="educator/lectures" element={
+                  <RoleGuard allowedRoles={['Educator', 'Admin', 'Creator']}>
+                    <EducatorEditor />
+                  </RoleGuard>
+                } />
+                <Route path="educator/lectures/:id/edit" element={
+                  <RoleGuard allowedRoles={['Educator', 'Admin', 'Creator']}>
+                    <EducatorEditor />
+                  </RoleGuard>
+                } />
+                <Route path="educator/editor/:id" element={
+                  <RoleGuard allowedRoles={['Educator', 'Admin', 'Creator']}>
+                    <EducatorEditor />
+                  </RoleGuard>
+                } />
+                <Route path="admin" element={
+                  <RoleGuard allowedRoles={['Admin']}>
+                    <AdminDashboard />
+                  </RoleGuard>
+                } />
+                <Route path="admin/dashboard" element={
+                  <RoleGuard allowedRoles={['Admin']}>
+                    <AdminDashboard />
+                  </RoleGuard>
+                } />
+              </Route>
 
-            {/* Legacy direct top-level paths redirect inside DashboardShell */}
-            <Route path="/learner/study" element={<Navigate to="/dashboard/learner/study" replace />} />
-            <Route path="/learner/study/:id" element={<Navigate to="/dashboard/learner/study" replace />} />
-            <Route path="/educator/lectures" element={<Navigate to="/dashboard/educator/lectures" replace />} />
-            <Route path="/educator/lectures/:id/edit" element={<Navigate to="/dashboard/educator/lectures" replace />} />
-            <Route path="/educator/editor/:id" element={<Navigate to="/dashboard/educator/lectures" replace />} />
-            <Route path="/dashboard/educator/editor/:id" element={<Navigate to="/dashboard/educator/lectures" replace />} />
-            <Route path="/admin/dashboard" element={<Navigate to="/dashboard/admin" replace />} />
+              {/* Legacy direct top-level paths redirect inside DashboardShell */}
+              <Route path="/learner/study" element={<Navigate to="/dashboard/learner/study" replace />} />
+              <Route path="/learner/study/:id" element={<Navigate to="/dashboard/learner/study" replace />} />
+              <Route path="/educator/lectures" element={<Navigate to="/dashboard/educator/lectures" replace />} />
+              <Route path="/educator/lectures/:id/edit" element={<Navigate to="/dashboard/educator/lectures" replace />} />
+              <Route path="/educator/editor/:id" element={<Navigate to="/dashboard/educator/lectures" replace />} />
+              <Route path="/dashboard/educator/editor/:id" element={<Navigate to="/dashboard/educator/lectures" replace />} />
+              <Route path="/admin/dashboard" element={<Navigate to="/dashboard/admin" replace />} />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ErrorBoundary>
         </BrowserRouter>
       </ThemeProvider>
     </ToastProvider>

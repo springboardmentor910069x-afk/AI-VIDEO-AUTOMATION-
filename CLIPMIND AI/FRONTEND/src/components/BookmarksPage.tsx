@@ -98,7 +98,10 @@ export default function BookmarksPage() {
 
   const filtered = bookmarks.filter(b => {
     const matchFilter = filter === 'all' || b.type === filter
-    const matchSearch = !search || b.note.toLowerCase().includes(search.toLowerCase()) || b.text.toLowerCase().includes(search.toLowerCase()) || b.videoTitle.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = !search ||
+      (b.note || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.text || '').toLowerCase().includes(search.toLowerCase()) ||
+      (b.videoTitle || '').toLowerCase().includes(search.toLowerCase())
     return matchFilter && matchSearch
   })
 

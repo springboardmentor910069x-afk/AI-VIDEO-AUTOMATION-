@@ -420,11 +420,11 @@ export default function VideoIntelligenceCenter() {
   const activeLineIdx = displayTranscript.reduce((best: number, l: any, i: number) => l.timeSec <= currentTimeSec ? i : best, 0)
 
   const filteredTranscript = transcriptSearch
-    ? displayTranscript.filter((l: any) => l.text.toLowerCase().includes(transcriptSearch.toLowerCase()))
+    ? displayTranscript.filter((l: any) => (l.text || '').toLowerCase().includes(transcriptSearch.toLowerCase()))
     : displayTranscript
 
   const matchCount = transcriptSearch
-    ? displayTranscript.filter((l: any) => l.text.toLowerCase().includes(transcriptSearch.toLowerCase())).length
+    ? displayTranscript.filter((l: any) => (l.text || '').toLowerCase().includes(transcriptSearch.toLowerCase())).length
     : 0
 
   const TAB_LIST: { id: Tab; label: string; icon: string }[] = [
@@ -635,7 +635,7 @@ export default function VideoIntelligenceCenter() {
           </div>
         </div>
       </div>
-
+ 
       {/* RIGHT PANEL — 45% */}
       <div className="glass-card" style={{ flex: '1 1 45%', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}>
         {/* Tab Header */}

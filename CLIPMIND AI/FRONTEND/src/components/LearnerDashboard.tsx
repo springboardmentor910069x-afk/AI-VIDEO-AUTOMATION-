@@ -138,8 +138,8 @@ export default function LearnerDashboard() {
   const filteredLectures = useMemo(() => {
     if (!data?.recent_lectures) return []
     return data.recent_lectures.filter(l => {
-      const matchSearch = l.title.toLowerCase().includes(search.toLowerCase()) ||
-        l.category.toLowerCase().includes(search.toLowerCase())
+      const matchSearch = (l.title || '').toLowerCase().includes(search.toLowerCase()) ||
+        (l.category || '').toLowerCase().includes(search.toLowerCase())
       const matchCat = selectedCategory === 'All' || l.category === selectedCategory
       return matchSearch && matchCat
     })

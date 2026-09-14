@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, VideoItem } from '../services/api'
+import { useToast } from './Toast'
 
 interface VideoCard {
   id: string
@@ -46,6 +47,7 @@ function formatDuration(secs: number) {
 
 export default function VideoLibrary() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
@@ -77,7 +79,8 @@ export default function VideoLibrary() {
   const VIDEOS: VideoCard[] = useMemo(() => {
     return videos.map((v: VideoItem) => {
       const summary = (v as any).summary?.tldr || (v as any).summary_tldr || (v as any).description || 'Video intelligence generated and indexed.'
-      const tags = (v as any).keywords || (v as any).tags || (v.category ? [`#${v.category}`] : ['#Video'])
+      const rawTags = (v as any).keywords || (v as any).tags || (v.category ? [`#${v.category}`] : ['#Video'])
+      const tags = Array.isArray(rawTags) ? rawTags.map(t => typeof t === 'string' ? t : (t?.name || t?.label || String(t))) : [String(rawTags)]
       const views = (v as any).views_count || (v as any).views || 0
       const thumb = v.thumbnail_url || (v as any).thumbnail_path || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80'
 
@@ -92,7 +95,7 @@ export default function VideoLibrary() {
         wordCountNum: v.word_count || 0,
         status: v.status === 'failed' ? 'Failed' : (v.status === 'transcribing' || v.status === 'processing' || v.status === 'queued') ? 'Transcribing' : 'Completed',
         summary,
-        tags: Array.isArray(tags) ? tags : [tags],
+        tags,
         color: v.status === 'failed' ? '#EF4444' : (v.status === 'transcribing' || v.status === 'processing') ? '#F59E0B' : '#6366F1',
         wer: v.wer_accuracy || 0,
         views,
@@ -104,8 +107,8 @@ export default function VideoLibrary() {
 
   const filtered = useMemo(() => {
     const f = VIDEOS.filter((v: VideoCard) => {
-      const matchSearch = v.title.toLowerCase().includes(search.toLowerCase()) ||
-        v.tags.some((t: string) => t.toLowerCase().includes(search.toLowerCase()))
+      const matchSearch = (v.title || '').toLowerCase().includes(search.toLowerCase()) ||
+        (v.tags || []).some((t: any) => String(t || '').toLowerCase().includes(search.toLowerCase()))
       const matchStatus = statusFilter === 'All' || v.status === statusFilter
       return matchSearch && matchStatus
     })
@@ -142,12 +145,14 @@ export default function VideoLibrary() {
     if (window.confirm(`Are you sure you want to delete '${title}'?`)) {
       try {
         await api.deleteVideo(id)
+        showToast(`Video '${title}' deleted successfully`, 'success')
         await fetchVideos()
-      } catch (err) {
+      } catch (err: any) {
         console.error('Delete video error:', err)
+        showToast(err.message || 'Failed to delete video', 'error')
       }
     }
-  }, [fetchVideos])
+  }, [fetchVideos, showToast])
 
   const handleDownloadPDF = useCallback(async (id: string, title: string) => {
     try {

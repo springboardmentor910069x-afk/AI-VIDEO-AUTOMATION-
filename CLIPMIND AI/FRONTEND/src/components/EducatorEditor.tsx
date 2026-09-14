@@ -122,7 +122,7 @@ export default function EducatorEditor() {
         if (v) setVideoTitle(v.title)
 
         // 1. Transcript
-        const trRes = await api.getTranscript(selectedVideoId)
+        const trRes = await api.getTranscript(selectedVideoId).catch(() => null)
         if (trRes && trRes.segments && trRes.segments.length > 0) {
           const mapped: Segment[] = trRes.segments.map((s: ApiSegment, idx: number) => ({
             id: `seg-${s.id || idx}`,

@@ -26,11 +26,17 @@ async def get_learner_dashboard_data(
     user_id = str(current_user.id) if current_user and getattr(current_user, "id", None) else "demo-user"
 
     # 1. Fetch user progress documents
-    progress_records = await LearnerProgress.find(LearnerProgress.user_id == user_id).to_list()
+    try:
+        progress_records = await LearnerProgress.find({"user_id": user_id}).to_list()
+    except Exception:
+        progress_records = []
     prog_by_video = {p.video_id: p for p in progress_records}
 
     # 2. Fetch all published/active videos
-    all_videos = await Video.find_all().sort("-created_at").to_list()
+    try:
+        all_videos = await Video.find_all().sort("-created_at").to_list()
+    except Exception:
+        all_videos = []
 
     # 3. Compute real study time
     total_study_seconds = sum(int(p.study_time_seconds or 0) for p in progress_records)
@@ -87,7 +93,10 @@ async def get_learner_dashboard_data(
             activity_dates.add(dt.date())
     
     # Also check user bookmarks
-    user_bookmarks = await Bookmark.find(Bookmark.user_id == user_id).sort("-created_at").to_list()
+    try:
+        user_bookmarks = await Bookmark.find({"user_id": user_id}).sort("-created_at").to_list()
+    except Exception:
+        user_bookmarks = []
     for b in user_bookmarks:
         if b.created_at:
             dt = b.created_at if b.created_at.tzinfo else b.created_at.replace(tzinfo=timezone.utc)

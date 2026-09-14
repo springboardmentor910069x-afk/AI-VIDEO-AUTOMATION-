@@ -302,7 +302,11 @@ export const api = {
   },
 
   async deleteVideo(id: string): Promise<void> {
-    await fetch(`${API_BASE_URL}/videos/${id}`, { method: 'DELETE', headers: getHeaders() })
+    const res = await fetch(`${API_BASE_URL}/videos/${id}`, { method: 'DELETE', headers: getHeaders() })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ detail: 'Failed to delete video' }))
+      throw new Error(data.detail || 'Failed to delete video')
+    }
   },
 
   async getTranscript(videoId: string): Promise<{ segments: Segment[]; word_count: number }> {

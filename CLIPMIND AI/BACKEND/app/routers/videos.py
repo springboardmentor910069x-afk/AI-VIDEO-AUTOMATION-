@@ -270,7 +270,7 @@ async def delete_video(
     video_id: str,
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
-    video = await Video.get(video_id)
+    video = await video_service.get_video(video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
 

@@ -4,6 +4,7 @@ import ThemeToggle from './ThemeToggle'
 import CommandPalette from './CommandPalette'
 import { api } from '../services/api'
 import { useToast } from './Toast'
+import ErrorBoundary from './ErrorBoundary'
 
 type Role = 'Creator' | 'Learner' | 'Educator' | 'Admin'
 
@@ -104,17 +105,17 @@ export default function DashboardShell() {
 
   // Load initial role prioritizing the authenticated user's assigned role
   const [activeRole, setActiveRole] = useState<Role>(() => {
+    const savedRole = localStorage.getItem('clipmind_active_role') as Role | null
+    if (savedRole && (savedRole in ROLE_NAV_ITEMS)) return savedRole
     try {
       const storedUser = localStorage.getItem('clipmind_user')
       if (storedUser) {
         const u = JSON.parse(storedUser)
         if (u.role && (u.role in ROLE_NAV_ITEMS)) {
-          if (u.role !== 'Admin') return u.role as Role
+          return u.role as Role
         }
       }
     } catch (e) { }
-    const savedRole = localStorage.getItem('clipmind_active_role') as Role | null
-    if (savedRole && (savedRole in ROLE_NAV_ITEMS)) return savedRole
     return 'Creator'
   })
 
@@ -136,7 +137,8 @@ export default function DashboardShell() {
           localStorage.setItem('clipmind_user', JSON.stringify(u))
           if (u.role && (u.role in ROLE_NAV_ITEMS)) {
             setAuthenticatedRole(u.role as Role)
-            if (u.role !== 'Admin') {
+            const savedRole = localStorage.getItem('clipmind_active_role') as Role | null
+            if (!savedRole) {
               setActiveRole(u.role as Role)
               localStorage.setItem('clipmind_active_role', u.role)
             }
@@ -686,7 +688,9 @@ export default function DashboardShell() {
 
         {/* PAGE CONTENT */}
         <main style={{ flex: 1, overflow: 'auto' }}>
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
 

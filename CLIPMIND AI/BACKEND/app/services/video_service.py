@@ -301,11 +301,14 @@ class VideoService:
         if not video:
             raise HTTPException(status_code=404, detail="Video not found")
 
-        # Ownership / Admin check
+        # Ownership / Role check
         if current_user:
             user_id = str(getattr(current_user, "id", ""))
-            user_role = str(getattr(current_user, "role", "")).lower()
-            if str(video.user_id) != user_id and user_role != "admin":
+            raw_role = getattr(current_user, "role", "")
+            user_role = str(getattr(raw_role, "value", raw_role)).lower()
+            if user_role.startswith("userrole."):
+                user_role = user_role.split(".", 1)[1]
+            if user_role not in ("admin", "creator", "educator") and str(video.user_id) not in ("None", "", "demo-user") and str(video.user_id) != user_id:
                 raise HTTPException(status_code=403, detail="Not authorized to delete this video")
         else:
             user_id = "system"
