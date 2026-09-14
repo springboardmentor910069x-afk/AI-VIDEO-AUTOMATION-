@@ -1,0 +1,12 @@
+.git
+.github
+**/.git
+**/node_modules
+**/dist
+**/.venv
+**/__pycache__
+**/*.pyc
+CLIPMIND AI/FRONTEND/node_modules
+CLIPMIND AI/FRONTEND/dist
+docs/
+*.md

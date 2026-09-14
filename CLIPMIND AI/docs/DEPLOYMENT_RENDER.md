@@ -41,12 +41,12 @@ ClipMind AI consists of two cloud components configured for Render:
 1. Log in to [MongoDB Atlas](https://cloud.mongodb.com).
 2. Click **Create** -> Choose **M0 (Free)** tier -> Select any region (e.g. AWS / us-east-1).
 3. Under **Security Quickstart**:
-   - Create a database user (e.g., username: `clipmind_admin`, password: `yourSecurePassword123`).
+   - Create a database user (e.g., username: `<username>`, password: `<password>`).
    - Under **Where would you like to connect from?**, choose **Network Access / Allow Access from Anywhere** (`0.0.0.0/0`).
 4. Click **Connect** -> Choose **Drivers** (Python).
 5. Copy your connection string. It looks like:
    ```text
-   mongodb+srv://clipmind_admin:yourSecurePassword123@cluster0.abcde.mongodb.net/?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@<cluster-name>.mongodb.net/?retryWrites=true&w=majority
    ```
 
 ---

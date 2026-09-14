@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # OAuth & External Video API Credentials
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "AIzaSyDgDafkPkUdvYeAaPytdcIdGMdPLYt36Y0")
+    YOUTUBE_API_KEY: str = os.getenv("YOUTUBE_API_KEY", "")
 
     # AI Models (OpenAI Whisper & Hugging Face Transformers BART/T5 as specified in PDF)
     AI_MODEL_WHISPER: str = os.getenv("AI_MODEL_WHISPER", "openai/whisper-small")
