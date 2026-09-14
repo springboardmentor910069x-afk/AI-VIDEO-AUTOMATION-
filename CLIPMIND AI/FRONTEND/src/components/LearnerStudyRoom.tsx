@@ -45,6 +45,8 @@ export default function LearnerStudyRoom() {
   const [playing, setPlaying] = useState(false)
   const [currentTimeSec, setCurrentTimeSec] = useState(0)
   const [speed, setSpeed] = useState('1.0x')
+  const [volume, setVolume] = useState(1.0)
+  const [muted, setMuted] = useState(false)
 
   // Chat
   const [messages, setMessages] = useState<Message[]>([
@@ -258,6 +260,12 @@ export default function LearnerStudyRoom() {
             events: {
               onReady: (event: any) => {
                 if (!isMounted) return
+                try {
+                  event.target?.unMute?.()
+                  event.target?.setVolume?.(100)
+                } catch {}
+                postYTCommand('unMute')
+                postYTCommand('setVolume', [100])
                 const dur = event.target?.getDuration?.()
                 if (dur && dur > 0) {
                   setVideo((prev: VideoData | null) => prev ? { ...prev, duration_sec: Math.floor(dur) } : prev)
@@ -362,6 +370,14 @@ export default function LearnerStudyRoom() {
       }
       postYTCommand('seekTo', [target, true])
       if (!playing) {
+        if (ytPlayerRef.current?.unMute) {
+          try { ytPlayerRef.current.unMute() } catch {}
+        }
+        if (ytPlayerRef.current?.setVolume) {
+          try { ytPlayerRef.current.setVolume(muted ? 0 : Math.round(volume * 100)) } catch {}
+        }
+        postYTCommand('unMute')
+        postYTCommand('setVolume', [muted ? 0 : Math.round(volume * 100)])
         if (ytPlayerRef.current?.playVideo) {
           try { ytPlayerRef.current.playVideo() } catch {}
         }
@@ -370,6 +386,8 @@ export default function LearnerStudyRoom() {
       }
     } else if (videoRef.current) {
       videoRef.current.currentTime = target
+      videoRef.current.muted = muted
+      videoRef.current.volume = volume
       if (videoRef.current.paused) {
         videoRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(true))
       }
@@ -389,6 +407,14 @@ export default function LearnerStudyRoom() {
         postYTCommand('pauseVideo')
         setPlaying(false)
       } else {
+        if (ytPlayerRef.current?.unMute) {
+          try { ytPlayerRef.current.unMute() } catch {}
+        }
+        if (ytPlayerRef.current?.setVolume) {
+          try { ytPlayerRef.current.setVolume(muted ? 0 : Math.round(volume * 100)) } catch {}
+        }
+        postYTCommand('unMute')
+        postYTCommand('setVolume', [muted ? 0 : Math.round(volume * 100)])
         if (ytPlayerRef.current?.playVideo) {
           try { ytPlayerRef.current.playVideo() } catch {}
         }
@@ -396,6 +422,8 @@ export default function LearnerStudyRoom() {
         setPlaying(true)
       }
     } else if (videoRef.current && !videoError) {
+      videoRef.current.muted = muted
+      videoRef.current.volume = volume
       if (playing) {
         videoRef.current.pause()
         setPlaying(false)
@@ -408,6 +436,58 @@ export default function LearnerStudyRoom() {
       }
     } else {
       setPlaying(!playing)
+    }
+  }
+
+  const toggleMute = () => {
+    const nextMuted = !muted
+    setMuted(nextMuted)
+    if (ytId) {
+      if (nextMuted) {
+        if (ytPlayerRef.current?.mute) {
+          try { ytPlayerRef.current.mute() } catch {}
+        }
+        postYTCommand('mute')
+      } else {
+        if (ytPlayerRef.current?.unMute) {
+          try { ytPlayerRef.current.unMute() } catch {}
+        }
+        if (ytPlayerRef.current?.setVolume) {
+          try { ytPlayerRef.current.setVolume(Math.round(volume * 100)) } catch {}
+        }
+        postYTCommand('unMute')
+        postYTCommand('setVolume', [Math.round(volume * 100)])
+      }
+    } else if (videoRef.current) {
+      videoRef.current.muted = nextMuted
+      if (!nextMuted) videoRef.current.volume = volume
+    }
+  }
+
+  const handleVolumeChange = (newVol: number) => {
+    setVolume(newVol)
+    if (newVol > 0 && muted) {
+      setMuted(false)
+    }
+    if (ytId) {
+      if (newVol === 0) {
+        if (ytPlayerRef.current?.mute) {
+          try { ytPlayerRef.current.mute() } catch {}
+        }
+        postYTCommand('mute')
+      } else {
+        if (ytPlayerRef.current?.unMute) {
+          try { ytPlayerRef.current.unMute() } catch {}
+        }
+        if (ytPlayerRef.current?.setVolume) {
+          try { ytPlayerRef.current.setVolume(Math.round(newVol * 100)) } catch {}
+        }
+        postYTCommand('unMute')
+        postYTCommand('setVolume', [Math.round(newVol * 100)])
+      }
+    } else if (videoRef.current) {
+      videoRef.current.volume = newVol
+      videoRef.current.muted = newVol === 0
     }
   }
 
@@ -663,7 +743,7 @@ export default function LearnerStudyRoom() {
                   ref={iframeRef}
                   src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&widgetid=1`}
                   title={video?.title || 'YouTube Lecture'}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                   onLoad={() => postYTCommand('listening')}
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
@@ -674,6 +754,7 @@ export default function LearnerStudyRoom() {
                   src={streamUrl}
                   poster={posterUrl || undefined}
                   playsInline
+                  muted={muted}
                   preload="metadata"
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                   onPlay={() => setPlaying(true)}
@@ -764,6 +845,36 @@ export default function LearnerStudyRoom() {
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: 'var(--text-secondary)' }}>
                     {formatTime(currentTimeSec)} / {formatTime(totalSec)}
                   </span>
+
+                  {/* Volume / Audio Control Widget */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+                    <button
+                      className="btn-glass"
+                      onClick={toggleMute}
+                      style={{ padding: '5px 8px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: muted || volume === 0 ? '#ef4444' : 'var(--text-secondary)' }}
+                      aria-label={muted || volume === 0 ? 'Unmute' : 'Mute'}
+                      title={muted || volume === 0 ? 'Unmute sound (Currently Muted)' : `Mute (Volume: ${Math.round(volume * 100)}%)`}
+                    >
+                      {muted || volume === 0 ? (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                      ) : volume < 0.5 ? (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                      ) : (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                      )}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={muted ? 0 : volume}
+                      onChange={e => handleVolumeChange(parseFloat(e.target.value))}
+                      style={{ width: 60, height: 4, accentColor: 'var(--accent-indigo)', cursor: 'pointer' }}
+                      title={`Volume: ${Math.round((muted ? 0 : volume) * 100)}%`}
+                      aria-label="Volume slider"
+                    />
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

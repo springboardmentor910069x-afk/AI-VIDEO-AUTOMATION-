@@ -19,6 +19,8 @@ export default function VideoIntelligenceCenter() {
   const [activeKeyword, setActiveKeyword] = useState<string | null>(null)
   const [openAccordion, setOpenAccordion] = useState<number | null>(0)
   const [checkedTakeaways, setCheckedTakeaways] = useState<Set<number>>(new Set())
+  const [volume, setVolume] = useState(1.0)
+  const [muted, setMuted] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // API data states
@@ -138,6 +140,7 @@ export default function VideoIntelligenceCenter() {
 
     const initPlayer = () => {
       if ((window as any).YT && (window as any).YT.Player && iframeRef.current) {
+        
         try {
           ytPlayerRef.current = new (window as any).YT.Player(iframeRef.current, {
             events: {
@@ -147,6 +150,12 @@ export default function VideoIntelligenceCenter() {
                 if (dur && dur > 0) setTotalSec(Math.floor(dur))
                 const rate = parseFloat(speed.replace('x', '')) || 1.0
                 event.target?.setPlaybackRate?.(rate)
+                try {
+                  event.target?.unMute?.()
+                  event.target?.setVolume?.(100)
+                } catch {}
+                postYTCommand('unMute')
+                postYTCommand('setVolume', [100])
               },
               onStateChange: (event: any) => {
                 if (!isMounted) return
@@ -260,6 +269,11 @@ export default function VideoIntelligenceCenter() {
         try { ytPlayerRef.current.seekTo(target, true) } catch {}
       }
       postYTCommand('seekTo', [target, true])
+      if (ytPlayerRef.current?.unMute) {
+        try { ytPlayerRef.current.unMute() } catch {}
+      }
+      postYTCommand('unMute')
+      postYTCommand('setVolume', [muted ? 0 : Math.round(volume * 100)])
       if (!playing) {
         if (ytPlayerRef.current?.playVideo) {
           try { ytPlayerRef.current.playVideo() } catch {}
@@ -278,7 +292,7 @@ export default function VideoIntelligenceCenter() {
       setShowToast({ text: km.title })
       setTimeout(() => setShowToast(null), 3000)
     }
-  }, [ytId, totalSec, playing, keyMoments, postYTCommand])
+  }, [ytId, totalSec, playing, keyMoments, postYTCommand, muted, volume])
 
   const togglePlay = () => {
     if (ytId) {
@@ -289,6 +303,14 @@ export default function VideoIntelligenceCenter() {
         postYTCommand('pauseVideo')
         setPlaying(false)
       } else {
+        if (ytPlayerRef.current?.unMute) {
+          try { ytPlayerRef.current.unMute() } catch {}
+        }
+        if (ytPlayerRef.current?.setVolume) {
+          try { ytPlayerRef.current.setVolume(muted ? 0 : Math.round(volume * 100)) } catch {}
+        }
+        postYTCommand('unMute')
+        postYTCommand('setVolume', [muted ? 0 : Math.round(volume * 100)])
         if (ytPlayerRef.current?.playVideo) {
           try { ytPlayerRef.current.playVideo() } catch {}
         }
@@ -296,6 +318,8 @@ export default function VideoIntelligenceCenter() {
         setPlaying(true)
       }
     } else if (videoRef.current) {
+      videoRef.current.muted = muted
+      videoRef.current.volume = volume
       if (!videoRef.current.paused) {
         videoRef.current.pause()
         setPlaying(false)
@@ -304,6 +328,58 @@ export default function VideoIntelligenceCenter() {
       }
     } else {
       setPlaying(!playing)
+    }
+  }
+
+  const toggleMute = () => {
+    const nextMuted = !muted
+    setMuted(nextMuted)
+    if (ytId) {
+      if (nextMuted) {
+        if (ytPlayerRef.current?.mute) {
+          try { ytPlayerRef.current.mute() } catch {}
+        }
+        postYTCommand('mute')
+      } else {
+        if (ytPlayerRef.current?.unMute) {
+          try { ytPlayerRef.current.unMute() } catch {}
+        }
+        if (ytPlayerRef.current?.setVolume) {
+          try { ytPlayerRef.current.setVolume(Math.round(volume * 100)) } catch {}
+        }
+        postYTCommand('unMute')
+        postYTCommand('setVolume', [Math.round(volume * 100)])
+      }
+    } else if (videoRef.current) {
+      videoRef.current.muted = nextMuted
+      if (!nextMuted) videoRef.current.volume = volume
+    }
+  }
+
+  const handleVolumeChange = (newVol: number) => {
+    setVolume(newVol)
+    if (newVol > 0 && muted) {
+      setMuted(false)
+    }
+    if (ytId) {
+      if (newVol === 0) {
+        if (ytPlayerRef.current?.mute) {
+          try { ytPlayerRef.current.mute() } catch {}
+        }
+        postYTCommand('mute')
+      } else {
+        if (ytPlayerRef.current?.unMute) {
+          try { ytPlayerRef.current.unMute() } catch {}
+        }
+        if (ytPlayerRef.current?.setVolume) {
+          try { ytPlayerRef.current.setVolume(Math.round(newVol * 100)) } catch {}
+        }
+        postYTCommand('unMute')
+        postYTCommand('setVolume', [Math.round(newVol * 100)])
+      }
+    } else if (videoRef.current) {
+      videoRef.current.volume = newVol
+      videoRef.current.muted = newVol === 0
     }
   }
 
@@ -374,11 +450,15 @@ export default function VideoIntelligenceCenter() {
               <iframe
                 id="clipmind-yt-player"
                 ref={iframeRef}
-                src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&widgetid=1`}
+                src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&widgetid=1&autoplay=1`}
                 title={videoItem?.title || 'YouTube Stream'}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                onLoad={() => postYTCommand('listening')}
+                onLoad={() => {
+                  postYTCommand('listening')
+                  postYTCommand('unMute')
+                  postYTCommand('setVolume', [100])
+                }}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
               />
             ) : (videoItem?.id || videoItem?.filename) ? (
@@ -386,6 +466,7 @@ export default function VideoIntelligenceCenter() {
                 ref={videoRef}
                 src={api.getVideoStreamUrl(videoItem.id, videoItem.filename || 'video.mp4')}
                 playsInline
+                muted={muted}
                 preload="metadata"
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                 onPlay={() => setPlaying(true)}
@@ -468,7 +549,7 @@ export default function VideoIntelligenceCenter() {
 
             {/* Buttons row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button onClick={() => setPlaying(!playing)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex' }} aria-label={playing ? 'Pause' : 'Play'}>
+              <button onClick={togglePlay} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex' }} aria-label={playing ? 'Pause' : 'Play'}>
                 {playing ? (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
                 ) : (
@@ -476,6 +557,36 @@ export default function VideoIntelligenceCenter() {
                 )}
               </button>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: 'var(--text-secondary)' }}>{formatTime(currentTimeSec)} / {formatTime(totalSec)}</span>
+
+              {/* Volume / Audio Control Widget */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
+                <button
+                  onClick={toggleMute}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: muted || volume === 0 ? '#ef4444' : 'var(--text-secondary)', display: 'flex', padding: 2 }}
+                  aria-label={muted || volume === 0 ? 'Unmute' : 'Mute'}
+                  title={muted || volume === 0 ? 'Unmute sound (Currently Muted)' : `Mute (Volume: ${Math.round(volume * 100)}%)`}
+                >
+                  {muted || volume === 0 ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                  ) : volume < 0.5 ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={muted ? 0 : volume}
+                  onChange={e => handleVolumeChange(parseFloat(e.target.value))}
+                  style={{ width: 64, height: 4, accentColor: 'var(--accent-indigo)', cursor: 'pointer' }}
+                  title={`Volume: ${Math.round((muted ? 0 : volume) * 100)}%`}
+                  aria-label="Volume slider"
+                />
+              </div>
+
               <div style={{ flex: 1 }} />
               {/* Speed selector */}
               <select
