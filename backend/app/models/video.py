@@ -8,6 +8,7 @@ class Video(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
     filename = Column(String)
+    youtube_url = Column(String, nullable=True)
     transcript = Column(Text)
     summary = Column(Text)
     keywords = Column(Text)

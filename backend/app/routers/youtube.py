@@ -739,7 +739,7 @@ async def analyze_youtube(
     db = SessionLocal()
 
     try:
-
+        print("YOUTUBE URL BEFORE SAVE:", url)
         saved_video = save_video(
             db=db,
             title=title,
@@ -749,9 +749,10 @@ async def analyze_youtube(
             keywords=keywords_text,
             duration=duration,
             word_count=word_count,
-            transcript_timestamps=timestamps_text
+            transcript_timestamps=timestamps_text,
+            youtube_url=url
         )
-
+        print("YOUTUBE URL AFTER SAVE:", saved_video.youtube_url)
     finally:
 
         db.close()

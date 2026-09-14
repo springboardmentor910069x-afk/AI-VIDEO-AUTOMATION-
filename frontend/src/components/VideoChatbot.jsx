@@ -6,7 +6,8 @@ function VideoChatbot({
   transcript,
   title,
   summary,
-  metadata
+  metadata,
+  videoId
 }) {
 
   const [question, setQuestion] = useState("");
@@ -48,7 +49,8 @@ function VideoChatbot({
           transcript: transcript,
           title: title || "Current Video",
           summary: summary || "",
-          metadata: metadata || {}
+          metadata: metadata || {},
+          video_id: videoId || 0
         }
       );
 

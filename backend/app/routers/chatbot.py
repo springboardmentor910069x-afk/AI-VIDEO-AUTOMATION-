@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import re
+from app.config import SessionLocal
+from app.models.chat_message import ChatMessage
 
 router = APIRouter()
 
@@ -11,6 +13,7 @@ class ChatRequest(BaseModel):
     title: str = ""
     summary: str = ""
     metadata: dict = {}
+    video_id: int = 0
 
 
 STOP_WORDS = {
@@ -710,7 +713,7 @@ async def chat_with_video(
     summary = request.summary.strip()
 
     metadata = request.metadata or {}
-
+    video_id = request.video_id
     if not question:
 
         raise HTTPException(
@@ -741,8 +744,28 @@ async def chat_with_video(
     )
 
     print(
-        "CHATBOT RESPONSE READY"
+    "CHATBOT RESPONSE READY"
     )
+
+    if video_id:
+
+        db = SessionLocal()
+
+        try:
+
+            chat_message = ChatMessage(
+                video_id=video_id,
+                question=question,
+                answer=answer
+            )
+
+            db.add(chat_message)
+            db.commit()
+
+        finally:
+
+            db.close()
+
 
     return {
         "question": question,

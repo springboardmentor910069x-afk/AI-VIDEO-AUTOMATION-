@@ -2440,6 +2440,7 @@ setYoutubeMetadata({});
   title={title}
   summary={summary}
   metadata={youtubeMetadata}
+  videoId={selectedVideoId}
 />
 
               {/* =================================================
