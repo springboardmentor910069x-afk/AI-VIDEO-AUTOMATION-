@@ -1,25 +1,18 @@
 # ==============================================================================
-# ClipMind AI — Render Cloud Deployment Blueprint Specification
+# ClipMind AI — Render Cloud All-in-One Deployment Blueprint Specification
 # Docs: https://render.com/docs/blueprint-spec
+# Single-Service Full-Stack Deployment (React 19 Frontend + FastAPI Backend)
 # ==============================================================================
 
 services:
-  # ----------------------------------------------------------------------------
-  # 1. ClipMind AI — Backend API Web Service
-  # ----------------------------------------------------------------------------
   - type: web
-    name: clipmind-backend
-    runtime: python
-    rootDir: CLIPMIND AI/BACKEND
-    buildCommand: bash build.sh
-    startCommand: python run.py
+    name: clipmind-all-in-one
+    runtime: docker
     plan: free
     region: oregon
     healthCheckPath: /health
     autoDeploy: true
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
       - key: ENVIRONMENT
         value: production
       - key: PORT
@@ -42,26 +35,5 @@ services:
         value: llama-3.3-70b-versatile
       - key: ANALYTICS_ZERO_BASELINE
         value: "true"
-
-  # ----------------------------------------------------------------------------
-  # 2. ClipMind AI — Frontend Static Site (React / Vite)
-  # ----------------------------------------------------------------------------
-  - type: web
-    name: clipmind-frontend
-    runtime: static
-    rootDir: CLIPMIND AI/FRONTEND
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    plan: free
-    region: oregon
-    autoDeploy: true
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_BACKEND_URL
-        fromService:
-          type: web
-          name: clipmind-backend
-          property: url
+      - key: CORS_ORIGINS
+        value: "*"
