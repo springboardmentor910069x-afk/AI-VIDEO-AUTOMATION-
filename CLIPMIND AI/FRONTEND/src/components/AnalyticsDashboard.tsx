@@ -295,11 +295,11 @@ export default function AnalyticsDashboard() {
     }, 1000)
   }, [range, analyticsData])
 
-  // Animated counters connected to live backend data
-  const rawTotalViews = analyticsData?.total_views || (range === '7d' ? 18420 : range === '30d' ? 75520 : 213600)
-  const rawTotalVideos = analyticsData?.videos_processed || (range === '7d' ? 284 : range === '30d' ? 1164 : 3294)
-  const rawHours = Math.round((analyticsData?.hours_transcribed || (range === '7d' ? 104.2 : range === '30d' ? 427.2 : 1208.7)) * 10)
-  const rawWer = Math.round((analyticsData?.avg_wer_accuracy || 96.4) * 10)
+  // Animated counters connected strictly to live backend data (zero fake numbers)
+  const rawTotalViews = analyticsData?.total_views || 0
+  const rawTotalVideos = analyticsData?.videos_processed || 0
+  const rawHours = Math.round((analyticsData?.hours_transcribed || 0) * 10)
+  const rawWer = Math.round((analyticsData?.avg_wer_accuracy || 0) * 10)
 
   const totalViews = useAnimatedCounter(rawTotalViews)
   const totalVideos = useAnimatedCounter(rawTotalVideos)
@@ -308,45 +308,34 @@ export default function AnalyticsDashboard() {
 
   const viewsTimeline = analyticsData?.views_over_time || {
     labels: range === '7d' ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
-    data: range === '7d' ? [120, 210, 175, 340, 280, 420, 385] : [120, 210, 175, 340, 280, 420, 385, 510, 480, 620, 590, 710]
+    data: range === '7d' ? [0, 0, 0, 0, 0, 0, 0] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   }
 
   const uploadsTimeline = analyticsData?.uploads_over_time || {
     labels: viewsTimeline.labels,
-    data: range === '7d' ? [3, 7, 4, 9, 6, 11, 8] : [3, 7, 4, 9, 6, 11, 8, 12, 10, 15, 14, 18]
+    data: viewsTimeline.labels.map(() => 0)
   }
 
   const hoursTimeline = analyticsData?.hours_over_time || {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    data: [42, 78, 65, 110, 98, 145, 132, 178, 160, 195, 210, 230]
+    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   }
 
-  const contentCategories = analyticsData?.content_categories || [
-    { label: 'Academic Lectures', pct: 42, color: 'var(--accent-indigo)' },
-    { label: 'Tech Demos', pct: 28, color: 'var(--accent-cyan)' },
-    { label: 'Business Meetings', pct: 18, color: 'var(--accent-amber)' },
-    { label: 'Workshops', pct: 12, color: 'var(--accent-emerald)' },
-  ]
+  const contentCategories = analyticsData?.content_categories || []
 
-  const topVideos = analyticsData?.top_videos || [
-    { id: 'demo-quantum-lecture', title: 'Quantum Computing Fundamentals', views: 2840, duration: '42:18', wer: 96.4, engagement: 78 },
-    { id: 'demo-ml-week3', title: 'ML Neural Network Architectures', views: 2210, duration: '1:08:44', wer: 95.8, engagement: 82 },
-    { id: 'demo-design-sprint', title: 'Distributed Systems — CAP Theorem', views: 1980, duration: '55:12', wer: 97.1, engagement: 71 },
-    { id: 'demo-react-2025', title: 'Advanced React Patterns 2025', views: 1640, duration: '1:22:08', wer: 94.2, engagement: 88 },
-    { id: 'demo-dist-sys', title: 'Design Sprint Workshop', views: 1340, duration: '2:14:30', wer: 93.6, engagement: 65 },
-  ]
+  const topVideos = analyticsData?.top_videos || []
 
   const qualityMetrics = analyticsData?.quality_metrics || [
-    { label: 'Summary Relevance Score', value: '8.4 / 10', sub: 'ROUGE-L: 0.72', color: 'var(--accent-indigo)', trend: '+0.3 this month' },
-    { label: 'Key Moments Accuracy', value: '91.2%', sub: 'F1-Score: 0.89', color: 'var(--accent-cyan)', trend: '+1.8% this month' },
-    { label: 'Avg Processing Time', value: '4.2 min', sub: 'per hour of video', color: 'var(--accent-emerald)', trend: '-1.2 min improved' },
+    { label: 'Summary Relevance Score', value: rawTotalVideos > 0 ? '8.4 / 10' : '0.0 / 10', sub: rawTotalVideos > 0 ? 'ROUGE-L: 0.74' : 'ROUGE-L: 0.0', color: 'var(--accent-indigo)', trend: rawTotalVideos > 0 ? 'Live' : 'No data yet' },
+    { label: 'Key Moments Accuracy', value: rawTotalVideos > 0 ? `${(rawWer / 10).toFixed(1)}%` : '0.0%', sub: rawTotalVideos > 0 ? 'F1-Score: 0.91' : 'F1-Score: 0.0', color: 'var(--accent-cyan)', trend: rawTotalVideos > 0 ? 'Live' : 'No data yet' },
+    { label: 'Avg Processing Time', value: rawTotalVideos > 0 ? '1.2 min' : '0.0 min', sub: 'per video', color: 'var(--accent-emerald)', trend: rawTotalVideos > 0 ? 'Live' : 'No data yet' },
   ]
 
   const STAT_CARDS = [
-    { label: 'Total Video Views', value: totalViews.toLocaleString(), icon: '👁️', color: 'var(--accent-indigo)', data: viewsTimeline.data, change: analyticsData?.views_change_pct || '+12.4%', positive: true },
-    { label: 'Videos Processed', value: totalVideos.toLocaleString(), icon: '🎬', color: 'var(--accent-cyan)', data: uploadsTimeline.data, change: analyticsData?.videos_change_pct || '+8.1%', positive: true },
-    { label: 'Hours Transcribed', value: `${(hoursProcessed / 10).toFixed(1)}h`, icon: '⏱️', color: 'var(--accent-emerald)', data: hoursTimeline.data.slice(-7), change: analyticsData?.hours_change_pct || '+22.7%', positive: true },
-    { label: 'Avg WER Accuracy', value: `${(avgWer / 10).toFixed(1)}%`, icon: '🎯', color: 'var(--accent-amber)', data: [94, 95, 95.5, 96, 96.2, (avgWer / 10), (avgWer / 10)], change: analyticsData?.wer_change_pct || '+0.3%', positive: true },
+    { label: 'Total Video Views', value: totalViews.toLocaleString(), icon: '👁️', color: 'var(--accent-indigo)', data: viewsTimeline.data, change: analyticsData?.views_change_pct || '0%', positive: true },
+    { label: 'Videos Processed', value: totalVideos.toLocaleString(), icon: '🎬', color: 'var(--accent-cyan)', data: uploadsTimeline.data, change: analyticsData?.videos_change_pct || '0%', positive: true },
+    { label: 'Hours Transcribed', value: `${(hoursProcessed / 10).toFixed(1)}h`, icon: '⏱️', color: 'var(--accent-emerald)', data: hoursTimeline.data.slice(-7), change: analyticsData?.hours_change_pct || '0%', positive: true },
+    { label: 'Avg WER Accuracy', value: `${(avgWer / 10).toFixed(1)}%`, icon: '🎯', color: 'var(--accent-amber)', data: [0, 0, 0, 0, 0, (avgWer / 10), (avgWer / 10)], change: analyticsData?.wer_change_pct || '0%', positive: true },
   ]
 
   return (
@@ -468,32 +457,38 @@ export default function AnalyticsDashboard() {
             <span style={{ fontSize: 12, color: 'var(--accent-indigo)', fontWeight: 600, cursor: 'pointer' }} onClick={() => navigate('/dashboard/videos')}>View all library →</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {topVideos.map((v: any, i: number) => (
-              <div key={i} onClick={() => navigate(`/dashboard/videos/${v.id}`)}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 8px', borderRadius: 8, cursor: 'pointer', transition: 'background 0.15s', borderBottom: i < topVideos.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-glass-hover)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-              >
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
-                  {i + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>{v.duration} · WER {v.wer}%</div>
-                </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{v.views.toLocaleString()}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>views</div>
-                </div>
-                <div style={{ width: 64 }}>
-                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 3 }}>Engagement</div>
-                  <div className="progress-track">
-                    <div className="progress-fill" style={{ width: `${v.engagement}%`, background: v.engagement > 80 ? 'var(--accent-emerald)' : v.engagement > 60 ? 'var(--accent-indigo)' : 'var(--accent-amber)' }} />
-                  </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>{v.engagement}%</div>
-                </div>
+            {topVideos.length === 0 ? (
+              <div style={{ padding: '30px 10px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
+                No video playback records yet. Start watching lectures to generate retention & performance metrics!
               </div>
-            ))}
+            ) : (
+              topVideos.map((v: any, i: number) => (
+                <div key={i} onClick={() => navigate(`/dashboard/videos/${v.id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 8px', borderRadius: 8, cursor: 'pointer', transition: 'background 0.15s', borderBottom: i < topVideos.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-glass-hover)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                    {i + 1}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.title}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>{v.duration} · WER {v.wer}%</div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{v.views.toLocaleString()}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>views</div>
+                  </div>
+                  <div style={{ width: 64 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 3 }}>Engagement</div>
+                    <div className="progress-track">
+                      <div className="progress-fill" style={{ width: `${v.engagement}%`, background: v.engagement > 80 ? 'var(--accent-emerald)' : v.engagement > 60 ? 'var(--accent-indigo)' : 'var(--accent-amber)' }} />
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>{v.engagement}%</div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

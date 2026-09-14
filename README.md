@@ -198,7 +198,7 @@ The backend exposes interactive Swagger documentation at `http://localhost:8000/
 
 ## 7. Render Cloud Deployment Guide
 
-ClipMind AI is pre-configured with a Render Blueprint specification ([render.yaml](../render.yaml)) for automated deployment:
+ClipMind AI is pre-configured with a Render Blueprint specification ([render.yaml](render.yaml)) for automated deployment:
 
 ### Free Cloud Architecture
 1. **Frontend**: Render Static Site (Free tier, instant CDN, zero idle sleep, client-side SPA routing rewrite).
@@ -237,8 +237,10 @@ ClipMind AI is pre-configured with a Render Blueprint specification ([render.yam
 ### Instant One-Click Launcher (Windows)
 Run the launcher script:
 ```powershell
+cd "CLIPMIND AI"
 .\start.bat
 ```
+*(Or directly invoke `.\"CLIPMIND AI"\start.bat` from root)*
 The script will automatically:
 1. Terminate any stale processes on ports `8000` and `5173`.
 2. Launch the FastAPI backend server on `http://localhost:8000`.
@@ -249,7 +251,7 @@ The script will automatically:
 
 #### 1. Backend Setup (Python 3.11+)
 ```bash
-cd "BACKEND"
+cd "CLIPMIND AI/BACKEND"
 python -m venv venv
 # Windows:
 .\venv\Scripts\activate
@@ -263,7 +265,7 @@ python run.py
 
 #### 2. Frontend Setup (Node.js 18+)
 ```bash
-cd "FRONTEND"
+cd "CLIPMIND AI/FRONTEND"
 npm install
 npm run dev
 ```

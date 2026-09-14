@@ -6,7 +6,7 @@ from app.config import settings
 from app.mongodb_models import (
     User as MongoUser, APIKey, Video as MongoVideo, Transcript, Summary,
     KeyMoment, Bookmark, AuditLog, Setting, ProcessingJob, ContentInsight, Share,
-    Quiz, FlashcardSet
+    Quiz, FlashcardSet, LearnerProgress
 )
 
 
@@ -55,7 +55,7 @@ async def init_mongodb():
                 MongoUser, APIKey, MongoVideo, Transcript, Summary,
                 KeyMoment, Bookmark, AuditLog, Setting,
                 ProcessingJob, ContentInsight, Share,
-                Quiz, FlashcardSet
+                Quiz, FlashcardSet, LearnerProgress
             ]
         )
         print("[OK] Document database connected securely")

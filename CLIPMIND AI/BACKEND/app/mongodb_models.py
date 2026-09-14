@@ -248,3 +248,21 @@ class FlashcardSet(Document):
         name = "flashcard_sets"
         indexes = ["video_id", "created_by"]
 
+
+class LearnerProgress(Document):
+    user_id: str
+    video_id: str
+    watch_seconds: Optional[int] = 0
+    study_time_seconds: Optional[int] = 0
+    completed: Optional[bool] = False
+    flashcards_mastered: List[str] = Field(default_factory=list)
+    flashcards_review: List[str] = Field(default_factory=list)
+    quiz_attempts: List[Dict[str, Any]] = Field(default_factory=list)
+    last_studied_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Settings:
+        name = "learner_progress"
+        indexes = ["user_id", "video_id", "last_studied_at"]
+

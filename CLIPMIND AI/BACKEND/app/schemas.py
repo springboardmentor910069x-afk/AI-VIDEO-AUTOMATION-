@@ -126,6 +126,37 @@ class LearnerChatResponse(BaseModel):
     relevant_seconds: Optional[int] = None
     context_snippet: Optional[str] = None
 
+class StudySessionHeartbeatRequest(BaseModel):
+    video_id: str
+    seconds: int
+    current_position_sec: Optional[int] = 0
+
+class FlashcardMasteryRequest(BaseModel):
+    video_id: str
+    card_id: str
+    status: str  # 'know' | 'review'
+
+class QuizSubmissionRequest(BaseModel):
+    video_id: str
+    score: int
+    total: int
+    answers: Optional[List[Any]] = None
+
+class LearnerDashboardResponse(BaseModel):
+    total_study_minutes: int
+    lectures_studied: int
+    total_lectures: int
+    flashcards_mastered: int
+    flashcards_total: int
+    flashcard_mastery_pct: int
+    quizzes_taken: int
+    quiz_accuracy_pct: int
+    streak_days: int
+    today_study_minutes: int
+    recent_lectures: List[Dict[str, Any]] = []
+    recent_notes: List[Dict[str, Any]] = []
+    milestones: List[Dict[str, Any]] = []
+
 class SegmentUpdateRequest(BaseModel):
     text: str
     speaker: Optional[str] = None

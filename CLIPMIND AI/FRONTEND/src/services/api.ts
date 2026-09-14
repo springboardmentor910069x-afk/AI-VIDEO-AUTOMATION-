@@ -103,6 +103,57 @@ export interface Bookmark {
   video_title?: string
 }
 
+export interface LearnerLectureProgress {
+  id: string
+  title: string
+  category: string
+  duration_sec: number
+  watch_seconds: number
+  progress_pct: number
+  completed: boolean
+  thumbnail_url?: string
+  last_studied?: string
+  cards_mastered: number
+  quiz_attempts_count: number
+}
+
+export interface LearnerStudyNote {
+  id: string
+  video_id: string
+  video_title: string
+  timestamp_str: string
+  timestamp_sec: number
+  label: string
+  note: string
+  created_at?: string
+}
+
+export interface LearnerMilestone {
+  id: string
+  title: string
+  desc: string
+  icon: string
+  unlocked: boolean
+  progress: number
+  target: number
+}
+
+export interface LearnerDashboardData {
+  total_study_minutes: number
+  lectures_studied: number
+  total_lectures: number
+  flashcards_mastered: number
+  flashcards_total: number
+  flashcard_mastery_pct: number
+  quizzes_taken: number
+  quiz_accuracy_pct: number
+  streak_days: number
+  today_study_minutes: number
+  recent_lectures: LearnerLectureProgress[]
+  recent_notes: LearnerStudyNote[]
+  milestones: LearnerMilestone[]
+}
+
 // Helper headers with auth token
 function getHeaders(): HeadersInit {
   const token = localStorage.getItem('clipmind_access_token')
@@ -368,6 +419,42 @@ export const api = {
   },
 
   // Learner
+  async getLearnerDashboard(): Promise<LearnerDashboardData> {
+    const res = await fetch(`${API_BASE_URL}/learner/dashboard`, { headers: getHeaders() })
+    if (!res.ok) throw new Error('Failed to load learner dashboard data')
+    return res.json()
+  },
+
+  async recordStudySession(videoId: string, seconds: number, currentPositionSec: number = 0) {
+    const res = await fetch(`${API_BASE_URL}/learner/study-session`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ video_id: videoId, seconds, current_position_sec: currentPositionSec })
+    })
+    if (!res.ok) return { success: false }
+    return res.json()
+  },
+
+  async saveFlashcardMastery(videoId: string, cardId: string, status: 'know' | 'review') {
+    const res = await fetch(`${API_BASE_URL}/learner/flashcard-mastery`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ video_id: videoId, card_id: cardId, status })
+    })
+    if (!res.ok) return { success: false }
+    return res.json()
+  },
+
+  async submitQuizResult(videoId: string, score: number, total: number, answers?: any[]) {
+    const res = await fetch(`${API_BASE_URL}/learner/quiz-submit`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ video_id: videoId, score, total, answers })
+    })
+    if (!res.ok) return { success: false }
+    return res.json()
+  },
+
   async sendLearnerChat(videoId: string, question: string) {
     const res = await fetch(`${API_BASE_URL}/learner/chat`, {
       method: 'POST',

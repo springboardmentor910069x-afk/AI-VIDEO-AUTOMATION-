@@ -1,0 +1,286 @@
+# ClipMind AI — RESTful API Specification
+
+The ClipMind AI backend is built with FastAPI and provides high-performance asynchronous REST endpoints along with real-time WebSocket telemetry.
+
+- **Base URL**: `http://localhost:8000/api/v1`
+- **Interactive Documentation (Swagger UI)**: `http://localhost:8000/docs`
+- **Alternative Documentation (ReDoc)**: `http://localhost:8000/redoc`
+
+---
+
+## 1. Authentication & Security Scheme
+
+ClipMind AI utilizes standard OAuth2 with Password Bearer flow and JSON Web Tokens (JWT).
+
+### Headers
+```http
+Authorization: Bearer <jwt_access_token>
+```
+
+### Roles Matrix & Permissions
+
+| Role | Permitted Access Scope |
+| :--- | :--- |
+| **Creator** | Upload videos, ingest YouTube URLs, generate summaries, delete own videos, create bookmarks, export reports. |
+| **Educator** | Access Educator Studio, edit transcripts, curate chapters, build custom quizzes, design flashcard sets, publish curricula. |
+| **Learner** | View accessible lectures, access interactive study rooms, take quizzes, flip flashcards, track study progress. |
+| **Admin** | Full system governance, view and manage all users, toggle user roles, inspect audit logs, clean system cache, view health metrics. |
+
+---
+
+## 2. API Endpoints Reference
+
+### Authentication (`/auth`)
+
+#### `POST /auth/register`
+Create a new user account.
+- **Request Body**:
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "SecurePassword123!",
+    "full_name": "Jane Doe",
+    "role": "learner"
+  }
+  ```
+- **Response**: `201 Created`
+  ```json
+  {
+    "id": 1,
+    "email": "user@example.com",
+    "full_name": "Jane Doe",
+    "role": "learner",
+    "created_at": "2026-09-14T00:00:00Z"
+  }
+  ```
+
+#### `POST /auth/login`
+Authenticate with credentials and obtain a JWT access token.
+- **Content-Type**: `application/x-www-form-urlencoded`
+- **Request Body**: `username=creator@clipmind.ai&password=Password123!`
+- **Response**: `200 OK`
+  ```json
+  {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token_type": "bearer",
+    "role": "creator",
+    "user_id": 1
+  }
+  ```
+
+#### `GET /auth/me`
+Retrieve authenticated user profile.
+- **Headers**: `Authorization: Bearer <token>`
+- **Response**: `200 OK`
+
+---
+
+### Video Ingestion & Intelligence (`/videos`)
+
+#### `POST /videos/upload`
+Upload a raw video file (`.mp4`, `.mov`, `.mkv`) for AI analysis.
+- **Security**: Required (`Creator`, `Educator`, `Admin`)
+- **Content-Type**: `multipart/form-data`
+- **Form Fields**: `file` (binary), `title` (string, optional)
+- **Response**: `201 Created` with video metadata and processing task ID.
+
+#### `POST /videos/url`
+Ingest video content via YouTube URL.
+- **Request Body**:
+  ```json
+  {
+    "url": "https://www.youtube.com/watch?v=example",
+    "title": "Introduction to Neural Networks"
+  }
+  ```
+- **Response**: `202 Accepted`
+
+#### `GET /videos`
+List all ingested videos in the user's library with filtering and pagination.
+- **Query Params**: `page` (int, default 1), `limit` (int, default 20)
+- **Response**: `200 OK`
+
+#### `GET /videos/{video_id}`
+Fetch detailed metadata, processing status, and duration for a specific video.
+- **Response**: `200 OK`
+
+#### `DELETE /videos/{video_id}`
+Securely delete a video. Cascades deletion across physical media on disk, generated exports, and all child MongoDB documents (`Transcript`, `Summary`, `KeyMoment`, `Bookmark`, `Quiz`, `FlashcardSet`).
+- **Security**: Required (Video Owner or `Admin`)
+- **Response**: `200 OK`
+  ```json
+  {
+    "success": true,
+    "message": "Video deleted successfully"
+  }
+  ```
+
+#### `GET /videos/{video_id}/export`
+Generate and download intelligence reports in multiple formats.
+- **Query Params**: `format` (`pdf` | `docx` | `txt` | `srt` | `vtt`)
+- **Response**: `200 OK` with binary streaming file download.
+
+---
+
+### Transcripts & Summaries (`/videos/{video_id}/...`)
+
+#### `GET /videos/{video_id}/transcript`
+Retrieve word-level and chunked speech-to-text transcript.
+- **Response**: `200 OK`
+  ```json
+  {
+    "video_id": "6aa60488aa03d72a6ae96768",
+    "language": "en",
+    "full_text": "...",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 4.5,
+        "speaker": "Speaker 1",
+        "text": "Welcome to today's lecture on artificial intelligence."
+      }
+    ]
+  }
+  ```
+
+#### `GET /videos/{video_id}/summary`
+Retrieve multi-depth summaries and structured sections.
+- **Response**: `200 OK`
+  ```json
+  {
+    "tldr": "A concise overview of machine learning architectures...",
+    "detailed_summary": "...",
+    "key_takeaways": [
+      "Convolutional layers extract spatial hierarchies.",
+      "Backpropagation minimizes loss via gradient descent."
+    ],
+    "sections": []
+  }
+  ```
+
+#### `GET /videos/{video_id}/key-moments`
+Retrieve visual and semantic key moments with timestamps and importance scores.
+- **Response**: `200 OK`
+
+---
+
+### Educator Curriculum Suite (`/educator`)
+
+#### `GET /educator/lectures`
+List all lectures available for curriculum authoring.
+- **Security**: Required (`Educator`, `Admin`)
+- **Response**: `200 OK`
+
+#### `POST /educator/lectures/{video_id}/chapters`
+Persist custom curriculum chapter breakdown to MongoDB `Summary.sections`.
+- **Security**: Required (`Educator`, `Admin`)
+- **Request Body**:
+  ```json
+  {
+    "chapters": [
+      {
+        "title": "Introduction to Vectors",
+        "start_time": 0.0,
+        "end_time": 120.0,
+        "description": "Foundations of linear algebra in n-dimensional space."
+      }
+    ]
+  }
+  ```
+- **Response**: `200 OK`
+
+#### `POST /educator/lectures/{video_id}/quiz`
+Create or update custom evaluation quiz for the lecture.
+- **Security**: Required (`Educator`, `Admin`)
+- **Request Body**:
+  ```json
+  {
+    "questions": [
+      {
+        "id": "q1",
+        "question": "What is the primary function of an activation layer?",
+        "options": ["Introduce non-linearity", "Scale weights", "Store gradients", "Normalize inputs"],
+        "correct_answer": 0,
+        "explanation": "Activation functions introduce non-linearities allowing neural nets to model complex mappings."
+      }
+    ]
+  }
+  ```
+- **Response**: `200 OK`
+
+#### `POST /educator/lectures/{video_id}/flashcards`
+Create or update active recall flashcard sets.
+- **Security**: Required (`Educator`, `Admin`)
+- **Request Body**:
+  ```json
+  {
+    "flashcards": [
+      {
+        "id": "fc1",
+        "front": "Gradient Descent",
+        "back": "An optimization algorithm used to minimize the loss function.",
+        "timestamp_sec": 45
+      }
+    ]
+  }
+  ```
+- **Response**: `200 OK`
+
+---
+
+### Learner Study Room (`/learner`)
+
+#### `GET /learner/videos/{video_id}/study`
+Retrieve complete study package (video metadata, chapters, active quiz, flashcards). Falls back dynamically to AI-generated flashcards/quizzes if educator has not created a custom set.
+- **Security**: Required (`Learner`, `Educator`, `Creator`, `Admin`)
+- **Response**: `200 OK`
+
+#### `POST /learner/quiz/{video_id}/submit`
+Submit answers to lecture quiz and receive scored evaluation.
+- **Response**: `200 OK`
+
+---
+
+### Admin Governance & Telemetry (`/admin`)
+
+#### `GET /admin/users`
+List all registered users with role and status indicators.
+- **Security**: Required (`Admin`)
+- **Response**: `200 OK`
+
+#### `PUT /admin/users/{user_id}/role`
+Update user authorization role.
+- **Security**: Required (`Admin`)
+- **Request Body**: `{"role": "educator"}`
+- **Response**: `200 OK`
+
+#### `GET /admin/audit-logs`
+Retrieve chronological system audit logs (e.g., logins, deletions, cache clears).
+- **Security**: Required (`Admin`)
+- **Response**: `200 OK`
+
+#### `POST /admin/clean-cache`
+Purge orphaned temporary files and cached media.
+- **Security**: Required (`Admin`)
+- **Response**: `200 OK`
+  ```json
+  {
+    "message": "Cache cleaned successfully."
+  }
+  ```
+
+---
+
+### Real-Time WebSocket Telemetry (`/ws`)
+
+#### `WebSocket /ws/videos/{video_id}`
+Bidirectional WebSocket stream providing real-time pipeline status updates during processing.
+- **Message Format**:
+  ```json
+  {
+    "stage": "transcribing",
+    "progress": 45.0,
+    "status": "in_progress",
+    "detail": "OpenAI Whisper processing audio chunk 2 of 4..."
+  }
+  ```

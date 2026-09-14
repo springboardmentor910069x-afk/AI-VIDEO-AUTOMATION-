@@ -45,12 +45,17 @@ clipmind.db
 !.env.example
 
 # Media Uploads, Transcodes & Cache
-**/uploads/*
+**/uploads/**
+!**/uploads/
 !**/uploads/.gitkeep
 !**/uploads/thumbnails/
 !**/uploads/thumbnails/.gitkeep
 !**/uploads/exports/
 !**/uploads/exports/.gitkeep
+!**/uploads/audio/
+!**/uploads/audio/.gitkeep
+!**/uploads/videos/
+!**/uploads/videos/.gitkeep
 
 # IDEs & System Files
 .vscode/

@@ -24,7 +24,8 @@ const ROLE_NAV_ITEMS: Record<Role, NavItem[]> = {
     { icon: '⚙️', label: 'Settings', path: '/dashboard/settings' },
   ],
   Learner: [
-    { icon: '🎓', label: 'AI Study & Chat', path: '/dashboard/learner/study' },
+    { icon: '🏠', label: 'Student Dashboard', path: '/dashboard/learner' },
+    { icon: '🎓', label: 'AI Study Room', path: '/dashboard/learner/study' },
     { icon: '📤', label: 'Upload Video', path: '/dashboard/upload' },
     { icon: '🎥', label: 'My Lectures', path: '/dashboard/videos' },
     { icon: '🔖', label: 'Study Notes', path: '/dashboard/bookmarks' },
@@ -233,7 +234,9 @@ export default function DashboardShell() {
     if (currentPath === '/dashboard/bookmarks') return ['Dashboard', activeRole === 'Learner' ? 'Study Notes' : 'Bookmarks']
     if (currentPath === '/dashboard/analytics') return ['Dashboard', 'Analytics']
     if (currentPath === '/dashboard/settings') return ['Dashboard', 'Settings']
-    if (currentPath.startsWith('/dashboard/learner')) return ['Dashboard', 'Learner', 'Study Room']
+    if (currentPath === '/dashboard/learner' || (currentPath === '/dashboard' && activeRole === 'Learner')) return ['Dashboard', 'Student Hub']
+    if (currentPath.startsWith('/dashboard/learner/study')) return ['Dashboard', 'Learner', 'Study Room']
+    if (currentPath.startsWith('/dashboard/learner')) return ['Dashboard', 'Learner', 'Student Hub']
     if (currentPath.startsWith('/dashboard/educator')) return ['Dashboard', 'Educator', 'Lecture Studio']
     if (currentPath.startsWith('/dashboard/admin')) return ['Dashboard', 'Admin Console']
     return ['Dashboard', activeRole]
@@ -247,7 +250,7 @@ export default function DashboardShell() {
   const sidebarW = sidebarCollapsed ? 68 : 240
 
   // Dynamic video storage meter
-  const [storageUsedMb, setStorageUsedMb] = useState<number>(14200)
+  const [storageUsedMb, setStorageUsedMb] = useState<number>(0)
 
   useEffect(() => {
     async function loadStorage() {

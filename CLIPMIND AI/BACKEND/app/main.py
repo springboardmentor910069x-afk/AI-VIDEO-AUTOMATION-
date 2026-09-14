@@ -77,8 +77,25 @@ app.include_router(websocket.router)
 app.include_router(sharing.router)
 
 
+# Optional Single-Service Deployment: Detect pre-built Frontend SPA dist directory
+frontend_dist_paths = [
+    os.path.join(os.path.dirname(settings.BASE_DIR), "FRONTEND", "dist"),
+    os.path.join(settings.BASE_DIR, "dist"),
+    os.path.join(settings.BASE_DIR, "static"),
+]
+frontend_dist = next((p for p in frontend_dist_paths if os.path.isdir(p) and os.path.exists(os.path.join(p, "index.html"))), None)
+
+if frontend_dist:
+    from fastapi.responses import FileResponse
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend_assets")
+
 @app.get("/")
 def root():
+    if frontend_dist and os.path.exists(os.path.join(frontend_dist, "index.html")):
+        from fastapi.responses import FileResponse
+        return FileResponse(os.path.join(frontend_dist, "index.html"))
     return {
         "status": "online",
         "app": settings.PROJECT_NAME,
@@ -165,3 +182,20 @@ async def health_check():
         },
         "system": system_metrics
     }
+
+
+if frontend_dist:
+    from fastapi.responses import FileResponse
+    from fastapi import HTTPException
+
+    @app.get("/{full_path:path}")
+    async def serve_spa_route(full_path: str):
+        if full_path.startswith(("api/", "docs", "redoc", "openapi.json", "uploads/", "health", "ws/")):
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        file_path = os.path.join(frontend_dist, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        index_file = os.path.join(frontend_dist, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Resource not found")

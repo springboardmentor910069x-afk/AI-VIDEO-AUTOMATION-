@@ -260,7 +260,8 @@ async def get_system_health(
     try:
         cpu_pct = psutil.cpu_percent(interval=0.1)
         mem = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk_path = 'C:\\' if os.name == 'nt' else '/'
+        disk = psutil.disk_usage(disk_path)
         storage_used_gb = round(disk.used / (1024 ** 3), 1)
         storage_total_gb = round(disk.total / (1024 ** 3), 1)
         ram_used_gb = round(mem.used / (1024 ** 3), 1)

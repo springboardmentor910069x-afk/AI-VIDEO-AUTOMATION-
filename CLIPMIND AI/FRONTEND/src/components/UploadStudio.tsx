@@ -38,8 +38,7 @@ export default function UploadStudio() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [urlInput, setUrlInput] = useState('')
-  const [youtubeApiKey, setYoutubeApiKey] = useState('AIzaSyDgDafkPkUdvYeAaPytdcIdGMdPLYt36Y0')
-  const [showKeyGuide, setShowKeyGuide] = useState(false)
+  const [youtubeApiKey] = useState('AIzaSyDgDafkPkUdvYeAaPytdcIdGMdPLYt36Y0')
   const [summaryDepth, setSummaryDepth] = useState<SummaryDepth>('Detailed Breakdown')
   const [sensitivity, setSensitivity] = useState(50)
   const [domain, setDomain] = useState<Domain>('Academic Lecture')
@@ -394,71 +393,6 @@ export default function UploadStudio() {
               <span>⚡</span> Ingest Stream
             </button>
           </div>
-
-          {/* YouTube API Key Row & Console Guide Helper */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-secondary)', padding: '4px 2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>🔑 YouTube API Key:</span>
-              <input
-                type="password"
-                placeholder="Google Cloud API Key (AIzaSy...)"
-                value={youtubeApiKey}
-                onChange={e => setYoutubeApiKey(e.target.value)}
-                style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-glass)',
-                  borderRadius: 6,
-                  padding: '4px 8px',
-                  fontSize: 11,
-                  color: 'var(--text-primary)',
-                  width: 210,
-                  fontFamily: 'monospace'
-                }}
-              />
-              <span style={{ color: '#10B981', fontSize: 11, fontWeight: 700 }}>✓ Configured</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowKeyGuide(!showKeyGuide)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--accent-cyan)',
-                fontSize: 11.5,
-                fontWeight: 600,
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              {showKeyGuide ? 'Hide API Key Guide ▲' : 'How to get YouTube API key? ▼'}
-            </button>
-          </div>
-
-          {/* Expandable Google Cloud Console Setup Guide */}
-          {showKeyGuide && (
-            <div style={{
-              background: 'rgba(15, 23, 42, 0.95)',
-              border: '1px solid var(--accent-cyan-dim)',
-              borderRadius: 10,
-              padding: '14px 18px',
-              textAlign: 'left',
-              fontSize: 12,
-              lineHeight: 1.6,
-              color: 'var(--text-secondary)',
-              marginTop: 4
-            }}>
-              <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>🌐</span> Steps to get YouTube Data API v3 Key from Google Cloud Console:
-              </div>
-              <ol style={{ margin: 0, paddingLeft: 18 }}>
-                <li>Go to <strong style={{ color: 'var(--accent-cyan)' }}>console.cloud.google.com</strong> and sign in.</li>
-                <li>Create a new project (e.g. <em>ClipMind-AI</em>) or choose an existing project.</li>
-                <li>Go to <strong>APIs & Services &gt; Library</strong>, search for <strong>YouTube Data API v3</strong> and click <strong>Enable</strong>.</li>
-                <li>Go to <strong>APIs & Services &gt; Credentials</strong> and click <strong>+ Create Credentials &gt; API key</strong>.</li>
-                <li>Copy your key (starts with <code style={{ color: 'var(--accent-cyan)' }}>AIzaSy...</code>) and paste it into the field above or in your backend <code style={{ color: 'var(--accent-cyan)' }}>.env</code>.</li>
-              </ol>
-            </div>
-          )}
         </div>
       </div>
 

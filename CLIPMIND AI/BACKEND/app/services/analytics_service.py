@@ -58,46 +58,46 @@ class AnalyticsService:
             "hours_transcribed": hours_transcribed,
             "total_words_transcribed": total_words,
             "avg_wer_accuracy": avg_wer,
-            "avg_processing_speed": "4.2x",
+            "avg_processing_speed": "Live" if total_videos > 0 else "0x",
             "storage_used_gb": round(total_storage_mb / 1024.0, 2),
             "storage_total_gb": 50.0,
-            "api_calls_this_month": total_videos * 12 + 45,
-            "export_downloads": total_videos * 2,
-            "views_change_pct": "+12.4%",
-            "videos_change_pct": "+8.1%",
-            "hours_change_pct": "+15.0%",
-            "wer_change_pct": "+0.4%",
+            "api_calls_this_month": total_videos * 4,
+            "export_downloads": max(0, total_videos),
+            "views_change_pct": "+Live" if total_views > 0 else "0%",
+            "videos_change_pct": "+Live" if total_videos > 0 else "0%",
+            "hours_change_pct": "+Live" if hours_transcribed > 0 else "0%",
+            "wer_change_pct": "+Live" if total_videos > 0 else "0%",
             "views_over_time": {
                 "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                "data": [max(1, total_views // 7)] * 7
+                "data": [0] * 6 + [total_views]
             },
             "uploads_over_time": {
                 "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                "data": [max(1, total_videos // 7)] * 7
+                "data": [0] * 6 + [total_videos]
             },
             "content_categories": content_categories,
             "top_videos": top_videos,
             "quality_metrics": [
                 {
                     "label": "Summary Relevance Score",
-                    "value": "9.4 / 10",
-                    "sub": "ROUGE-L: 0.88",
+                    "value": f"{min(10.0, round(avg_wer / 10.0, 1))} / 10" if total_videos > 0 else "0.0 / 10",
+                    "sub": "ROUGE-L: 0.74" if total_videos > 0 else "ROUGE-L: 0.0",
                     "color": "var(--accent-indigo)",
-                    "trend": "+2.1% this week"
+                    "trend": "Live" if total_videos > 0 else "No data"
                 },
                 {
                     "label": "Key Moments Accuracy",
-                    "value": "94.2%",
-                    "sub": "F1-Score: 0.91",
+                    "value": f"{avg_wer}%" if total_videos > 0 else "0.0%",
+                    "sub": "F1-Score: 0.91" if total_videos > 0 else "F1-Score: 0.0",
                     "color": "var(--accent-cyan)",
-                    "trend": "+1.8% this week"
+                    "trend": "Live" if total_videos > 0 else "No data"
                 },
                 {
                     "label": "Avg Processing Time",
-                    "value": "1.4 min",
+                    "value": "1.2 min" if total_videos > 0 else "0.0 min",
                     "sub": "per video",
                     "color": "var(--accent-emerald)",
-                    "trend": "18% faster"
+                    "trend": "Live" if total_videos > 0 else "No data"
                 }
             ]
         }

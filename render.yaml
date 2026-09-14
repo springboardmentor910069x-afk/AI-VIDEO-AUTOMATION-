@@ -1,0 +1,67 @@
+# ==============================================================================
+# ClipMind AI — Render Cloud Deployment Blueprint Specification
+# Docs: https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. ClipMind AI — Backend API Web Service
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: clipmind-backend
+    runtime: python
+    rootDir: CLIPMIND AI/BACKEND
+    buildCommand: bash build.sh
+    startCommand: python run.py
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 10080
+      - key: MONGODB_URL
+        sync: false # Set in Render Dashboard: mongodb+srv://<user>:<password>@cluster.mongodb.net/?retryWrites=true&w=majority
+      - key: MONGODB_DB_NAME
+        value: clipmind_db
+      - key: WHISPER_CLOUD_ENABLED
+        value: "true"
+      - key: GROQ_API_KEY
+        sync: false # Optional: Groq API key for cloud LLM acceleration
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: ANALYTICS_ZERO_BASELINE
+        value: "true"
+
+  # ----------------------------------------------------------------------------
+  # 2. ClipMind AI — Frontend Static Site (React / Vite)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: clipmind-frontend
+    runtime: static
+    rootDir: CLIPMIND AI/FRONTEND
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
+    region: oregon
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_BACKEND_URL
+        fromService:
+          type: web
+          name: clipmind-backend
+          property: url

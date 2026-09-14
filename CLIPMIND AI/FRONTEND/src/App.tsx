@@ -6,6 +6,7 @@ import UploadStudio from './components/UploadStudio'
 import VideoLibrary from './components/VideoLibrary'
 import VideoIntelligenceCenter from './components/VideoIntelligenceCenter'
 import LearnerStudyRoom from './components/LearnerStudyRoom'
+import LearnerDashboard from './components/LearnerDashboard'
 import AdminDashboard from './components/AdminDashboard'
 import AnalyticsDashboard from './components/AnalyticsDashboard'
 import EducatorEditor from './components/EducatorEditor'
@@ -77,7 +78,7 @@ function getActiveUserRole(): Role {
 
 function RoleDashboardIndex() {
   const activeRole = getActiveUserRole()
-  if (activeRole === 'Learner') return <LearnerStudyRoom />
+  if (activeRole === 'Learner') return <LearnerDashboard />
   if (activeRole === 'Educator') return <EducatorEditor />
   if (activeRole === 'Admin') return <AdminDashboard />
   return <VideoLibrary />
@@ -154,6 +155,16 @@ export default function App() {
               <Route path="settings" element={<SettingsPage />} />
 
               {/* Role specific primary routes inside DashboardShell */}
+              <Route path="learner" element={
+                <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
+                  <LearnerDashboard />
+                </RoleGuard>
+              } />
+              <Route path="learner/dashboard" element={
+                <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
+                  <LearnerDashboard />
+                </RoleGuard>
+              } />
               <Route path="learner/study" element={
                 <RoleGuard allowedRoles={['Learner', 'Admin', 'Creator', 'Educator']}>
                   <LearnerStudyRoom />

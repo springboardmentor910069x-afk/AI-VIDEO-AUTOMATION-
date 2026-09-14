@@ -24,6 +24,8 @@ export default function VideoIntelligenceCenter() {
   // API data states
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const videoContainerRef = useRef<HTMLDivElement | null>(null)
+  const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  const ytPlayerRef = useRef<any>(null)
   const [videoError, setVideoError] = useState(false)
   const [videoItem, setVideoItem] = useState<any>(null)
   const [transcript, setTranscript] = useState<Segment[]>([])
@@ -32,6 +34,23 @@ export default function VideoIntelligenceCenter() {
   const [evaluation, setEvaluation] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [totalSec, setTotalSec] = useState(2538)
+
+  const ytMatch = videoItem?.file_path?.match(/youtube:\/\/([a-zA-Z0-9_-]+)/)
+    || videoItem?.filename?.match(/youtube_([a-zA-Z0-9_-]+)\.mp4/)
+    || videoItem?.thumbnail_url?.match(/\/vi\/([a-zA-Z0-9_-]+)\//)
+  const ytId = ytMatch ? ytMatch[1] : null
+
+  // Helper to send postMessage commands to the YouTube iframe
+  const postYTCommand = useCallback((func: string, args: any[] = []) => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func, args }),
+          '*'
+        )
+      } catch {}
+    }
+  }, [])
 
   // Fetch video data on mount & auto-poll if processing
   useEffect(() => {
@@ -107,34 +126,125 @@ export default function VideoIntelligenceCenter() {
       }
     }
 
-
     // Poll every 3 seconds if status is processing
     pollInterval = setInterval(fetchVideoData, 3000)
     return () => { if (pollInterval) clearInterval(pollInterval) }
   }, [id])
 
+  // Initialize official YouTube IFrame API when ytId is available
   useEffect(() => {
-    if (playing) {
-      const multiplier = parseFloat(speed.replace('x', '')) || 1.0
-      const intervalMs = Math.max(100, Math.floor(1000 / multiplier))
-      intervalRef.current = setInterval(() => {
-        setCurrentTimeSec(prev => {
-          const next = prev + 1
-          if (next >= totalSec) { setPlaying(false); return totalSec }
-          // Check for key moments
-          const km = keyMoments.find((k: KeyMomentItem) => k.timeSeconds === next)
-          if (km) {
-            setShowToast({ text: km.title })
-            setTimeout(() => setShowToast(null), 3000)
-          }
-          return next
-        })
-      }, intervalMs)
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+    if (!ytId) return
+    let isMounted = true
+
+    const initPlayer = () => {
+      if ((window as any).YT && (window as any).YT.Player && iframeRef.current) {
+        try {
+          ytPlayerRef.current = new (window as any).YT.Player(iframeRef.current, {
+            events: {
+              onReady: (event: any) => {
+                if (!isMounted) return
+                const dur = event.target?.getDuration?.()
+                if (dur && dur > 0) setTotalSec(Math.floor(dur))
+                const rate = parseFloat(speed.replace('x', '')) || 1.0
+                event.target?.setPlaybackRate?.(rate)
+              },
+              onStateChange: (event: any) => {
+                if (!isMounted) return
+                if (event.data === 1) {
+                  setPlaying(true)
+                } else if (event.data === 2 || event.data === 0) {
+                  setPlaying(false)
+                }
+              }
+            }
+          })
+        } catch (err) {
+          console.log('YT Player init notice:', err)
+        }
+      }
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [playing, keyMoments, totalSec, speed])
+
+    if (!(window as any).YT) {
+      const tag = document.createElement('script')
+      tag.src = 'https://www.youtube.com/iframe_api'
+      const firstScriptTag = document.getElementsByTagName('script')[0]
+      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag)
+      const prevOnReady = (window as any).onYouTubeIframeAPIReady
+      ;(window as any).onYouTubeIframeAPIReady = () => {
+        if (prevOnReady) prevOnReady()
+        initPlayer()
+      }
+    } else {
+      initPlayer()
+    }
+
+    return () => {
+      isMounted = false
+      if (ytPlayerRef.current?.destroy) {
+        try { ytPlayerRef.current.destroy() } catch {}
+      }
+      ytPlayerRef.current = null
+    }
+  }, [ytId])
+
+  // Real-time message listener from YouTube iframe for continuous state & time synchronization
+  useEffect(() => {
+    if (!ytId) return
+    const handleMsg = (e: MessageEvent) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
+        if (!data) return
+        if (data.event === 'onStateChange') {
+          if (data.info === 1) setPlaying(true)
+          else if (data.info === 2 || data.info === 0) setPlaying(false)
+        } else if (data.event === 'infoDelivery' && data.info) {
+          if (typeof data.info.currentTime === 'number') {
+            setCurrentTimeSec(Math.floor(data.info.currentTime))
+          }
+          if (typeof data.info.duration === 'number' && data.info.duration > 0) {
+            setTotalSec(Math.floor(data.info.duration))
+          }
+          if (typeof data.info.playerState === 'number') {
+            setPlaying(data.info.playerState === 1)
+          }
+        }
+      } catch {}
+    }
+    window.addEventListener('message', handleMsg)
+    return () => window.removeEventListener('message', handleMsg)
+  }, [ytId])
+
+  // High-frequency polling (200ms) during playback for exact frame-accurate seekbar & transcript sync
+  useEffect(() => {
+    if (!ytId || !playing) return
+    const timer = setInterval(() => {
+      if (ytPlayerRef.current?.getCurrentTime) {
+        try {
+          const t = ytPlayerRef.current.getCurrentTime()
+          if (typeof t === 'number' && !isNaN(t)) {
+            setCurrentTimeSec(Math.floor(t))
+          }
+          const d = ytPlayerRef.current.getDuration?.()
+          if (typeof d === 'number' && d > 0 && !isNaN(d)) {
+            setTotalSec(Math.floor(d))
+          }
+        } catch {}
+      } else {
+        postYTCommand('getCurrentTime')
+      }
+    }, 200)
+    return () => clearInterval(timer)
+  }, [ytId, playing, postYTCommand])
+
+  // Trigger key moments notifications in real time
+  useEffect(() => {
+    const km = keyMoments.find((k: KeyMomentItem) => k.timeSeconds === currentTimeSec)
+    if (km) {
+      setShowToast({ text: km.title })
+      const timer = setTimeout(() => setShowToast(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [currentTimeSec, keyMoments])
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60)
@@ -143,19 +253,49 @@ export default function VideoIntelligenceCenter() {
   }
 
   const seekTo = useCallback((sec: number) => {
-    setCurrentTimeSec(sec)
-    if (videoRef.current) {
-      videoRef.current.currentTime = sec
+    const target = Math.max(0, Math.min(sec, totalSec))
+    setCurrentTimeSec(target)
+    if (ytId) {
+      if (ytPlayerRef.current?.seekTo) {
+        try { ytPlayerRef.current.seekTo(target, true) } catch {}
+      }
+      postYTCommand('seekTo', [target, true])
+      if (!playing) {
+        if (ytPlayerRef.current?.playVideo) {
+          try { ytPlayerRef.current.playVideo() } catch {}
+        }
+        postYTCommand('playVideo')
+        setPlaying(true)
+      }
+    } else if (videoRef.current) {
+      videoRef.current.currentTime = target
+      if (videoRef.current.paused) {
+        videoRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(true))
+      }
     }
-    const km = keyMoments.find((k: KeyMomentItem) => k.timeSeconds === sec)
+    const km = keyMoments.find((k: KeyMomentItem) => Math.abs(k.timeSeconds - target) <= 1)
     if (km) {
       setShowToast({ text: km.title })
       setTimeout(() => setShowToast(null), 3000)
     }
-  }, [keyMoments])
+  }, [ytId, totalSec, playing, keyMoments, postYTCommand])
 
   const togglePlay = () => {
-    if (videoRef.current) {
+    if (ytId) {
+      if (playing) {
+        if (ytPlayerRef.current?.pauseVideo) {
+          try { ytPlayerRef.current.pauseVideo() } catch {}
+        }
+        postYTCommand('pauseVideo')
+        setPlaying(false)
+      } else {
+        if (ytPlayerRef.current?.playVideo) {
+          try { ytPlayerRef.current.playVideo() } catch {}
+        }
+        postYTCommand('playVideo')
+        setPlaying(true)
+      }
+    } else if (videoRef.current) {
       if (!videoRef.current.paused) {
         videoRef.current.pause()
         setPlaying(false)
@@ -181,13 +321,18 @@ export default function VideoIntelligenceCenter() {
 
   const handleSpeedChange = (newSpeed: string) => {
     setSpeed(newSpeed)
-    if (videoRef.current) {
-      const rate = parseFloat(newSpeed.replace('x', '')) || 1.0
+    const rate = parseFloat(newSpeed.replace('x', '')) || 1.0
+    if (ytId) {
+      if (ytPlayerRef.current?.setPlaybackRate) {
+        try { ytPlayerRef.current.setPlaybackRate(rate) } catch {}
+      }
+      postYTCommand('setPlaybackRate', [rate])
+    } else if (videoRef.current) {
       videoRef.current.playbackRate = rate
     }
   }
 
-  const progressPct = (currentTimeSec / totalSec) * 100
+  const progressPct = totalSec > 0 ? (currentTimeSec / totalSec) * 100 : 0
   
   // Convert transcript segments to display format
   const displayTranscript = transcript.map(seg => ({
@@ -214,17 +359,12 @@ export default function VideoIntelligenceCenter() {
     { id: 'export', label: 'Export', icon: '📤' },
   ]
 
-  const ytMatch = videoItem?.file_path?.match(/youtube:\/\/([a-zA-Z0-9_-]+)/)
-    || videoItem?.filename?.match(/youtube_([a-zA-Z0-9_-]+)\.mp4/)
-    || videoItem?.thumbnail_url?.match(/\/vi\/([a-zA-Z0-9_-]+)\//)
-  const ytId = ytMatch ? ytMatch[1] : null
-
   return (
     <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden', padding: 20, gap: 20, background: 'var(--bg-base)' }}>
       {/* LEFT PANEL — 55% */}
       <div style={{ flex: '0 0 55%', display: 'flex', flexDirection: 'column', gap: 16, overflow: 'hidden' }}>
         {/* Video player card */}
-        <div className="glass-card" style={{ overflow: 'hidden', flexShrink: 0 }}>
+        <div ref={videoContainerRef} className="glass-card" style={{ overflow: 'hidden', flexShrink: 0 }}>
           {/* Video area */}
           <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000', cursor: 'pointer' }}
             onClick={ytId ? undefined : togglePlay}>
@@ -232,10 +372,13 @@ export default function VideoIntelligenceCenter() {
             {/* Real HTML5 Video element or YouTube Stream Player */}
             {ytId ? (
               <iframe
-                src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+                id="clipmind-yt-player"
+                ref={iframeRef}
+                src={`https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}&widgetid=1`}
                 title={videoItem?.title || 'YouTube Stream'}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                onLoad={() => postYTCommand('listening')}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
               />
             ) : (videoItem?.id || videoItem?.filename) ? (
