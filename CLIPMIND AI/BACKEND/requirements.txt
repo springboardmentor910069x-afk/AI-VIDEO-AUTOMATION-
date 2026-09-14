@@ -5,8 +5,8 @@ python-multipart>=0.0.12
 
 # Database - MongoDB (Primary & Cloud Atlas)
 motor>=3.5.0
-pymongo>=4.8.0
-beanie>=1.26.0
+pymongo>=4.8.0,<4.14.0
+beanie>=1.26.0,<2.2.0
 dnspython>=2.4.0
 
 # Database - PostgreSQL (Optional backup)

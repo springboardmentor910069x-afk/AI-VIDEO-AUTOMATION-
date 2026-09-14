@@ -44,6 +44,10 @@ def init_postgres():
 # MongoDB client
 mongodb_client: AsyncIOMotorClient = None
 
+# Compatibility patch: Prevent 'MotorDatabase object is not callable' when Beanie checks for client.append_metadata
+if not hasattr(AsyncIOMotorClient, "append_metadata") or not callable(getattr(AsyncIOMotorClient, "append_metadata", None)):
+    setattr(AsyncIOMotorClient, "append_metadata", lambda self, *args, **kwargs: None)
+
 async def init_mongodb():
     """Initialize MongoDB connection and Beanie ODM for document payloads"""
     global mongodb_client
