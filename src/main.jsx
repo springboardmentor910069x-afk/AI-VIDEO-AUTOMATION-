@@ -107,9 +107,34 @@ function App() {
     try {
       const data = await request('/videos');
       setVideos(data);
+      if (selectedVideo) {
+        const updated = data.find(v => v.id === selectedVideo.id);
+        if (updated && (updated.status !== selectedVideo.status || updated.duration_seconds !== selectedVideo.duration_seconds || updated.thumbnail_name !== selectedVideo.thumbnail_name)) {
+          setSelectedVideo(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
+        }
+      }
     } catch (e) {
       setNotice(e.message);
     }
+  }
+
+  // Silent background refresh for Video Studio (no busy spinner or disruptive notices)
+  async function refreshStudioDataSilent(videoId) {
+    if (!videoId || !token) return;
+    try {
+      const [tr, sum, km, kw, ins] = await Promise.all([
+        request(`/videos/${videoId}/transcript`).catch(() => null),
+        request(`/videos/${videoId}/summaries`).catch(() => []),
+        request(`/videos/${videoId}/key-moments`).catch(() => []),
+        request(`/videos/${videoId}/keywords`).catch(() => []),
+        request(`/videos/${videoId}/insights`).catch(() => null)
+      ]);
+      if (tr) setTranscript(tr);
+      if (sum && sum.length > 0) setSummaries(sum);
+      if (km && km.length > 0) setKeyMoments(km);
+      if (kw && kw.length > 0) setKeywords(kw);
+      if (ins) setInsights(ins);
+    } catch (_) {}
   }
 
   // Load Bookmarks
@@ -157,6 +182,27 @@ function App() {
   useEffect(() => {
     loadTabAnalytics();
   }, [currentTab, token]);
+
+  // Auto-poll when any video or transcript job is in 'processing' state (removes need for manual browser refresh)
+  useEffect(() => {
+    if (!token) return;
+
+    const hasProcessingVideos = videos.some(v => v.status === 'processing');
+    const isStudioProcessing = selectedVideo && (selectedVideo.status === 'processing' || transcript?.status === 'processing');
+
+    if (hasProcessingVideos || isStudioProcessing) {
+      const interval = setInterval(() => {
+        if (hasProcessingVideos || currentTab === 'workspace') {
+          loadVideos();
+        }
+        if (selectedVideo && isStudioProcessing) {
+          refreshStudioDataSilent(selectedVideo.id);
+        }
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [token, currentTab, videos, selectedVideo, transcript]);
 
   // Auth Handler
   async function handleAuth(e) {
@@ -263,7 +309,7 @@ function App() {
     try {
       await request(`/videos/${selectedVideo.id}/transcript`, { method: 'POST' });
       setTranscript({ status: 'processing', content: '', segments: [] });
-      setNotice('Whisper transcription started in background. Refresh in a moment.');
+      setNotice('Whisper transcription started in background. It will automatically update when ready.');
     } catch (e) {
       setNotice(e.message);
     } finally {
