@@ -1,6 +1,8 @@
+from __future__ import annotations
 import os
 import json
 import html
+from typing import Any, Optional, List, Dict
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
