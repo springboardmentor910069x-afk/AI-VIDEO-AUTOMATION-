@@ -75,7 +75,7 @@ class VideoService:
             if yt_id:
                 effective_yt_key = (youtube_api_key or getattr(settings, "YOUTUBE_API_KEY", "")).strip()
                 yt_res = video_downloader.process_youtube_url(url_clean, api_key=effective_yt_key)
-                if yt_res.get("success"):
+                if yt_res.get("success") and yt_res.get("has_transcript") and yt_res.get("segments"):
                     final_title = title or yt_res.get("title") or f"YouTube Video ({yt_id})"
                     duration = yt_res.get("duration_sec", 180)
                     cover_thumb = yt_res.get("thumbnail_url")
@@ -83,8 +83,26 @@ class VideoService:
                     file_path = f"youtube://{yt_id}"
                     file_size_mb = 5.0
                     pre_segments = yt_res.get("segments")
+                else:
+                    # Captions not available directly from YouTube: download audio stream via yt-dlp so Whisper transcribes the ENTIRE video!
+                    dl_res = video_downloader.extract_info_and_download(url_clean)
+                    if dl_res.get("success") and dl_res.get("file_path"):
+                        saved_filename = dl_res["filename"]
+                        file_path = dl_res["file_path"]
+                        file_size_mb = dl_res.get("file_size_mb", 5.0)
+                        final_title = title or dl_res.get("title") or yt_res.get("title") or f"YouTube Video ({yt_id})"
+                        duration = dl_res.get("duration_sec") or yt_res.get("duration_sec", 180)
+                        cover_thumb = dl_res.get("thumbnail_url") or yt_res.get("thumbnail_url")
+                    else:
+                        # Resilient fallback
+                        final_title = title or yt_res.get("title") or f"YouTube Video ({yt_id})"
+                        duration = yt_res.get("duration_sec", 180)
+                        cover_thumb = yt_res.get("thumbnail_url")
+                        saved_filename = f"youtube_{yt_id}.mp4"
+                        file_path = f"youtube://{yt_id}"
+                        file_size_mb = 5.0
 
-            if not file_path.startswith("youtube://"):
+            if not file_path.startswith("youtube://") and not os.path.exists(file_path):
                 dl_res = video_downloader.extract_info_and_download(url_clean)
                 if dl_res.get("success") and dl_res.get("file_path"):
                     saved_filename = dl_res["filename"]

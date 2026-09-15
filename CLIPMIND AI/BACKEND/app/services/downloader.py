@@ -186,18 +186,75 @@ class VideoDownloader:
             except Exception as api_err:
                 print(f"[YouTube API Notice] Data API call failed or quota exceeded ({api_err}), trying oEmbed fallback.")
 
-        # Tier 2: Public YouTube oEmbed fallback (zero API key needed)
+        # Tier 2: Fast yt-dlp metadata probe (zero API key needed, extracts real video duration & title)
+        try:
+            import yt_dlp
+            ydl_opts = {
+                'skip_download': True,
+                'quiet': True,
+                'no_warnings': True,
+                'socket_timeout': 10
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+                if info:
+                    real_dur = int(info.get("duration") or 0)
+                    return {
+                        "title": info.get("title", f"YouTube Video ({video_id})"),
+                        "description": (info.get("description") or "")[:500],
+                        "channel_title": info.get("uploader") or "YouTube Creator",
+                        "thumbnail_url": info.get("thumbnail") or f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg",
+                        "duration_sec": real_dur if real_dur > 0 else 180,
+                        "tags": (info.get("tags") or [])[:6],
+                        "source": "yt_dlp_metadata"
+                    }
+        except Exception as ytdl_err:
+            pass
+
+        # Tier 2.5: Fast direct YouTube HTML probe (zero API key needed, extracts real video duration)
+        extracted_title = None
+        extracted_dur = None
+        try:
+            watch_url = f"https://www.youtube.com/watch?v={video_id}"
+            html_req = urllib.request.Request(
+                watch_url,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+            )
+            with urllib.request.urlopen(html_req, timeout=6) as resp:
+                html_body = resp.read().decode("utf-8", errors="ignore")
+
+            m_len = re.search(r'"lengthSeconds":"(\d+)"', html_body)
+            if m_len:
+                extracted_dur = int(m_len.group(1))
+            else:
+                m_approx = re.search(r'"approxDurationMs":"(\d+)"', html_body)
+                if m_approx:
+                    extracted_dur = int(int(m_approx.group(1)) / 1000)
+                else:
+                    m_iso = re.search(r'itemprop="duration" content="([^"]+)"', html_body)
+                    if m_iso:
+                        extracted_dur = cls.parse_iso8601_duration(m_iso.group(1))
+
+            m_title = re.search(r'<title>([^<]+)</title>', html_body)
+            if m_title:
+                raw_t = m_title.group(1).replace(" - YouTube", "").strip()
+                if raw_t:
+                    extracted_title = raw_t
+        except Exception:
+            pass
+
+        # Tier 3: Public YouTube oEmbed fallback (zero API key needed)
         try:
             oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
             req = urllib.request.Request(oembed_url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 return {
-                    "title": data.get("title", f"YouTube Video ({video_id})"),
+                    "title": data.get("title") or extracted_title or f"YouTube Video ({video_id})",
                     "description": "",
                     "channel_title": data.get("author_name", ""),
                     "thumbnail_url": data.get("thumbnail_url") or f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg",
-                    "duration_sec": 180,
+                    "duration_sec": extracted_dur or 180,
                     "tags": [],
                     "source": "youtube_oembed"
                 }
@@ -205,11 +262,11 @@ class VideoDownloader:
             pass
 
         return {
-            "title": f"YouTube Video ({video_id})",
+            "title": extracted_title or f"YouTube Video ({video_id})",
             "description": "",
             "channel_title": "YouTube Creator",
             "thumbnail_url": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg",
-            "duration_sec": 180,
+            "duration_sec": extracted_dur or 180,
             "tags": [],
             "source": "fallback"
         }
@@ -235,50 +292,62 @@ class VideoDownloader:
             api = YouTubeTranscriptApi()
 
             # Attempt listing transcripts to find optimal English or translatable track
-            try:
-                tl = api.list(video_id)
-                preferred_langs = ['en', 'en-US', 'en-GB', 'en-CA', 'en-IN', 'en-AU']
-
-                # 1. Manual English
+            list_fn = getattr(api, "list", None) or getattr(api, "list_transcripts", None) or getattr(YouTubeTranscriptApi, "list_transcripts", None)
+            if list_fn:
                 try:
-                    t = tl.find_manually_created_transcript(preferred_langs)
-                    raw_transcript = t.fetch().to_raw_data()
-                except Exception:
-                    pass
+                    tl = list_fn(video_id)
+                    preferred_langs = ['en', 'en-US', 'en-GB', 'en-CA', 'en-IN', 'en-AU']
 
-                # 2. Generated English
-                if not raw_transcript:
+                    # Helper to convert transcript to raw dicts
+                    def _fetch_to_raw(transcript_obj):
+                        f = transcript_obj.fetch()
+                        return f.to_raw_data() if hasattr(f, "to_raw_data") else f
+
+                    # 1. Manual English
                     try:
-                        t = tl.find_generated_transcript(preferred_langs)
-                        raw_transcript = t.fetch().to_raw_data()
+                        t = tl.find_manually_created_transcript(preferred_langs)
+                        raw_transcript = _fetch_to_raw(t)
                     except Exception:
                         pass
 
-                # 3. Any English transcript
-                if not raw_transcript:
+                    # 2. Generated English
+                    if not raw_transcript:
+                        try:
+                            t = tl.find_generated_transcript(preferred_langs)
+                            raw_transcript = _fetch_to_raw(t)
+                        except Exception:
+                            pass
+
+                    # 3. Any English transcript
+                    if not raw_transcript:
+                        try:
+                            t = tl.find_transcript(preferred_langs)
+                            raw_transcript = _fetch_to_raw(t)
+                        except Exception:
+                            pass
+
+                    # 4. Any language translated to English
+                    if not raw_transcript:
+                        for t in tl:
+                            if getattr(t, 'is_translatable', False):
+                                try:
+                                    raw_transcript = _fetch_to_raw(t.translate('en'))
+                                    if raw_transcript:
+                                        break
+                                except Exception:
+                                    pass
+                except Exception as list_err:
+                    pass
+
+            # Direct fetch fallback
+            if not raw_transcript:
+                fetch_fn = getattr(api, "fetch", None) or getattr(YouTubeTranscriptApi, "get_transcript", None)
+                if fetch_fn:
                     try:
-                        t = tl.find_transcript(preferred_langs)
-                        raw_transcript = t.fetch().to_raw_data()
+                        fetched = fetch_fn(video_id)
+                        raw_transcript = fetched.to_raw_data() if hasattr(fetched, "to_raw_data") else fetched
                     except Exception:
                         pass
-
-                # 4. Any language translated to English
-                if not raw_transcript:
-                    for t in tl:
-                        if getattr(t, 'is_translatable', False):
-                            try:
-                                raw_transcript = t.translate('en').fetch().to_raw_data()
-                                if raw_transcript:
-                                    break
-                            except Exception:
-                                pass
-            except Exception as list_err:
-                # Direct fetch fallback
-                try:
-                    fetched = api.fetch(video_id)
-                    raw_transcript = fetched.to_raw_data()
-                except Exception:
-                    pass
         except Exception as e:
             print(f"[YouTube Transcript Notice] YouTubeTranscriptApi failed: {e}")
 

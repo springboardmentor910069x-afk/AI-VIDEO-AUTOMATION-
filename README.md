@@ -76,19 +76,19 @@
 
 ---
 
-## 3. Verified Demo Accounts & Role Matrix
+## 3. Database Authentication & Role-Based Access Control (RBAC)
 
-The platform implements strict Role-Based Access Control (RBAC). All four roles are pre-configured:
+The platform implements strict Role-Based Access Control (RBAC) powered by database-backed password hashing (`bcrypt`) and JWT access tokens. Users register directly with their selected role or sign in using verified credentials:
 
-| Role | Email | Password | Access Rights |
-| :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@clipmind.ai` | `Admin@123456` | Full system control, platform analytics, user role elevation, audit logs, storage cleanup. |
-| **Educator** | `educator@clipmind.ai` | `Admin@123456` | Course creation, 5-tab curriculum editor, chapter segmentation, custom quiz & flashcard authoring. |
-| **Learner** | `student@clipmind.ai` | `Admin@123456` | Interactive Study Room, AI tutor chat, 3D flashcards with persistent mastery, quizzes, study streaks. |
-| **Content Creator**| `creator@clipmind.ai`| `Admin@123456` | Video upload studio, AI summary generation, key moments extraction, multi-format export. |
+| Role | Access Rights | Registration Mode |
+| :--- | :--- | :--- |
+| **Learner** | Interactive Study Room, AI tutor chat, 3D flashcards with persistent mastery tracking, automated self-quizzes, and study streaks. | Immediate registration via `/register` or 1-Click Google OAuth (choose "Learner"). |
+| **Content Creator** | Full video upload studio, YouTube URL ingestion, high-speed multi-stage AI summarizer, and multi-format exports (PDF, DOCX, SRT). | Immediate registration via `/register` or 1-Click Google OAuth (choose "Creator"). |
+| **Educator** | 5-tab curriculum editor, line-by-line transcript editing, chapter segmentation, quiz & flashcard authoring, and student engagement reports. | Immediate registration via `/register` or 1-Click Google OAuth (choose "Educator"). |
+| **Administrator** | System control, cross-platform analytics, user role elevation, audit log inspection, and storage management. | Secured administrative provisioning. |
 
-> [!IMPORTANT]
-> **Admin Account Security**: Admin accounts cannot be created via public registration. Provisioning is restricted to existing Administrators or backend operators.
+> [!NOTE]
+> All user accounts and video data are securely authenticated against the production MongoDB Atlas database (`clipmind_db`). Hardcoded backdoors and demo bypasses have been completely eradicated for production compliance.
 
 ---
 

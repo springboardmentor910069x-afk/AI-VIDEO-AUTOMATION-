@@ -256,8 +256,14 @@ export default function VideoIntelligenceCenter() {
   }, [currentTimeSec, keyMoments])
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-    const s = sec % 60
+    if (!sec || isNaN(sec) || sec < 0) return '00:00'
+    const totalSec = Math.floor(sec)
+    const h = Math.floor(totalSec / 3600)
+    const m = Math.floor((totalSec % 3600) / 60)
+    const s = totalSec % 60
+    if (h > 0) {
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    }
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
@@ -836,7 +842,19 @@ function SummariesTab({
                   }}
                 >
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: 'var(--accent-cyan)', fontFamily: "'JetBrains Mono', monospace" }}>{sec.time || '00:00'}</span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const tStr = (sec.timeRange || sec.time || '').split('-')[0].trim()
+                        const parts = tStr.split(':').map(Number)
+                        const s = parts.length === 3 ? parts[0]*3600 + parts[1]*60 + parts[2] : (parts.length === 2 ? parts[0]*60 + parts[1] : 0)
+                        seekTo(s)
+                      }}
+                      style={{ color: 'var(--accent-cyan)', fontFamily: "'JetBrains Mono', monospace", cursor: 'pointer', background: 'rgba(6,182,212,0.1)', padding: '2px 6px', borderRadius: 4 }}
+                      title="Click to seek to this chapter"
+                    >
+                      {sec.timeRange || sec.time || '00:00'}
+                    </span>
                     {sec.title}
                   </span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
@@ -845,10 +863,10 @@ function SummariesTab({
                 </button>
                 {isOpen && (
                   <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-subtle)', marginTop: 4 }}>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 10, marginTop: 10 }}>{sec.summary}</p>
-                    {sec.points && (
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 10, marginTop: 10 }}>{sec.summary || sec.content}</p>
+                    {(sec.bulletPoints || sec.points) && (
                       <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {sec.points.map((pt: string, pi: number) => (
+                        {(sec.bulletPoints || sec.points).map((pt: string, pi: number) => (
                           <li key={pi} style={{ lineHeight: 1.5 }}>{pt}</li>
                         ))}
                       </ul>

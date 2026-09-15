@@ -77,7 +77,7 @@ def validate_and_probe_video(file_path: str, filename: str) -> Dict[str, Any]:
             "file_path": file_path or "",
             "filename": filename or "web_stream",
             "file_size_mb": 0.0,
-            "duration_sec": 180,
+            "duration_sec": None,
             "resolution": "1920x1080",
             "codec": "stream",
             "is_valid": True
@@ -174,7 +174,7 @@ def process_video_media(video_id: str, file_path: str) -> Dict[str, Any]:
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 3: Transcription (Whisper ASR / Pre-Extracted Captions)
 # ─────────────────────────────────────────────────────────────────────────────
-async def transcribe_video_audio(video_id: str, audio_path: str, video_title: str) -> Dict[str, Any]:
+async def transcribe_video_audio(video_id: str, audio_path: str, video_title: str, duration_sec: int = 180) -> Dict[str, Any]:
     # Check if a pre-extracted transcript already exists in database (e.g. from YouTube API / Captions)
     existing_ts = await Transcript.find_one({"video_id": video_id})
     if existing_ts and existing_ts.segments and len(existing_ts.segments) > 0:
@@ -188,21 +188,21 @@ async def transcribe_video_audio(video_id: str, audio_path: str, video_title: st
             "language": existing_ts.language or "en"
         }
 
-    # Execute transcription off the event loop
-    stt_result = await asyncio.to_thread(stt_engine.transcribe, audio_path, video_title)
+    # Execute transcription off the event loop, forwarding duration_sec
+    stt_result = await asyncio.to_thread(stt_engine.transcribe, audio_path, video_title, None, duration_sec)
     
     if not existing_ts:
         transcript = Transcript(
             video_id=video_id,
             language=stt_result.get("language", "en"),
-            duration_sec=stt_result.get("duration_sec", 0),
+            duration_sec=stt_result.get("duration_sec", duration_sec),
             word_count=stt_result.get("word_count", 0),
             segments=stt_result.get("segments", [])
         )
         await transcript.insert()
     else:
         existing_ts.language = stt_result.get("language", "en")
-        existing_ts.duration_sec = stt_result.get("duration_sec", 0)
+        existing_ts.duration_sec = stt_result.get("duration_sec", duration_sec)
         existing_ts.word_count = stt_result.get("word_count", 0)
         existing_ts.segments = stt_result.get("segments", [])
         existing_ts.updated_at = datetime.now(timezone.utc)
@@ -280,7 +280,7 @@ async def detect_video_key_moments(
 
     segments = stt_data.get("segments", [])
     total_segments = len(segments)
-    num_clusters = max(3, min(6, math.ceil(total_segments / 3))) if total_segments else 2
+    num_clusters = max(3, min(8, math.ceil(total_segments / 4))) if total_segments else 3
     cluster_size = max(1, math.ceil(total_segments / num_clusters)) if total_segments else 1
 
     stop_words = {"the", "a", "an", "and", "or", "but", "is", "are", "was", "were", "this", "that", "to", "of", "in", "for", "on", "with", "as", "at", "by", "from", "it", "we", "you", "they", "i", "be", "have", "has", "had", "do", "does", "did"}
@@ -289,7 +289,7 @@ async def detect_video_key_moments(
     saved_moments = []
     for i in range(num_clusters):
         start_idx = i * cluster_size
-        end_idx = min((i + 1) * cluster_size, total_segments) if total_segments else 0
+        end_idx = total_segments if i == num_clusters - 1 else min((i + 1) * cluster_size, total_segments)
         cluster_segs = segments[start_idx:end_idx] if total_segments else []
         cluster_text = " ".join([s.get("text", "") for s in cluster_segs])
 
@@ -536,7 +536,9 @@ class PipelineOrchestrator:
         try:
             # Stage 1: Fast Validation & Probing
             stage1_meta = await asyncio.to_thread(validate_and_probe_video, video.file_path, video.filename)
-            video.duration_sec = stage1_meta.get("duration_sec", 180)
+            probed_dur = stage1_meta.get("duration_sec")
+            if probed_dur and probed_dur > 0:
+                video.duration_sec = probed_dur
             video.file_size_mb = stage1_meta.get("file_size_mb", video.file_size_mb)
             await self.broadcast_status(video_id, video, "stage1_upload", "Stage 1 completed: Metadata validated.", 15.0, t_start)
 
@@ -550,7 +552,19 @@ class PipelineOrchestrator:
             await self.broadcast_status(video_id, video, "stage2_processing", "Stage 2 completed: Media processed & keyframes extracted.", 35.0, t_start)
 
             # Stage 3: High-Speed Transcription (Whisper ASR)
-            stt_result = await transcribe_video_audio(video_id=video_id, audio_path=audio_path, video_title=video.title)
+            stt_result = await transcribe_video_audio(
+                video_id=video_id,
+                audio_path=audio_path,
+                video_title=video.title,
+                duration_sec=video.duration_sec or 180
+            )
+            # Ensure video duration matches transcribed segments if they are longer
+            if stt_result.get("duration_sec") and int(stt_result["duration_sec"]) > (video.duration_sec or 0):
+                video.duration_sec = int(stt_result["duration_sec"])
+            elif stt_result.get("segments") and len(stt_result["segments"]) > 0:
+                last_end = int(stt_result["segments"][-1].get("end", 0))
+                if last_end > (video.duration_sec or 0):
+                    video.duration_sec = last_end
             await self.broadcast_status(video_id, video, "stage3_transcription", "Stage 3 completed: High-speed transcription finished.", 65.0, t_start)
 
             # Stages 4 & 5: Concurrent Summarization & Key Moments Detection

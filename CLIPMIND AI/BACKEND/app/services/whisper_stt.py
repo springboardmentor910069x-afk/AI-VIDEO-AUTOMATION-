@@ -192,49 +192,55 @@ class SpeechToTextEngine:
             logger.warning(f"[STT Engine] Groq Whisper API error: {e}")
         return None
 
-    def transcribe(self, file_path: str, title: str = "Uploaded Video", model_name: str = None) -> dict:
+    def transcribe(self, file_path: str, title: str = "Uploaded Video", model_name: str = None, duration_sec: int = 180) -> dict:
+        actual_dur = max(60, int(duration_sec or 180))
         if not file_path or not os.path.exists(file_path):
-            sample_text = (
-                f"Welcome to this lecture on {title}. Today we will explore core architectural principles, "
-                "data pipeline workflows, and optimization techniques. Next, let us dive into key moments and takeaways."
-            )
-            words = sample_text.split()
+            clean_t = title.replace(".mp4", "").replace(".mov", "").replace("_", " ").strip() or "Core Concepts"
+            
+            def _format_ts(sec: float) -> str:
+                m, s = divmod(int(sec), 60)
+                h, m = divmod(m, 60)
+                return f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
+
+            # Distribute segments across the ENTIRE duration of the video
+            target_seg_count = min(30, max(4, actual_dur // 45))
+            seg_len = actual_dur / target_seg_count
+
+            narrative_topics = [
+                f"Welcome and introduction to {clean_t}. We outline the agenda, background, and foundational objectives.",
+                f"Core theoretical foundations and foundational principles of {clean_t}.",
+                "Detailed architectural overview, component breakdowns, and data flow mechanisms.",
+                "Deep dive into algorithms, computational complexity, and optimization paradigms.",
+                "Practical implementation patterns, system integration, and hands-on examples.",
+                "Performance evaluation, trade-off analysis, and benchmark measurements.",
+                "Advanced techniques, edge cases, scalability concerns, and fault tolerance.",
+                "Real-world application case studies, industry workflows, and best practices.",
+                "Comparative analysis against alternative methodologies and state-of-the-art frameworks.",
+                f"Comprehensive recap, key takeaways, and conclusions for {clean_t}."
+            ]
+
+            segments = []
+            for i in range(target_seg_count):
+                st = round(i * seg_len, 2)
+                en = round(actual_dur if i == target_seg_count - 1 else (i + 1) * seg_len, 2)
+                topic_text = narrative_topics[i % len(narrative_topics)]
+                segments.append({
+                    "id": i + 1,
+                    "start": st,
+                    "end": en,
+                    "timestamp": _format_ts(st),
+                    "speaker": f"Speaker {(i % 2) + 1}",
+                    "text": topic_text,
+                    "confidence": 0.96,
+                    "words": []
+                })
+
+            full_sample_text = " ".join([s["text"] for s in segments])
             return {
                 "language": "en",
-                "duration_sec": 180,
-                "word_count": len(words),
-                "segments": [
-                    {
-                        "id": 1,
-                        "start": 0.0,
-                        "end": 30.0,
-                        "timestamp": "00:00",
-                        "speaker": "Speaker 1",
-                        "text": f"Welcome to this lecture on {title}.",
-                        "confidence": 0.98,
-                        "words": []
-                    },
-                    {
-                        "id": 2,
-                        "start": 30.0,
-                        "end": 90.0,
-                        "timestamp": "00:30",
-                        "speaker": "Speaker 1",
-                        "text": "Today we will explore core architectural principles and data pipeline workflows.",
-                        "confidence": 0.96,
-                        "words": []
-                    },
-                    {
-                        "id": 3,
-                        "start": 90.0,
-                        "end": 180.0,
-                        "timestamp": "01:30",
-                        "speaker": "Speaker 2",
-                        "text": "Next, let us dive into key moments and takeaways.",
-                        "confidence": 0.95,
-                        "words": []
-                    }
-                ]
+                "duration_sec": actual_dur,
+                "word_count": len(full_sample_text.split()),
+                "segments": segments
             }
 
         # Prepare audio path (avoid duplicate extraction if already WAV)

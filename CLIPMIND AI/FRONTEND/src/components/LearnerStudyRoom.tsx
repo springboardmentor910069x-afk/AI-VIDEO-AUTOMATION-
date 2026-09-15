@@ -533,8 +533,14 @@ export default function LearnerStudyRoom() {
   }
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-    const s = sec % 60
+    if (!sec || isNaN(sec) || sec < 0) return '00:00'
+    const totalSec = Math.floor(sec)
+    const h = Math.floor(totalSec / 3600)
+    const m = Math.floor((totalSec % 3600) / 60)
+    const s = totalSec % 60
+    if (h > 0) {
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    }
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 

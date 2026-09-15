@@ -70,8 +70,8 @@ class NLPSummarizer:
                 summarizer = self._get_pipeline()
                 if summarizer is not None:
                     try:
-                        input_text = full_text[:2000]
-                        summary_out = summarizer(input_text, max_length=120, min_length=30, do_sample=False)
+                        input_text = full_text[:8000]
+                        summary_out = summarizer(input_text, max_length=150, min_length=40, do_sample=False)
                         tldr = summary_out[0].get("summary_text") or summary_out[0].get("generated_text", "")
                     except Exception as e:
                         logger.debug(f"[NLP Summarizer] Transformer fallback notice: {e}")
@@ -80,28 +80,42 @@ class NLPSummarizer:
             if not tldr:
                 sentences = [s.strip() for s in re.split(r'[.!?]+', full_text) if len(s.strip()) > 10]
                 if sentences:
-                    tldr = ". ".join(sentences[:3]) + "."
+                    tldr = ". ".join(sentences[:4]) + "."
                 else:
-                    tldr = full_text[:250] + ("..." if len(full_text) > 250 else "")
+                    tldr = full_text[:350] + ("..." if len(full_text) > 350 else "")
 
-            # Build structured chapter sections from segments
+            # Build structured chapter sections from segments spanning full timeline
             sections = []
-            num_sec = min(5, max(1, len(segments) // 3)) if segments else 1
+            dur_sec = int(transcript_data.get("duration_sec") or (segments[-1].get("end", 180) if segments else 180))
+
+            if dur_sec >= 900:     # 15+ minutes
+                num_sec = min(8, max(5, len(segments) // 15)) if segments else 6
+            elif dur_sec >= 300:   # 5+ minutes
+                num_sec = min(6, max(4, len(segments) // 10)) if segments else 4
+            else:
+                num_sec = min(4, max(2, len(segments) // 3)) if segments else 2
+
             step = max(1, len(segments) // num_sec) if segments else 1
 
             for idx in range(num_sec):
                 start_i = idx * step
-                end_i = min((idx + 1) * step, len(segments))
+                end_i = len(segments) if idx == num_sec - 1 else min((idx + 1) * step, len(segments))
                 sec_segs = segments[start_i:end_i]
                 if not sec_segs:
                     continue
 
-                first_ts = sec_segs[0].get("timestamp", "00:00")
-                last_ts = sec_segs[-1].get("timestamp", "00:00")
+                def _format_sec(s_val: float) -> str:
+                    m_val, s_rem = divmod(int(s_val), 60)
+                    h_val, m_val = divmod(m_val, 60)
+                    return f"{h_val:02d}:{m_val:02d}:{s_rem:02d}" if h_val > 0 else f"{m_val:02d}:{s_rem:02d}"
+
+                first_ts = sec_segs[0].get("timestamp") or _format_sec(sec_segs[0].get("start", 0.0))
+                end_val = sec_segs[-1].get("end")
+                last_ts = _format_sec(end_val) if end_val is not None else sec_segs[-1].get("timestamp", "00:00")
                 sec_text = " ".join([s.get("text", "") for s in sec_segs])
                 sentences = [s.strip() for s in re.split(r'[.!?]+', sec_text) if len(s.strip()) > 10]
 
-                bullets = sentences[:3] if len(sentences) >= 3 else (sentences if sentences else [sec_text[:120]])
+                bullets = sentences[:3] if len(sentences) >= 3 else (sentences if sentences else [sec_text[:140]])
                 sec_words = [
                     w.strip(".,!?:;\"'()").capitalize()
                     for w in sec_text.split()
@@ -115,21 +129,30 @@ class NLPSummarizer:
                     "title": section_title,
                     "heading": section_title,
                     "timeRange": f"{first_ts} - {last_ts}",
-                    "summary": sec_text[:220] + ("..." if len(sec_text) > 220 else ""),
-                    "content": sec_text[:220] + ("..." if len(sec_text) > 220 else ""),
+                    "summary": sec_text[:280] + ("..." if len(sec_text) > 280 else ""),
+                    "content": sec_text[:280] + ("..." if len(sec_text) > 280 else ""),
                     "bulletPoints": bullets,
                     "keyEquations": []
                 })
 
             if not key_takeaways_llm:
                 takeaway_candidates = []
-                for s in segments:
-                    txt = s.get("text", "").strip()
-                    if len(txt) > 20 and txt not in takeaway_candidates:
-                        takeaway_candidates.append(txt)
-                    if len(takeaway_candidates) >= 3:
-                        break
-                key_takeaways = takeaway_candidates or [tldr]
+                # Pick candidates evenly across the timeline (beginning, middle, end)
+                sample_indices = [
+                    0,
+                    len(segments) // 4,
+                    len(segments) // 2,
+                    (len(segments) * 3) // 4,
+                    max(0, len(segments) - 1)
+                ] if len(segments) >= 5 else list(range(len(segments)))
+
+                for i in sample_indices:
+                    if i < len(segments):
+                        txt = segments[i].get("text", "").strip()
+                        if len(txt) > 20 and txt not in takeaway_candidates:
+                            takeaway_candidates.append(txt)
+
+                key_takeaways = takeaway_candidates[:4] or [tldr]
             else:
                 key_takeaways = key_takeaways_llm
 

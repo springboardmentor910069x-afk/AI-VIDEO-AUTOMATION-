@@ -109,15 +109,15 @@ class LLMService:
 
     def summarize_transcript(self, text: str, depth: str = "Detailed Breakdown") -> Optional[Dict[str, Any]]:
         system_prompt = (
-            "You are ClipMind AI, an elite video intelligence engine. "
-            "Analyze the transcript and return ONLY valid JSON matching this structure exactly:\n"
+            "You are ClipMind AI, an elite multimodal video intelligence engine. "
+            "Analyze the entire video transcript from beginning to end and return ONLY valid JSON matching this structure exactly:\n"
             "{\n"
-            '  "tldr": "2-3 concise summary sentences",\n'
-            '  "key_takeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3"],\n'
-            '  "keywords": ["#Keyword1", "#Keyword2", "#Keyword3"]\n'
+            '  "tldr": "A comprehensive 2-4 sentence executive summary encompassing the core thesis and entire progression of the video",\n'
+            '  "key_takeaways": ["Primary Takeaway 1", "Detailed Takeaway 2", "Detailed Takeaway 3", "Comprehensive Takeaway 4"],\n'
+            '  "keywords": ["#Keyword1", "#Keyword2", "#Keyword3", "#Keyword4", "#Keyword5", "#Keyword6"]\n'
             "}"
         )
-        user_prompt = f"Target Depth: {depth}\nTranscript snippet:\n{text[:4000]}"
+        user_prompt = f"Target Depth: {depth}\nFull Video Transcript:\n{text[:45000]}"
 
         raw_resp = self.generate_chat_response(system_prompt, user_prompt)
         if raw_resp:
