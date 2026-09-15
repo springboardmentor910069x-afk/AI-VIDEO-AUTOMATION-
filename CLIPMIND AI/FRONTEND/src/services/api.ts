@@ -168,6 +168,20 @@ function getHeaders(): HeadersInit {
   return headers
 }
 
+function formatApiError(err: any, fallback: string): string {
+  if (!err) return fallback
+  if (typeof err === 'string') return err
+  if (typeof err.detail === 'string') return err.detail
+  if (Array.isArray(err.detail) && err.detail.length > 0) {
+    return err.detail.map((d: any) => d.msg || (typeof d === 'object' ? JSON.stringify(d) : String(d))).join(', ')
+  }
+  if (err.detail && typeof err.detail === 'object') {
+    return err.detail.msg || err.detail.message || JSON.stringify(err.detail)
+  }
+  if (typeof err.message === 'string') return err.message
+  return fallback
+}
+
 export const api = {
   // Auth
   async register(email: string, password: string, name: string, role = 'Creator'): Promise<AuthResponse> {
@@ -178,7 +192,7 @@ export const api = {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.detail || 'Registration failed')
+      throw new Error(formatApiError(err, 'Registration failed'))
     }
     const data: AuthResponse = await res.json()
     // Only store credentials when a real token is returned (Learner gets immediate token;
@@ -198,7 +212,7 @@ export const api = {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.detail || 'Invalid email or password')
+      throw new Error(formatApiError(err, 'Invalid email or password'))
     }
     const data: AuthResponse = await res.json()
     if (data.access_token && data.access_token.trim()) {
@@ -216,7 +230,7 @@ export const api = {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.detail || 'Demo login failed')
+      throw new Error(formatApiError(err, 'Demo login failed'))
     }
     const data: AuthResponse = await res.json()
     if (data.access_token && data.access_token.trim()) {
@@ -241,18 +255,11 @@ export const api = {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      let msg = 'Google sign-in failed'
-      if (typeof err.detail === 'string') {
-        msg = err.detail
-      } else if (Array.isArray(err.detail) && err.detail.length > 0) {
-        msg = err.detail.map((d: any) => d.msg || (typeof d === 'object' ? JSON.stringify(d) : String(d))).join(', ')
-      } else if (err.message && typeof err.message === 'string') {
-        msg = err.message
-      }
-      throw new Error(msg)
+      throw new Error(formatApiError(err, 'Google sign-in failed'))
     }
     const data: AuthResponse = await res.json()
     localStorage.setItem('clipmind_access_token', data.access_token)
+    localStorage.setItem('clipmind_user_role', data.user.role)
     localStorage.setItem('clipmind_user', JSON.stringify(data.user))
     return data
   },

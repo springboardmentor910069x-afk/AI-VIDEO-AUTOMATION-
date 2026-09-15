@@ -125,7 +125,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
     else navigate('/dashboard')
   }
 
-  const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || ''
+  const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '86124787652-p0isa589ii9umv80ortvjmn40tq4qeod.apps.googleusercontent.com'
 
 
   // Sync role to googleRole and showcaseRole
@@ -223,7 +223,22 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         const client = (window as any).google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: 'email profile openid',
+          error_callback: (err: any) => {
+            console.log('Google OAuth client notice:', err)
+            setGoogleEmail(email ? email : '')
+            setGoogleName(name ? name : (email ? email.split('@')[0] : ''))
+            setGoogleRole(role)
+            setGoogleModalOpen(true)
+          },
           callback: async (tokenResponse: any) => {
+            if (tokenResponse?.error) {
+              console.log('Google token notice:', tokenResponse.error)
+              setGoogleEmail(email ? email : '')
+              setGoogleName(name ? name : (email ? email.split('@')[0] : ''))
+              setGoogleRole(role)
+              setGoogleModalOpen(true)
+              return
+            }
             if (tokenResponse?.access_token) {
               setLoading(true)
               setErrorMsg(null)
@@ -234,14 +249,16 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                 showToast(`Signed in with Google as ${userRole}!`, 'success')
                 redirectByRole(userRole)
               } catch (err: any) {
-                setErrorMsg(err.message || 'Google authentication failed.')
+                const msg = err?.message || 'Google authentication failed.'
+                setErrorMsg(msg)
+                showToast(msg, 'error')
               } finally {
                 setLoading(false)
               }
             }
           }
         })
-        client.requestAccessToken()
+        client.requestAccessToken({ prompt: 'select_account' })
         return
       } catch (err) {
         console.log('Google token client notice:', err)
