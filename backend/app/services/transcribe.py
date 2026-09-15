@@ -1,11 +1,14 @@
 import whisper
 
-
-# Load the English Whisper model once when the backend starts
-model = whisper.load_model("small.en")
+model = None
 
 
 def transcribe_video(video_path):
+    global model
+
+    if model is None:
+        model = whisper.load_model("small.en")
+
     result = model.transcribe(
         video_path,
         language="en",
