@@ -149,13 +149,6 @@ async def get_video(video_id: str, current_user: Optional[User] = Depends(get_cu
     )
 
 
-@router.delete("/{video_id}")
-async def delete_video(video_id: str, current_user: Optional[User] = Depends(get_current_user_optional)):
-    success = await video_service.delete_video(video_id, current_user=current_user)
-    if not success:
-        raise HTTPException(status_code=404, detail="Video not found")
-    return {"success": True, "message": "Video deleted successfully"}
-
 
 @router.get("/{video_id}/transcript", response_model=TranscriptResponse)
 async def get_video_transcript(video_id: str, current_user: Optional[User] = Depends(get_current_user_optional)):
@@ -264,68 +257,6 @@ async def regenerate_summary(
 
     return {"success": True, "message": "Summary regenerated successfully", "tldr": tldr}
 
-
-@router.delete("/{video_id}")
-async def delete_video(
-    video_id: str,
-    current_user: Optional[User] = Depends(get_current_user_optional)
-):
-    video = await video_service.get_video(video_id)
-    if not video:
-        raise HTTPException(status_code=404, detail="Video not found")
-
-    verify_ownership(str(video.user_id), current_user)
-
-    # 1. Clean disk files
-    try:
-        if video.file_path and os.path.exists(video.file_path):
-            os.remove(video.file_path)
-    except Exception:
-        pass
-
-    try:
-        for folder in [settings.UPLOAD_DIR, settings.EXPORTS_DIR, settings.THUMBNAIL_DIR]:
-            if os.path.exists(folder):
-                for f in os.listdir(folder):
-                    if video_id in f:
-                        try:
-                            os.remove(os.path.join(folder, f))
-                        except Exception:
-                            pass
-    except Exception:
-        pass
-
-    # 2. Delete child documents
-    try:
-        await Transcript.find({"video_id": video_id}).delete()
-        await Summary.find({"video_id": video_id}).delete()
-        await KeyMoment.find({"video_id": video_id}).delete()
-        await ContentInsight.find({"video_id": video_id}).delete()
-        await Share.find({"video_id": video_id}).delete()
-        await Bookmark.find({"video_id": video_id}).delete()
-        await Quiz.find({"video_id": video_id}).delete()
-        await FlashcardSet.find({"video_id": video_id}).delete()
-    except Exception:
-        pass
-
-    # 3. Delete Video record
-    v_title = video.title
-    await video.delete()
-
-    # 4. Audit Log
-    try:
-        audit = AuditLog(
-            user_id=str(getattr(current_user, "id", "demo-user")),
-            user_email=str(getattr(current_user, "email", "user@clipmind.ai")),
-            action="VIDEO_DELETE",
-            resource=f"Video:{video_id}",
-            details=f"Deleted video '{v_title}' with cascading resource cleanup."
-        )
-        await audit.insert()
-    except Exception:
-        pass
-
-    return {"success": True, "message": f"Video '{v_title}' and all associated intelligence assets deleted successfully."}
 
 
 @router.get("/{video_id}/key-moments", response_model=KeyMomentsResponse)
