@@ -8,11 +8,79 @@ import { api } from '../services/api'
 type Role = 'Creator' | 'Learner' | 'Educator' | 'Admin'
 const REGISTER_ROLES: ('Creator' | 'Learner' | 'Educator')[] = ['Creator', 'Learner', 'Educator']
 
-const TESTIMONIALS = [
-  { quote: "ClipMind AI saved our university research team over 20 hours a week reviewing conference recordings.", author: "Dr. Elena Rostova", role: "AI Researcher, MIT" },
-  { quote: "I process 10+ YouTube lectures daily for my students. ClipMind AI turns them into structured study guides instantly.", author: "Prof. James Okafor", role: "CS Professor, Stanford" },
-  { quote: "As a content creator, ClipMind AI helps me find the best clips from 3-hour streams in seconds.", author: "Maya Chen", role: "Tech Creator, 450K subscribers" },
+const AI_CAPABILITIES: Record<'Creator' | 'Learner' | 'Educator', {
+  title: string
+  badge: string
+  color: string
+  accent: string
+  glow: string
+  highlights: string[]
+  metrics: { label: string; val: string }[]
+}> = {
+  Creator: {
+    title: 'Creator Studio Intelligence',
+    badge: 'VIRAL RETENTION & SHORTS',
+    color: 'rgba(99, 102, 241, 0.15)',
+    accent: '#818CF8',
+    glow: 'rgba(99, 102, 241, 0.4)',
+    highlights: [
+      'Semantic Key Moments clustering with high-retention timestamps',
+      'Auto-generated viral video hooks & multi-chapter breakdown',
+      'One-click transcript export formatted for YouTube & Socials',
+      'Aspect ratio conversion previews (16:9 Landscape & 9:16 Shorts)'
+    ],
+    metrics: [
+      { label: 'Key Moments', val: 'Auto-Ranked' },
+      { label: 'Aspect Ratios', val: '16:9 / 9:16' },
+      { label: 'Export Format', val: 'Social Ready' }
+    ]
+  },
+  Learner: {
+    title: 'Learner Interactive Study Room',
+    badge: 'ACTIVE RECALL & COMPREHENSION',
+    color: 'rgba(6, 182, 212, 0.15)',
+    accent: '#22D3EE',
+    glow: 'rgba(6, 182, 212, 0.4)',
+    highlights: [
+      'Zero 2-min truncation — full 16min+ lecture coverage from 00:00 to finish',
+      'Interactive AI Flashcards with spaced repetition recall',
+      'Auto-generated timed comprehension quizzes with instant scoring',
+      'Synchronized audio search jumping straight to core concepts'
+    ],
+    metrics: [
+      { label: 'Timeline', val: 'Full Duration' },
+      { label: 'Quizzes', val: 'Self-Graded' },
+      { label: 'Flashcards', val: 'Spaced Recall' }
+    ]
+  },
+  Educator: {
+    title: 'Educator Lecture & Syllabus Suite',
+    badge: 'ACADEMIC STRUCTURE & GUIDES',
+    color: 'rgba(16, 185, 129, 0.15)',
+    accent: '#34D399',
+    glow: 'rgba(16, 185, 129, 0.4)',
+    highlights: [
+      'Structured academic lecture summaries with verified citations',
+      'High-impact takeaway bullet points for quick student review',
+      'Exportable comprehensive markdown study guides & syllabus notes',
+      'Multi-chapter hierarchy matching textbook lecture plans'
+    ],
+    metrics: [
+      { label: 'Structure', val: 'Multi-Chapter' },
+      { label: 'Study Guides', val: 'Auto-Generated' },
+      { label: 'Takeaways', val: 'Key Badges' }
+    ]
+  }
+}
+
+const TIMELINE_PINS = [
+  { time: '01:24', label: 'Viral Hook', tag: 'High Retention', color: '#818CF8', pos: 12 },
+  { time: '05:42', label: 'Core Architecture', tag: 'Key Concept', color: '#22D3EE', pos: 38 },
+  { time: '10:15', label: 'Live Demonstration', tag: 'Deep Dive', color: '#34D399', pos: 65 },
+  { time: '15:40', label: 'Executive Summary', tag: 'Synthesis', color: '#F59E0B', pos: 92 },
 ]
+
+const WAVEFORM_HEIGHTS = [8, 14, 22, 16, 28, 20, 12, 24, 32, 18, 10, 26, 22, 14, 30, 24, 16, 28, 20, 12, 26, 30, 18, 14, 24, 16, 10, 20]
 
 const FLOATING_NODES = [
   { x: 15, y: 20, size: 8, delay: 0 },
@@ -30,12 +98,13 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const { showToast } = useToast()
   const [tab, setTab] = useState<'login' | 'register'>(mode)
   const [role, setRole] = useState<Role>('Creator')
+  const [showcaseRole, setShowcaseRole] = useState<'Creator' | 'Learner' | 'Educator'>('Creator')
+  const [activePinIdx, setActivePinIdx] = useState<number>(0)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
-  const [testimonialIdx, setTestimonialIdx] = useState(0)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
@@ -54,10 +123,22 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || ''
 
 
-  // Sync role to googleRole
+  // Sync role to googleRole and showcaseRole
   useEffect(() => {
     setGoogleRole(role)
+    if (role === 'Creator' || role === 'Learner' || role === 'Educator') {
+      setShowcaseRole(role)
+    }
   }, [role])
+
+  // Rotate active key moment pin smoothly
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActivePinIdx(prev => (prev + 1) % TIMELINE_PINS.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [])
+
 
   // Google Identity Services (GIS) automatic initialization
   useEffect(() => {
@@ -218,11 +299,11 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         padding: '60px 48px',
       }}>
-        {/* Ambient glow orbs */}
-        <div style={{ position: 'absolute', top: '20%', left: '20%', width: 300, height: 300, background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: 250, height: 250, background: 'radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+        {/* Animated Aurora Glow Orbs */}
+        <div className="aurora-orb-1" />
+        <div className="aurora-orb-2" />
 
-        {/* Floating nodes */}
+        {/* Dynamic Starry Floating Nodes */}
         {FLOATING_NODES.map((node, i) => (
           <div key={i} style={{
             position: 'absolute',
@@ -230,83 +311,243 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             width: node.size, height: node.size,
             borderRadius: '50%',
             background: i % 2 === 0 ? 'var(--accent-indigo)' : 'var(--accent-cyan)',
-            opacity: 0.6,
+            opacity: 0.55,
             animation: `float-node ${5 + node.delay * 0.5}s ${node.delay}s ease-in-out infinite`,
             boxShadow: `0 0 ${node.size * 2}px ${i % 2 === 0 ? 'rgba(99,102,241,0.5)' : 'rgba(6,182,212,0.5)'}`,
           }} />
         ))}
 
-        {/* SVG connecting lines (decorative) */}
-        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.15 }} xmlns="http://www.w3.org/2000/svg">
-          <line x1="15%" y1="20%" x2="40%" y2="55%" stroke="var(--accent-indigo)" strokeWidth="1" />
-          <line x1="40%" y1="55%" x2="70%" y2="15%" stroke="var(--accent-cyan)" strokeWidth="1" />
-          <line x1="70%" y1="15%" x2="85%" y2="60%" stroke="var(--accent-indigo)" strokeWidth="1" />
-          <line x1="25%" y1="80%" x2="60%" y2="85%" stroke="var(--accent-cyan)" strokeWidth="1" />
-          <line x1="10%" y1="45%" x2="25%" y2="80%" stroke="var(--accent-indigo)" strokeWidth="1" />
-          <line x1="80%" y1="35%" x2="85%" y2="60%" stroke="var(--accent-cyan)" strokeWidth="1" />
+        {/* Constellation Network Mesh */}
+        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.18, pointerEvents: 'none' }} xmlns="http://www.w3.org/2000/svg">
+          <line x1="15%" y1="18%" x2="40%" y2="48%" stroke="var(--accent-indigo)" strokeWidth="1" strokeDasharray="4 2" />
+          <line x1="40%" y1="48%" x2="72%" y2="18%" stroke="var(--accent-cyan)" strokeWidth="1" strokeDasharray="4 2" />
+          <line x1="72%" y1="18%" x2="88%" y2="52%" stroke="var(--accent-indigo)" strokeWidth="1" strokeDasharray="4 2" />
+          <line x1="25%" y1="78%" x2="62%" y2="82%" stroke="var(--accent-cyan)" strokeWidth="1" strokeDasharray="4 2" />
+          <line x1="12%" y1="42%" x2="25%" y2="78%" stroke="var(--accent-indigo)" strokeWidth="1" strokeDasharray="4 2" />
+          <line x1="82%" y1="32%" x2="88%" y2="52%" stroke="var(--accent-cyan)" strokeWidth="1" strokeDasharray="4 2" />
         </svg>
 
-        {/* Logo */}
-        <div style={{ position: 'relative', zIndex: 1, marginBottom: 'auto', paddingBottom: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px var(--accent-indigo-glow)' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+        {/* Top Header: Logo + Live Pipeline Indicator */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => navigate('/')}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 14,
+              background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 24px var(--accent-indigo-glow)'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
             </div>
-            <span style={{ fontSize: 22, fontWeight: 800, color: '#F9FAFB' }}>ClipMind<span style={{ color: '#818CF8' }}> AI</span></span>
+            <div>
+              <span style={{ fontSize: 24, fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em' }}>ClipMind<span style={{ color: '#818CF8' }}> AI</span></span>
+              <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, letterSpacing: '0.05em' }}>VIDEO INTELLIGENCE PLATFORM</div>
+            </div>
+          </div>
+
+          {/* Real-time Status Badge */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)',
+            padding: '6px 14px', borderRadius: 9999,
+            fontSize: 11.5, fontWeight: 700, color: '#34D399', letterSpacing: '0.03em',
+            boxShadow: '0 0 16px rgba(16, 185, 129, 0.15)'
+          }}>
+            <span className="live-pulse-dot" />
+            <span>AI ENGINE ONLINE • FULL DURATION</span>
           </div>
         </div>
 
-        {/* Main visual text */}
-        <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <h2 style={{ fontSize: 38, fontWeight: 800, color: '#F9FAFB', lineHeight: 1.2, marginBottom: 16 }}>
-            AI that understands<br />
-            <span style={{ background: 'linear-gradient(135deg, #a5b4fc, #06B6D4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              every spoken word.
+        {/* Hero Section */}
+        <div style={{ position: 'relative', zIndex: 1, marginBottom: 24 }}>
+          <h2 style={{ fontSize: 32, fontWeight: 800, color: '#F9FAFB', lineHeight: 1.25, marginBottom: 12 }}>
+            Autonomous Video Intelligence<br />
+            <span style={{
+              background: 'linear-gradient(135deg, #a5b4fc 0%, #38bdf8 50%, #34d399 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
+            }}>
+              Zero Truncation. Complete Video Mastery.
             </span>
           </h2>
-          <p style={{ fontSize: 16, color: '#9CA3AF', lineHeight: 1.7, maxWidth: 420, marginBottom: 40 }}>
-            Join 12,000+ creators, students, and educators who transform hours of video content into structured, searchable knowledge.
+          <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.65, maxWidth: 520, margin: 0 }}>
+            Transform long-form lectures, conference talks, and video streams into timestamped chapters, semantic viral moments, and interactive study assets with sub-second Groq LPU inference.
           </p>
+        </div>
 
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: 32, marginBottom: 48 }}>
-            {[['10,000+', 'Hours Processed'], ['96.4%', 'WER Accuracy'], ['12,000+', 'Active Users']].map(([val, label]) => (
-              <div key={label}>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#F9FAFB' }}>{val}</div>
-                <div style={{ fontSize: 13, color: '#9CA3AF' }}>{label}</div>
+        {/* Live Audio Equalizer Waveform Motion Bar */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 16,
+          padding: '16px 20px', marginBottom: 20
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13 }}>🎙️</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#F8FAFC', letterSpacing: '0.04em' }}>
+                NEURAL SPEECH STREAM
+              </span>
+              <span style={{ fontSize: 11, background: 'rgba(99, 102, 241, 0.2)', color: '#A5B4FC', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
+                WHISPER V3 TURBO
+              </span>
+            </div>
+            <span style={{ fontSize: 11.5, color: '#38BDF8', fontWeight: 600, fontFamily: 'monospace' }}>
+              00:00 — 16:00+ TIMELINE
+            </span>
+          </div>
+
+          {/* Equalizer Frequency Bars */}
+          <div style={{
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+            height: 36, padding: '4px 0', gap: 3
+          }}>
+            {WAVEFORM_HEIGHTS.map((h, idx) => (
+              <div
+                key={idx}
+                style={{
+                  flex: 1,
+                  height: `${h}px`,
+                  borderRadius: 3,
+                  background: idx % 3 === 0
+                    ? 'linear-gradient(180deg, #38BDF8 0%, #6366F1 100%)'
+                    : idx % 3 === 1
+                      ? 'linear-gradient(180deg, #818CF8 0%, #3B82F6 100%)'
+                      : 'linear-gradient(180deg, #34D399 0%, #06B6D4 100%)',
+                  animation: `soundwave-bar ${0.9 + (idx % 5) * 0.2}s ease-in-out infinite`,
+                  animationDelay: `${(idx * 0.08) % 1.2}s`,
+                  boxShadow: '0 0 6px rgba(99, 102, 241, 0.3)'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Interactive Timeline & Key Moments Radar */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 16,
+          padding: '16px 20px', marginBottom: 20
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>⏱️</span>
+              <span>SYNCHRONIZED KEY MOMENTS RADAR</span>
+            </span>
+            <span style={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>
+              ● 100% Full Duration Mapped
+            </span>
+          </div>
+
+          {/* Timeline Bar with Laser Playhead */}
+          <div style={{
+            position: 'relative', height: 8, background: 'rgba(255, 255, 255, 0.08)',
+            borderRadius: 9999, overflow: 'hidden', marginBottom: 16
+          }}>
+            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(90deg, rgba(99,102,241,0.5), rgba(6,182,212,0.5), rgba(16,185,129,0.5))' }} />
+            <div className="laser-playhead" />
+          </div>
+
+          {/* Key Moment Pins */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            {TIMELINE_PINS.map((pin, i) => (
+              <div
+                key={i}
+                onClick={() => setActivePinIdx(i)}
+                style={{
+                  cursor: 'pointer',
+                  padding: '8px 10px',
+                  borderRadius: 10,
+                  border: `1px solid ${activePinIdx === i ? pin.color : 'rgba(255,255,255,0.06)'}`,
+                  background: activePinIdx === i ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
+                  transition: 'all 0.2s',
+                  boxShadow: activePinIdx === i ? `0 0 14px ${pin.color}40` : 'none'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                  <span style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 700, color: pin.color }}>{pin.time}</span>
+                  <span style={{ fontSize: 9.5, color: '#94A3B8' }}>{pin.tag}</span>
+                </div>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: '#F1F5F9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {pin.label}
+                </div>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Testimonial carousel */}
-          <div style={{
-            background: 'rgba(17,24,39,0.7)', backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 24,
-          }}>
-            <div style={{ fontSize: 14, color: '#D1D5DB', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 16 }}>
-              "{TESTIMONIALS[testimonialIdx].quote}"
+        {/* Role-Adaptive Intelligence Showcase (Motion Tabs) */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 18,
+          padding: 20, boxShadow: '0 16px 40px rgba(0, 0, 0, 0.45)'
+        }}>
+          {/* Tab Selector */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {(['Creator', 'Learner', 'Educator'] as const).map(r => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setShowcaseRole(r)}
+                style={{
+                  flex: 1, padding: '8px 12px', borderRadius: 10, border: 'none',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  transition: 'all 0.2s',
+                  background: showcaseRole === r ? AI_CAPABILITIES[r].color : 'rgba(255,255,255,0.03)',
+                  color: showcaseRole === r ? AI_CAPABILITIES[r].accent : '#94A3B8',
+                  boxShadow: showcaseRole === r ? `0 0 16px ${AI_CAPABILITIES[r].glow}` : 'none',
+                  borderWidth: 1, borderStyle: 'solid',
+                  borderColor: showcaseRole === r ? AI_CAPABILITIES[r].accent : 'transparent'
+                }}
+              >
+                <span>{r === 'Creator' ? '🎬' : r === 'Learner' ? '🎓' : '✏️'}</span>
+                <span>{r}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Active Role Content Card */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#F8FAFC' }}>
+                {AI_CAPABILITIES[showcaseRole].title}
+              </div>
+              <span style={{
+                fontSize: 10.5, fontWeight: 700, color: AI_CAPABILITIES[showcaseRole].accent,
+                background: AI_CAPABILITIES[showcaseRole].color, padding: '3px 10px', borderRadius: 9999,
+                letterSpacing: '0.04em'
+              }}>
+                {AI_CAPABILITIES[showcaseRole].badge}
+              </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff' }}>
-                {TESTIMONIALS[testimonialIdx].author[0]}
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#F9FAFB' }}>{TESTIMONIALS[testimonialIdx].author}</div>
-                <div style={{ fontSize: 12, color: '#9CA3AF' }}>{TESTIMONIALS[testimonialIdx].role}</div>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-                {TESTIMONIALS.map((_, i) => (
-                  <button key={i} onClick={() => setTestimonialIdx(i)} style={{
-                    width: i === testimonialIdx ? 20 : 6, height: 6, borderRadius: 3, border: 'none', cursor: 'pointer',
-                    background: i === testimonialIdx ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.2)',
-                    transition: 'all 0.2s',
-                  }} />
-                ))}
-              </div>
+
+            {/* Feature Highlights with Glowing Bullet Points */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {AI_CAPABILITIES[showcaseRole].highlights.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#CBD5E1', lineHeight: 1.5 }}>
+                  <span style={{ color: AI_CAPABILITIES[showcaseRole].accent, fontSize: 14, lineHeight: 1.2 }}>✓</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Architectural Metric Badges */}
+            <div style={{ display: 'flex', gap: 10, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              {AI_CAPABILITIES[showcaseRole].metrics.map((m, idx) => (
+                <div key={idx} style={{
+                  flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 10,
+                  padding: '8px 10px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.04)'
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#F8FAFC' }}>{m.val}</div>
+                  <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 2 }}>{m.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
+
 
       {/* RIGHT — form container */}
       <div style={{

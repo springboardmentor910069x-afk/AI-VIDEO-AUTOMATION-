@@ -319,3 +319,81 @@ input, select, textarea, button {
   background: linear-gradient(90deg, rgba(99, 102, 241, 0.22), rgba(6, 182, 212, 0.12)) !important;
   border-left: 3px solid var(--accent-indigo);
 }
+
+/* ==============================================================================
+   Advanced AI High-Motion Visual Utilities
+   ============================================================================== */
+@keyframes aurora-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes laser-sweep {
+  0% { left: 0%; opacity: 0.2; }
+  50% { left: 50%; opacity: 1; }
+  100% { left: 100%; opacity: 0.2; }
+}
+
+@keyframes soundwave-bar {
+  0%, 100% { height: 6px; opacity: 0.4; }
+  50% { height: 28px; opacity: 1; }
+}
+
+@keyframes radar-pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes packet-flow {
+  0% { stroke-dashoffset: 200; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.aurora-orb-1 {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.08) 45%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: aurora-spin 18s linear infinite;
+  pointer-events: none;
+}
+
+.aurora-orb-2 {
+  position: absolute;
+  bottom: 12%;
+  right: 5%;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, rgba(16, 185, 129, 0.08) 50%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(45px);
+  animation: aurora-spin 22s linear infinite reverse;
+  pointer-events: none;
+}
+
+.laser-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, #38BDF8, #818CF8, #34D399);
+  box-shadow: 0 0 12px #38BDF8, 0 0 24px #818CF8;
+  animation: laser-sweep 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #10B981;
+  border-radius: 50%;
+  animation: radar-pulse-dot 2s infinite;
+  display: inline-block;
+}
+
