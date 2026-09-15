@@ -47,14 +47,14 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div style={{
             maxWidth: 520,
             width: '100%',
-            background: 'var(--bg-glass)',
+            background: 'var(--bg-surface-elevated)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--border-glass)',
             borderRadius: 16,
             padding: 32,
             textAlign: 'center',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
           }}>
             <div style={{
               width: 56,
@@ -75,9 +75,21 @@ export default class ErrorBoundary extends Component<Props, State> {
               {this.props.fallbackTitle || 'Something went wrong loading this tab'}
             </h2>
 
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
+            <div style={{
+              fontSize: 12.5,
+              fontFamily: 'JetBrains Mono, monospace',
+              color: '#f87171',
+              background: 'var(--bg-base)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: 8,
+              padding: '10px 14px',
+              marginBottom: 20,
+              lineHeight: 1.5,
+              wordBreak: 'break-word',
+              textAlign: 'left',
+            }}>
               {this.state.error?.message || 'An unexpected error occurred while rendering this view.'}
-            </p>
+            </div>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button

@@ -11,6 +11,7 @@ export interface User {
   role: string
   is_active: boolean
   avatar_url?: string
+  verification_status?: string
 }
 
 export interface AuthResponse {
@@ -198,6 +199,24 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.detail || 'Invalid email or password')
+    }
+    const data: AuthResponse = await res.json()
+    if (data.access_token && data.access_token.trim()) {
+      localStorage.setItem('clipmind_access_token', data.access_token)
+      localStorage.setItem('clipmind_user', JSON.stringify(data.user))
+    }
+    return data
+  },
+
+  async loginDemo(role = 'Learner'): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE_URL}/auth/demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || 'Demo login failed')
     }
     const data: AuthResponse = await res.json()
     if (data.access_token && data.access_token.trim()) {
@@ -724,12 +743,6 @@ export const api = {
   async getEducatorLectures() {
     const res = await fetch(`${API_BASE_URL}/educator/lectures`, { headers: getHeaders() })
     if (!res.ok) return { lectures: [] }
-    return res.json()
-  },
-
-  async getEducatorQuizzes(videoId: string) {
-    const res = await fetch(`${API_BASE_URL}/educator/quizzes/${videoId}`, { headers: getHeaders() })
-    if (!res.ok) return { questions: [] }
     return res.json()
   },
 

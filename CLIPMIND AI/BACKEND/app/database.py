@@ -64,23 +64,28 @@ async def init_mongodb():
         )
         print("[OK] Document database connected securely")
 
-        # Seed default Admin account for administrative operations
-        try:
-            from app.security import get_password_hash
-            from app.mongodb_models import UserRole
-            existing_admin = await MongoUser.find_one({"email": "admin@clipmind.ai"})
-            if not existing_admin:
-                admin_user = MongoUser(
-                    email="admin@clipmind.ai",
-                    name="System Admin",
-                    hashed_password=get_password_hash("Admin@123"),
-                    role=UserRole.ADMIN,
-                    is_active=True
-                )
-                await admin_user.insert()
-                print("[OK] Seeded default administrator account: admin@clipmind.ai / Admin@123")
-        except Exception as seed_err:
-            print(f"[WARN] Admin seed notice: {seed_err}")
+        # Seed Admin account only if specified in environment variables
+        admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+        admin_password = os.getenv("ADMIN_PASSWORD", "").strip()
+        if admin_email and admin_password:
+            try:
+                from app.security import get_password_hash
+                from app.mongodb_models import UserRole
+                existing_admin = await MongoUser.find_one({"email": admin_email})
+                if not existing_admin:
+                    admin_user = MongoUser(
+                        email=admin_email,
+                        name=os.getenv("ADMIN_NAME", "System Administrator"),
+                        hashed_password=get_password_hash(admin_password),
+                        role=UserRole.ADMIN,
+                        is_active=True,
+                        is_verified=True,
+                        verification_status="verified"
+                    )
+                    await admin_user.insert()
+                    print(f"[OK] Initialized admin account: {admin_email}")
+            except Exception as seed_err:
+                print(f"[WARN] Admin initialization notice: {seed_err}")
     except Exception as e:
         print(f"[WARN] Document database connection fallback active: {e}")
         # Proceed gracefully for dev

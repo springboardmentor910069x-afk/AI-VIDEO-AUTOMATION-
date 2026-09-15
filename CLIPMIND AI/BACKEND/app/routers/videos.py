@@ -496,8 +496,8 @@ async def delete_video(
     # 4. Write audit log entry
     try:
         audit = AuditLog(
-            user_id=str(getattr(current_user, "id", "creator")),
-            user_email=str(getattr(current_user, "email", "creator@clipmind.ai")),
+            user_id=str(getattr(current_user, "id", "user")),
+            user_email=str(getattr(current_user, "email", "user@authenticated")),
             action="VIDEO_DELETE",
             resource=f"Video:{video_id}",
             details=f"User deleted video '{title}' and all associated transcripts, summaries, quizzes, and exports."

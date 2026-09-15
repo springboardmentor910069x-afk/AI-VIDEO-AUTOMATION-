@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root, .dark {
   color-scheme: dark;
   --bg-base: #070B14;
   --bg-surface: #0F172A;

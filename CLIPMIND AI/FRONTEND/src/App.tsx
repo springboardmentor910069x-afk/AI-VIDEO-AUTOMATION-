@@ -43,8 +43,10 @@ function ThemeProvider({ children }: { children: React.ReactElement }) {
     const root = document.documentElement
     if (theme === 'light') {
       root.classList.add('light')
+      root.classList.remove('dark')
     } else {
       root.classList.remove('light')
+      root.classList.add('dark')
     }
     localStorage.setItem('clipmind-theme', theme)
   }, [theme])

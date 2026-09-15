@@ -349,7 +349,7 @@ async def submit_quiz_result(
     try:
         log = AuditLog(
             user_id=user_id,
-            user_email=current_user.email if current_user else "learner@clipmind.ai",
+            user_email=current_user.email if current_user else "learner@authenticated",
             action="QUIZ_SUBMIT",
             resource="Video",
             resource_id=req.video_id,

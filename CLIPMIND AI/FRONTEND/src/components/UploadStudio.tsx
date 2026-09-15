@@ -38,6 +38,7 @@ export default function UploadStudio() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [urlInput, setUrlInput] = useState('')
+  const [youtubeApiKey, setYoutubeApiKey] = useState('')
   const [summaryDepth, setSummaryDepth] = useState<SummaryDepth>('Detailed Breakdown')
   const [sensitivity, setSensitivity] = useState(50)
   const [domain, setDomain] = useState<Domain>('Academic Lecture')

@@ -38,13 +38,11 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const [testimonialIdx, setTestimonialIdx] = useState(0)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [pendingApprovalRole, setPendingApprovalRole] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setErrorMsg(null)
-    setPendingApprovalRole(null)
 
     const userEmail = email.trim()
     const userPass = password.trim()
@@ -61,14 +59,8 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
 
       if (tab === 'register') {
         const res = await api.register(userEmail, userPass, userName, role)
-        if (res?.user?.verification_status === 'pending' || !res?.access_token) {
-          setPendingApprovalRole(role)
-          setLoading(false)
-          showToast(`Your ${role} account registration has been submitted to the Admin for approval.`, 'info', 5000)
-          return
-        }
         if (res?.user?.role) authenticatedRole = res.user.role as Role
-        showToast('Account created successfully! Welcome to ClipMind AI.', 'success')
+        showToast(`Account created as ${authenticatedRole}! Welcome to ClipMind AI.`, 'success')
       } else {
         const res = await api.login(userEmail, userPass)
         if (res?.user?.role) authenticatedRole = res.user.role as Role
@@ -84,12 +76,11 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
       else navigate('/dashboard')
     } catch (err: any) {
       setLoading(false)
-      const msg = err?.message || (tab === 'register' ? 'Registration failed. Please verify your details and try again.' : 'Invalid email or password. Please try again.')
+      const msg = err?.message || (tab === 'register' ? 'Registration failed. Please verify your details and try again.' : 'Invalid email or password. Please check your credentials.')
       setErrorMsg(msg)
       showToast(msg, 'error')
     }
   }
-
 
   const handleGoogleAuth = async () => {
     setLoading(true)
@@ -99,7 +90,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
       setLoading(false)
       const userRole = (res.user?.role as Role) || role
       localStorage.setItem('clipmind_active_role', userRole)
-      showToast('Signed in with Google successfully.', 'success')
+      showToast(`Signed in with Google as ${userRole}.`, 'success')
       if (userRole === 'Learner') navigate('/dashboard/learner/study')
       else if (userRole === 'Educator') navigate('/dashboard/educator/lectures')
       else if (userRole === 'Admin') navigate('/dashboard/admin')
@@ -276,9 +267,14 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
 
         {/* SSO buttons */}
         <div style={{ marginBottom: 20 }}>
-          <button onClick={handleGoogleAuth} className="btn-glass" type="button" style={{ width: '100%', padding: '11px 16px', borderRadius: 10, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}>
+          <button
+            onClick={handleGoogleAuth}
+            className="btn-glass"
+            type="button"
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 10, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer' }}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
-            Continue with Google
+            {tab === 'register' ? `Sign Up with Google as ${role}` : 'Continue with Google'}
           </button>
         </div>
 
@@ -306,51 +302,6 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
           }}>
             <span>⚠️</span>
             <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {/* Pending Approval Notice Card */}
-        {pendingApprovalRole && (
-          <div style={{
-            background: 'rgba(99, 102, 241, 0.12)',
-            border: '1px solid var(--accent-indigo)',
-            padding: '20px',
-            borderRadius: 12,
-            marginBottom: 24,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
-              <span>📋</span> Application Submitted for Admin Verification!
-            </div>
-            <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Your application for a <strong>{pendingApprovalRole}</strong> account has been submitted to system administrators.
-              Once verified and approved by the admin, your account will be activated and you can sign in.
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--accent-cyan)', background: 'rgba(6,182,212,0.1)', padding: '8px 12px', borderRadius: 8 }}>
-              💡 <strong>Instant Access Available:</strong> Anyone can create a <strong>Learner</strong> account immediately without administrator verification!
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-              <button
-                type="button"
-                onClick={() => { setPendingApprovalRole(null); setTab('login'); }}
-                className="btn-primary"
-                style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13 }}
-              >
-                Go to Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => { setPendingApprovalRole(null); setRole('Learner'); setTab('register'); }}
-                style={{
-                  padding: '8px 16px', borderRadius: 8, fontSize: 13, background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-glass)', color: 'var(--text-primary)', cursor: 'pointer'
-                }}
-              >
-                Register as Learner (Instant)
-              </button>
-            </div>
           </div>
         )}
 
@@ -388,7 +339,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                 autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                required={tab === 'register'}
+                required
                 style={{ paddingLeft: 38 }}
               />
             </div>
@@ -407,7 +358,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                 autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                required={tab === 'register'}
+                required
                 style={{ paddingLeft: 38, paddingRight: 44 }}
               />
               <button
