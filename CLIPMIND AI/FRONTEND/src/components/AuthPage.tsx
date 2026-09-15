@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle'
 import { useToast } from './Toast'
@@ -37,6 +37,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const [remember, setRemember] = useState(false)
   const [testimonialIdx, setTestimonialIdx] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [googleEmail, setGoogleEmail] = useState('')
   const [googleName, setGoogleName] = useState('')
