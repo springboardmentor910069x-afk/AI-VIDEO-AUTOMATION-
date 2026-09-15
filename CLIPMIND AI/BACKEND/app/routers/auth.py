@@ -13,8 +13,17 @@ from app.security import (
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+async def ensure_beanie_initialized():
+    try:
+        MongoUser.get_settings()
+    except Exception:
+        from app.database import init_mongodb
+        await init_mongodb()
+
+
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register_user(req: UserRegister):
+    await ensure_beanie_initialized()
     existing = await MongoUser.find_one({"email": req.email.lower().strip()})
     if existing:
         raise HTTPException(status_code=400, detail="Email is already registered")
@@ -79,6 +88,7 @@ async def register_user(req: UserRegister):
 
 @router.post("/login", response_model=Token)
 async def login_user(req: UserLogin):
+    await ensure_beanie_initialized()
     email = req.email.lower().strip()
     user = await MongoUser.find_one({"email": email})
     if not user:

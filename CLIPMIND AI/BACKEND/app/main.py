@@ -111,12 +111,21 @@ async def health_check():
     # 1. Database Health & Roundtrip Latency (Safe ping, no credentials exposed)
     db_status = "connected"
     db_latency_ms = None
+    beanie_initialized = False
     try:
         t0 = time.time()
         from app.database import mongodb_client, sql_engine
+        from app.mongodb_models import User as MongoUser
+        try:
+            MongoUser.get_settings()
+            beanie_initialized = True
+        except Exception:
+            pass
+
         if mongodb_client:
             await mongodb_client.admin.command('ping')
             db_latency_ms = round((time.time() - t0) * 1000, 2)
+            db_status = "connected" if beanie_initialized else "beanie_initializing"
         elif sql_engine:
             with sql_engine.connect() as conn:
                 pass
