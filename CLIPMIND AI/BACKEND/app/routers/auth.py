@@ -199,7 +199,7 @@ async def google_login(req: GoogleAuthRequest):
         user = MongoUser(
             email=email,
             name=extracted_name or email.split("@")[0].capitalize(),
-            hashed_password=get_password_hash(f"google_oauth_{email}"),
+            hashed_password=get_password_hash(req.new_password.strip()) if (getattr(req, "new_password", None) and req.new_password.strip()) else get_password_hash(f"google_oauth_{email}"),
             role=role_val,
             avatar_url=extracted_avatar,
             is_active=True,
@@ -208,8 +208,11 @@ async def google_login(req: GoogleAuthRequest):
         )
         await user.insert()
     else:
-        # Update user name or avatar if provided from Google profile
+        # Update user name, avatar, or reset password if provided from Google recovery
         updated = False
+        if getattr(req, "new_password", None) and req.new_password.strip():
+            user.hashed_password = get_password_hash(req.new_password.strip())
+            updated = True
         if extracted_name and (not user.name or user.name == user.email.split("@")[0]):
             user.name = extracted_name
             updated = True
@@ -218,6 +221,7 @@ async def google_login(req: GoogleAuthRequest):
             updated = True
         if updated:
             await user.save()
+
 
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email, "role": getattr(user.role, "value", user.role)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})

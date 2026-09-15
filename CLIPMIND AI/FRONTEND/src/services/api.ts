@@ -227,12 +227,13 @@ export const api = {
   },
 
   async loginWithGoogle(
-    params: string | { credential?: string; email?: string; name?: string; avatar_url?: string; role?: string },
+    params: string | { credential?: string; email?: string; name?: string; avatar_url?: string; role?: string; new_password?: string },
     defaultRole = 'Creator'
   ): Promise<AuthResponse> {
-    const payload = typeof params === 'string'
+    const payload: any = typeof params === 'string'
       ? { credential: params, role: defaultRole }
-      : { role: defaultRole, ...params }
+      : { credential: params.credential || 'google_oauth_token_client_auth', role: defaultRole, ...params }
+
     const res = await fetch(`${API_BASE_URL}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -240,13 +241,22 @@ export const api = {
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.detail || 'Google sign-in failed')
+      let msg = 'Google sign-in failed'
+      if (typeof err.detail === 'string') {
+        msg = err.detail
+      } else if (Array.isArray(err.detail) && err.detail.length > 0) {
+        msg = err.detail.map((d: any) => d.msg || (typeof d === 'object' ? JSON.stringify(d) : String(d))).join(', ')
+      } else if (err.message && typeof err.message === 'string') {
+        msg = err.message
+      }
+      throw new Error(msg)
     }
     const data: AuthResponse = await res.json()
     localStorage.setItem('clipmind_access_token', data.access_token)
     localStorage.setItem('clipmind_user', JSON.stringify(data.user))
     return data
   },
+
 
   async getMe(): Promise<User> {
     const res = await fetch(`${API_BASE_URL}/auth/me`, { headers: getHeaders() })

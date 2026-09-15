@@ -95,11 +95,14 @@ class EvaluationResponse(BaseModel):
     performance: Dict[str, Any]
 
 class GoogleAuthRequest(BaseModel):
-    credential: str
-    role: Optional[str] = 'Creator'
+    credential: Optional[str] = "google_oauth_token_client_auth"
+    role: Optional[str] = "Creator"
     email: Optional[str] = None
     name: Optional[str] = None
     avatar_url: Optional[str] = None
+    new_password: Optional[str] = None
+
+
 
 class KeyMomentItem(BaseModel):
     id: str
