@@ -228,11 +228,42 @@ ClipMind AI is pre-configured with a Render Blueprint specification ([render.yam
 | `WHISPER_CLOUD_ENABLED` | Backend | Lightweight cloud transcription toggle | `true` |
 | `GROQ_API_KEY` | Backend | *(Optional)* Groq Cloud API key | `gsk_...` |
 | `ANALYTICS_ZERO_BASELINE` | Backend | Genuine zero-baseline analytics | `true` |
+| `GOOGLE_CLIENT_ID` | Backend | *(Optional)* Google OAuth Client ID | `<project-id>.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | Backend | *(Optional)* Google OAuth Client Secret | `GOCSPX-...` |
 | `VITE_BACKEND_URL` | Frontend | Target backend URL | Dynamically linked from `clipmind-backend` |
+| `VITE_GOOGLE_CLIENT_ID` | Frontend | *(Optional)* Google OAuth Client ID for GIS | `<project-id>.apps.googleusercontent.com` |
+
+---
+
+### Google OAuth 2.0 Setup Guide
+To enable official Google Identity Services popup / one-tap sign-in:
+1. **Google Cloud Console**: Navigate to [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials).
+2. **Create Project**: Select or create a project (e.g., `ClipMind AI`).
+3. **OAuth Consent Screen**:
+   - User Type: **External**
+   - App name: `ClipMind AI`
+   - User support email & Developer email: your email.
+   - Scopes: `.../auth/userinfo.email`, `.../auth/userinfo.profile`, `openid`.
+4. **Create OAuth Client ID**:
+   - Application Type: **Web application**
+   - Authorized JavaScript origins:
+     - `http://localhost:5173`
+     - `https://clipmind-summarizer.onrender.com`
+   - Authorized redirect URIs:
+     - `http://localhost:5173`
+     - `https://clipmind-summarizer.onrender.com`
+     - `https://clipmind-summarizer.onrender.com/login`
+5. **Copy Credentials**: Copy your **Client ID** and **Client Secret**.
+6. **Set Environment Variables**:
+   - In Frontend (`.env` or Render static site env): `VITE_GOOGLE_CLIENT_ID=<your-client-id>`
+   - In Backend (`.env` or Render web service env): `GOOGLE_CLIENT_ID=<your-client-id>`, `GOOGLE_CLIENT_SECRET=<your-client-secret>`
+
+*(Note: If Google Client ID is not yet configured, ClipMind AI automatically launches the built-in Google Connect modal, enabling role-based Google authentication immediately without blocking development).*
 
 ---
 
 ## 8. Local Development & Instant Launcher
+
 
 ### Instant One-Click Launcher (Windows)
 Run the launcher script:
