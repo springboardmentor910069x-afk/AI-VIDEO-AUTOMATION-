@@ -37,3 +37,12 @@ services:
         value: "true"
       - key: CORS_ORIGINS
         value: "*"
+      - key: GOOGLE_CLIENT_ID
+        sync: false # Set in Render Dashboard: Google Cloud OAuth Client ID
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false # Set in Render Dashboard: Google Cloud OAuth Client Secret
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false # Set in Render Dashboard: Google Cloud OAuth Client ID for frontend
+
+
+

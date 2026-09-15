@@ -126,38 +126,60 @@ async def google_login(req: GoogleAuthRequest):
     extracted_name = (req.name or "").strip()
     extracted_avatar = req.avatar_url
 
-    # If a real Google Identity Services JWT was provided, decode and verify with Google
-    if req.credential and "." in req.credential and req.credential != "google_oauth_token_client_auth":
-        try:
-            import urllib.request, json
-            verify_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={req.credential}"
-            v_req = urllib.request.Request(verify_url, headers={"User-Agent": "ClipMind-Auth/2.0"})
-            with urllib.request.urlopen(v_req, timeout=5) as resp:
-                if resp.status == 200:
-                    token_data = json.loads(resp.read().decode("utf-8"))
-                    if "email" in token_data:
-                        extracted_email = token_data["email"].strip().lower()
-                    if "name" in token_data and not extracted_name:
-                        extracted_name = token_data["name"].strip()
-                    if "picture" in token_data and not extracted_avatar:
-                        extracted_avatar = token_data["picture"].strip()
-        except Exception:
-            # Fallback to base64url payload extraction
+    # If a real Google Identity Services token was provided, decode and verify with Google
+    if req.credential and req.credential != "google_oauth_token_client_auth":
+        if "." in req.credential:
             try:
-                import base64, json
-                parts = req.credential.split(".")
-                if len(parts) >= 2:
-                    padding = "=" * (4 - len(parts[1]) % 4)
-                    payload_bytes = base64.urlsafe_b64decode(parts[1] + padding)
-                    payload = json.loads(payload_bytes.decode("utf-8"))
-                    if "email" in payload and not extracted_email:
-                        extracted_email = payload["email"].strip().lower()
-                    if "name" in payload and not extracted_name:
-                        extracted_name = payload["name"].strip()
-                    if "picture" in payload and not extracted_avatar:
-                        extracted_avatar = payload["picture"].strip()
+                import urllib.request, json
+                verify_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={req.credential}"
+                v_req = urllib.request.Request(verify_url, headers={"User-Agent": "ClipMind-Auth/2.0"})
+                with urllib.request.urlopen(v_req, timeout=5) as resp:
+                    if resp.status == 200:
+                        token_data = json.loads(resp.read().decode("utf-8"))
+                        if "email" in token_data:
+                            extracted_email = token_data["email"].strip().lower()
+                        if "name" in token_data and not extracted_name:
+                            extracted_name = token_data["name"].strip()
+                        if "picture" in token_data and not extracted_avatar:
+                            extracted_avatar = token_data["picture"].strip()
+            except Exception:
+                # Fallback to base64url payload extraction
+                try:
+                    import base64, json
+                    parts = req.credential.split(".")
+                    if len(parts) >= 2:
+                        padding = "=" * (4 - len(parts[1]) % 4)
+                        payload_bytes = base64.urlsafe_b64decode(parts[1] + padding)
+                        payload = json.loads(payload_bytes.decode("utf-8"))
+                        if "email" in payload and not extracted_email:
+                            extracted_email = payload["email"].strip().lower()
+                        if "name" in payload and not extracted_name:
+                            extracted_name = payload["name"].strip()
+                        if "picture" in payload and not extracted_avatar:
+                            extracted_avatar = payload["picture"].strip()
+                except Exception:
+                    pass
+        else:
+            # OAuth2 access token (e.g. from initTokenClient popup flow)
+            try:
+                import urllib.request, json
+                userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+                v_req = urllib.request.Request(userinfo_url, headers={
+                    "Authorization": f"Bearer {req.credential}",
+                    "User-Agent": "ClipMind-Auth/2.0"
+                })
+                with urllib.request.urlopen(v_req, timeout=5) as resp:
+                    if resp.status == 200:
+                        token_data = json.loads(resp.read().decode("utf-8"))
+                        if "email" in token_data:
+                            extracted_email = token_data["email"].strip().lower()
+                        if "name" in token_data and not extracted_name:
+                            extracted_name = token_data["name"].strip()
+                        if "picture" in token_data and not extracted_avatar:
+                            extracted_avatar = token_data["picture"].strip()
             except Exception:
                 pass
+
 
     if not extracted_email:
         raise HTTPException(

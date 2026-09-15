@@ -51,14 +51,17 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
     else navigate('/dashboard')
   }
 
+  const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || ''
+
+
   // Sync role to googleRole
   useEffect(() => {
     setGoogleRole(role)
   }, [role])
 
-  // Optional Google Identity Services (GIS) automatic initialization
+  // Google Identity Services (GIS) automatic initialization
   useEffect(() => {
-    const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID
+    const clientId = GOOGLE_CLIENT_ID
     if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
       try {
         (window as any).google.accounts.id.initialize({
@@ -127,8 +130,37 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   }
 
   const handleGoogleAuth = () => {
-    const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID
-    if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+    const clientId = GOOGLE_CLIENT_ID
+    // 1. Try modern Google OAuth2 Token Client popup dialog
+    if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+      try {
+        const client = (window as any).google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse?.access_token) {
+              setLoading(true)
+              setErrorMsg(null)
+              try {
+                const res = await api.loginWithGoogle({ credential: tokenResponse.access_token, role })
+                const userRole = (res.user?.role as Role) || role
+                localStorage.setItem('clipmind_active_role', userRole)
+                showToast(`Signed in with Google as ${userRole}!`, 'success')
+                redirectByRole(userRole)
+              } catch (err: any) {
+                setErrorMsg(err.message || 'Google authentication failed.')
+              } finally {
+                setLoading(false)
+              }
+            }
+          }
+        })
+        client.requestAccessToken()
+        return
+      } catch (err) {
+        console.log('Google token client notice:', err)
+      }
+    } else if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
       try {
         (window as any).google.accounts.id.prompt()
         return
@@ -136,12 +168,13 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         console.log('GIS prompt notice:', err)
       }
     }
-    // Launch Google Connect modal
+    // Fallback: Launch Google Connect modal
     setGoogleEmail(email ? email : '')
     setGoogleName(name ? name : (email ? email.split('@')[0] : ''))
     setGoogleRole(role)
     setGoogleModalOpen(true)
   }
+
 
   const handleGoogleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

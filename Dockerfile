@@ -19,7 +19,10 @@ RUN npm install --legacy-peer-deps
 # Copy frontend source code and compile production bundle
 COPY ["CLIPMIND AI/FRONTEND/", "./"]
 ENV VITE_BACKEND_URL=""
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 RUN npm run build
+
 
 # ------------------------------------------------------------------------------
 # Stage 2: Python Backend Dependency Builder
@@ -84,3 +87,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["python", "run.py"]
+
+
