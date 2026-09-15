@@ -226,11 +226,17 @@ export const api = {
     return data
   },
 
-  async loginWithGoogle(credential: string, role = 'Creator'): Promise<AuthResponse> {
+  async loginWithGoogle(
+    params: string | { credential?: string; email?: string; name?: string; avatar_url?: string; role?: string },
+    defaultRole = 'Creator'
+  ): Promise<AuthResponse> {
+    const payload = typeof params === 'string'
+      ? { credential: params, role: defaultRole }
+      : { role: defaultRole, ...params }
     const res = await fetch(`${API_BASE_URL}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential, role }),
+      body: JSON.stringify(payload),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))

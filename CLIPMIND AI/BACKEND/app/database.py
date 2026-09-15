@@ -1,3 +1,4 @@
+import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from sqlalchemy import create_engine
