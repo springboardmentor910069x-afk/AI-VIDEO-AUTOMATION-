@@ -240,13 +240,13 @@ class VideoService:
             return video
 
         # Fresh video: create record and dispatch 7-stage processing pipeline
-        # Google Drive cloud storage check
+        # Google Drive cloud storage check - auto-backup if Drive is connected for zero data loss
         storage_type = "local"
         drive_file_id = None
         drive_folder_id = None
         drive_web_link = None
 
-        if storage_target == "google_drive" and file_path and os.path.exists(file_path):
+        if file_path and os.path.exists(file_path) and not file_path.startswith("youtube://"):
             try:
                 from app.mongodb_models import Setting
                 from app.services.drive_storage import drive_storage
@@ -261,14 +261,19 @@ class VideoService:
                     drive_file_id = drive_res.get("id")
                     drive_folder_id = drive_res.get("folder_id")
                     drive_web_link = drive_res.get("webViewLink")
-                    logger.info(f"Video uploaded to Google Drive successfully: {drive_file_id}")
+                    logger.info(f"Video synced to Google Drive successfully: {drive_file_id}")
             except Exception as e:
-                logger.warning(f"Failed to upload to Google Drive: {e}, falling back to local storage")
+                logger.warning(f"Google Drive auto-sync note: {e}, using local disk path")
+
+        # Normalize stored path to relative forward-slash format to prevent cross-platform breakage
+        stored_file_path = file_path
+        if file_path and not file_path.startswith("youtube://"):
+            stored_file_path = f"uploads/{saved_filename}"
 
         video = Video(
             title=final_title,
             filename=saved_filename,
-            file_path=file_path,
+            file_path=stored_file_path,
             content_hash=content_hash,
             thumbnail_url=cover_thumb,
             thumbnail_path=cover_thumb,
@@ -310,7 +315,13 @@ class VideoService:
         try:
             return await Video.get(video_id)
         except Exception:
-            return await Video.find_one({"_id": video_id})
+            pass
+        try:
+            from bson import ObjectId
+            return await Video.find_one({"_id": ObjectId(video_id)})
+        except Exception:
+            pass
+        return await Video.find_one({"_id": video_id})
 
     async def list_videos(
         self,

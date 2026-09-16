@@ -9,44 +9,82 @@ import ErrorBoundary from './ErrorBoundary'
 type Role = 'Creator' | 'Learner' | 'Educator' | 'Admin'
 
 interface NavItem {
-  icon: string
+  iconKey: string
   label: string
   path: string
 }
 
+const renderNavIcon = (key: string, size = 17) => {
+  const props = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const
+  }
+
+  switch (key) {
+    case 'overview':
+      return <svg {...props}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    case 'upload':
+      return <svg {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    case 'videos':
+      return <svg {...props}><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+    case 'chatbot':
+      return <svg {...props}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    case 'bookmarks':
+      return <svg {...props}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+    case 'analytics':
+      return <svg {...props}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    case 'settings':
+      return <svg {...props}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    case 'study':
+      return <svg {...props}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    case 'lectures':
+      return <svg {...props}><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    case 'admin':
+      return <svg {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    default:
+      return <svg {...props}><circle cx="12" cy="12" r="10"/></svg>
+  }
+}
+
 const ROLE_NAV_ITEMS: Record<Role, NavItem[]> = {
   Creator: [
-    { icon: '🏠', label: 'Overview', path: '/dashboard' },
-    { icon: '📤', label: 'Upload Studio', path: '/dashboard/upload' },
-    { icon: '🎥', label: 'Video Library', path: '/dashboard/videos' },
-    { icon: '🤖', label: 'AI Chatbot', path: '/dashboard/learner/study' },
-    { icon: '🔖', label: 'Bookmarks', path: '/dashboard/bookmarks' },
-    { icon: '📊', label: 'Analytics', path: '/dashboard/analytics' },
-    { icon: '⚙️', label: 'Settings', path: '/dashboard/settings' },
+    { iconKey: 'overview', label: 'Overview', path: '/dashboard' },
+    { iconKey: 'upload', label: 'Upload Studio', path: '/dashboard/upload' },
+    { iconKey: 'videos', label: 'Video Library', path: '/dashboard/videos' },
+    { iconKey: 'chatbot', label: 'AI Chatbot', path: '/dashboard/learner/study' },
+    { iconKey: 'bookmarks', label: 'Bookmarks', path: '/dashboard/bookmarks' },
+    { iconKey: 'analytics', label: 'Analytics', path: '/dashboard/analytics' },
+    { iconKey: 'settings', label: 'Settings', path: '/dashboard/settings' },
   ],
   Learner: [
-    { icon: '🏠', label: 'Student Dashboard', path: '/dashboard/learner' },
-    { icon: '🎓', label: 'AI Study Room', path: '/dashboard/learner/study' },
-    { icon: '📤', label: 'Upload Video', path: '/dashboard/upload' },
-    { icon: '🎥', label: 'My Lectures', path: '/dashboard/videos' },
-    { icon: '🔖', label: 'Study Notes', path: '/dashboard/bookmarks' },
-    { icon: '📊', label: 'Learning Stats', path: '/dashboard/analytics' },
-    { icon: '⚙️', label: 'Settings', path: '/dashboard/settings' },
+    { iconKey: 'overview', label: 'Student Dashboard', path: '/dashboard/learner' },
+    { iconKey: 'study', label: 'AI Study Room', path: '/dashboard/learner/study' },
+    { iconKey: 'upload', label: 'Upload Video', path: '/dashboard/upload' },
+    { iconKey: 'videos', label: 'My Lectures', path: '/dashboard/videos' },
+    { iconKey: 'bookmarks', label: 'Study Notes', path: '/dashboard/bookmarks' },
+    { iconKey: 'analytics', label: 'Learning Stats', path: '/dashboard/analytics' },
+    { iconKey: 'settings', label: 'Settings', path: '/dashboard/settings' },
   ],
   Educator: [
-    { icon: '✏️', label: 'Lecture Studio', path: '/dashboard/educator/lectures' },
-    { icon: '📤', label: 'Upload Lecture', path: '/dashboard/upload' },
-    { icon: '🎥', label: 'Course Content', path: '/dashboard/videos' },
-    { icon: '🤖', label: 'AI Chatbot', path: '/dashboard/learner/study' },
-    { icon: '📊', label: 'Student Analytics', path: '/dashboard/analytics' },
-    { icon: '⚙️', label: 'Settings', path: '/dashboard/settings' },
+    { iconKey: 'lectures', label: 'Lecture Studio', path: '/dashboard/educator/lectures' },
+    { iconKey: 'upload', label: 'Upload Lecture', path: '/dashboard/upload' },
+    { iconKey: 'videos', label: 'Course Content', path: '/dashboard/videos' },
+    { iconKey: 'chatbot', label: 'AI Chatbot', path: '/dashboard/learner/study' },
+    { iconKey: 'analytics', label: 'Student Analytics', path: '/dashboard/analytics' },
+    { iconKey: 'settings', label: 'Settings', path: '/dashboard/settings' },
   ],
   Admin: [
-    { icon: '🛡️', label: 'Admin Console', path: '/dashboard/admin' },
-    { icon: '🎥', label: 'Video Catalog', path: '/dashboard/videos' },
-    { icon: '🤖', label: 'AI Chatbot', path: '/dashboard/learner/study' },
-    { icon: '📊', label: 'System Analytics', path: '/dashboard/analytics' },
-    { icon: '⚙️', label: 'Settings', path: '/dashboard/settings' },
+    { iconKey: 'admin', label: 'Admin Console', path: '/dashboard/admin' },
+    { iconKey: 'videos', label: 'Video Catalog', path: '/dashboard/videos' },
+    { iconKey: 'chatbot', label: 'AI Chatbot', path: '/dashboard/learner/study' },
+    { iconKey: 'analytics', label: 'System Analytics', path: '/dashboard/analytics' },
+    { iconKey: 'settings', label: 'Settings', path: '/dashboard/settings' },
   ],
 }
 
@@ -416,7 +454,9 @@ export default function DashboardShell() {
                 onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
                 onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)' }}
               >
-                <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {renderNavIcon(item.iconKey)}
+                </span>
                 {(!sidebarCollapsed || isMobile) && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
               </button>
             )
@@ -593,12 +633,11 @@ export default function DashboardShell() {
                     fontSize: 13,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 5,
+                    gap: 6,
                     whiteSpace: 'nowrap',
-                    background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo))'
                   }}
                 >
-                  <span style={{ fontSize: 14 }}>🎓</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                   {!isMobile && <span>Study Room</span>}
                 </button>
               </div>
@@ -615,10 +654,9 @@ export default function DashboardShell() {
                   alignItems: 'center',
                   gap: 6,
                   whiteSpace: 'nowrap',
-                  background: 'linear-gradient(135deg, var(--accent-rose), #9333ea)'
                 }}
               >
-                <span style={{ fontSize: 14 }}>🛡️</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 {!isMobile && <span>Admin Console</span>}
               </button>
             ) : (

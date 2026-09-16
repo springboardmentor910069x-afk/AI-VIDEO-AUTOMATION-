@@ -57,6 +57,7 @@ README.md
 # Uploads (will be mounted as volume)
 uploads/*
 !uploads/.gitkeep
+!uploads/sample_lecture.mp4
 
 # Logs
 *.log

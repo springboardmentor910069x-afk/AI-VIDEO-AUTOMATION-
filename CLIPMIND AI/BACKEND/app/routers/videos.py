@@ -396,19 +396,10 @@ async def share_video(
 
 @router.get("/{video_id}/stream")
 async def stream_video(video_id: str, request: Request):
-    video = None
-    try:
-        video = await Video.get(video_id)
-    except Exception:
-        pass
-    if not video:
-        try:
-            video = await Video.find_one({"_id": video_id})
-        except Exception:
-            pass
+    video = await video_service.get_video(video_id)
 
-    # 1. If stored in Google Drive, stream from Google Drive API with Range headers (HTTP 206)
-    if video and getattr(video, "storage_type", "") == "google_drive" and getattr(video, "drive_file_id", None):
+    # 1. If stored in Google Drive (or synced as cloud backup), stream from Google Drive API with Range headers (HTTP 206)
+    if video and getattr(video, "drive_file_id", None):
         try:
             from app.services.drive_storage import drive_storage
             from app.mongodb_models import Setting
@@ -426,29 +417,49 @@ async def stream_video(video_id: str, request: Request):
         except Exception as e:
             print(f"[WARN] Failed to stream from Google Drive: {e}, falling back to local/sample")
 
-    # 2. Resolve video media file path on local disk
+    # 2. Resolve video media file path on local disk across Windows and Linux
     target_path = None
-    fallback_sample = os.path.join(settings.UPLOAD_DIR, "sample_lecture.mp4")
+    clean_filename = ""
+    if video:
+        if video.filename:
+            clean_filename = video.filename.replace("\\", "/").split("/")[-1]
+        elif video.file_path and not video.file_path.startswith("youtube://"):
+            clean_filename = video.file_path.replace("\\", "/").split("/")[-1]
 
-    if video and video.file_path:
-        candidates = [
-            video.file_path,
-            os.path.join(settings.UPLOAD_DIR, os.path.basename(video.file_path)),
-            os.path.join(settings.BASE_DIR, video.file_path) if not os.path.isabs(video.file_path) else None,
-            os.path.join(settings.UPLOAD_DIR, video.filename) if video.filename else None,
-            os.path.join(settings.BASE_DIR, "uploads", video.filename) if video.filename else None
+    candidates = []
+    if clean_filename:
+        candidates.extend([
+            os.path.join(settings.UPLOAD_DIR, clean_filename),
+            os.path.join(settings.BASE_DIR, "uploads", clean_filename),
+            os.path.join(settings.BASE_DIR, "app", "uploads", clean_filename),
+            os.path.join(settings.BASE_DIR, "app", "assets", clean_filename),
+            os.path.join(settings.BASE_DIR, clean_filename),
+        ])
+    if video and video.file_path and not video.file_path.startswith("youtube://"):
+        candidates.insert(0, video.file_path)
+        if not os.path.isabs(video.file_path):
+            candidates.append(os.path.join(settings.BASE_DIR, video.file_path))
+
+    for c in candidates:
+        if c and os.path.exists(c) and os.path.getsize(c) > 500:
+            target_path = c
+            break
+
+    # If file not found on disk (e.g. wiped after container restart), stream guaranteed fallback sample MP4
+    if not target_path or not os.path.exists(target_path):
+        fallback_candidates = [
+            os.path.join(settings.BASE_DIR, "app", "assets", "sample_lecture.mp4"),
+            os.path.join(settings.UPLOAD_DIR, "sample_lecture.mp4"),
+            os.path.join(settings.BASE_DIR, "uploads", "sample_lecture.mp4"),
+            os.path.join(settings.BASE_DIR, "assets", "sample_lecture.mp4"),
         ]
-        for c in candidates:
-            if c and os.path.exists(c) and os.path.getsize(c) > 500:
-                target_path = c
+        for fb in fallback_candidates:
+            if fb and os.path.exists(fb) and os.path.getsize(fb) > 500:
+                target_path = fb
                 break
 
-    # If file not found on disk (e.g. wiped after container restart), stream fallback sample MP4
     if not target_path or not os.path.exists(target_path):
-        if os.path.exists(fallback_sample):
-            target_path = fallback_sample
-        else:
-            raise HTTPException(status_code=404, detail="Video media file not available on disk")
+        raise HTTPException(status_code=404, detail="Video media file not available on disk or cloud")
 
     # 3. HTTP 206 Partial Content Range Streaming for HTML5 <video> seeking
     file_size = os.path.getsize(target_path)

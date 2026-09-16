@@ -49,7 +49,11 @@ export default function UploadStudio() {
 
   useEffect(() => {
     api.getDriveStorageStatus().then(status => {
-      if (status.storage_target) setStorageTarget(status.storage_target)
+      if (status.storage_target) {
+        setStorageTarget(status.storage_target)
+      } else if (status.connected) {
+        setStorageTarget('google_drive')
+      }
       setDriveConnected(Boolean(status.connected))
     }).catch(() => {})
   }, [])
@@ -455,13 +459,9 @@ export default function UploadStudio() {
 
             {/* Storage Target Selector */}
             <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  Storage Destination
-                </span>
-                <span style={{ fontSize: 11, color: driveConnected ? 'var(--accent-emerald, #10b981)' : 'var(--text-secondary)' }}>
-                  {driveConnected ? '● Google Drive Connected (15 GB)' : '○ Drive not connected'}
-                </span>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                Storage Destination
+                {driveConnected && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: 'rgba(99,102,241,0.15)', color: 'var(--accent-indigo)', fontWeight: 600 }}>Zero-Loss Auto-Backup Active</span>}
               </div>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <button
@@ -469,14 +469,15 @@ export default function UploadStudio() {
                   onClick={() => setStorageTarget('local')}
                   style={{
                     padding: '8px 16px', borderRadius: 10, border: '1px solid', cursor: 'pointer',
-                    fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+                    fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 7,
                     borderColor: storageTarget === 'local' ? 'var(--accent-indigo)' : 'var(--border-glass)',
                     background: storageTarget === 'local' ? 'var(--accent-indigo-dim)' : 'var(--bg-surface)',
                     color: storageTarget === 'local' ? 'var(--accent-indigo)' : 'var(--text-secondary)',
                     fontFamily: 'inherit'
                   }}
                 >
-                  <span>🖥️</span> Local Server Storage
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  Local Server Storage
                 </button>
                 <button
                   type="button"
@@ -490,14 +491,15 @@ export default function UploadStudio() {
                   }}
                   style={{
                     padding: '8px 16px', borderRadius: 10, border: '1px solid', cursor: 'pointer',
-                    fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+                    fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 7,
                     borderColor: storageTarget === 'google_drive' ? 'var(--accent-indigo)' : 'var(--border-glass)',
                     background: storageTarget === 'google_drive' ? 'var(--accent-indigo-dim)' : 'var(--bg-surface)',
                     color: storageTarget === 'google_drive' ? 'var(--accent-indigo)' : 'var(--text-secondary)',
                     fontFamily: 'inherit'
                   }}
                 >
-                  <span>☁️</span> Google Drive Cloud {driveConnected && '✓'}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                  Google Drive Cloud {driveConnected && '✓'}
                 </button>
               </div>
             </div>
