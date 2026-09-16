@@ -9,96 +9,108 @@
 
 ---
 
-### Slide 1: Title & Executive Introduction
-> *"Respected evaluators, faculty guides, and fellow engineers, good morning/afternoon. My name is **Adabala Venkata Thrinadh**, a B.Tech Computer Science and Engineering student from **GMR Institute of Technology, Rajam**.*  
+### Slide 1: Title & Executive Overview
+> *"Respected evaluators, faculty mentors, and fellow engineers, good morning/afternoon. My name is **Adabala Venkata Thrinadh**, a B.Tech Computer Science and Engineering student from **GMR Institute of Technology, Rajam**.*  
 >  
-> *Today, I am excited to present **ClipMind AI: A Video Summarization and Key Moments Detection Platform**, engineered under the **Infosys Springboard AI & Full-Stack Cloud Internship**.*  
+> *Today, I am honored to present **ClipMind AI: A Video Summarization and Key Moments Detection Platform**, engineered under the **Infosys Springboard AI & Full-Stack Cloud Internship**.*  
 >  
-> *In our digital world, video is the dominant medium for lectures, conferences, and technical training. However, video remains an inherently linear, continuous temporal medium. Our mission with ClipMind AI is to transform passive video into structured, searchable, and interactive knowledge assets with persistent zero-loss cloud storage and interactive concept mind maps."*
+> *In today's digital learning environment, video accounts for over 80% of web traffic. However, video remains an inherently linear, continuous medium. Our mission with ClipMind AI is to transform passive video recordings into structured, searchable, and interactive knowledge assets with persistent zero-loss cloud storage and interactive concept mind maps."*
 
 ---
 
-### Slide 2: Industry Bottleneck vs. ClipMind AI Architectural Solution
-> *"Looking at Slide 2, we contrast the traditional bottlenecks of video consumption with our cognitive engineering solution:*  
+### Slide 2: Problem Statement & Industry Motivation
+> *"On Slide 2, we highlight the four critical industry bottlenecks in video learning:*  
+> - **Linear Scrubbing Friction:** Manually scrubbing through a 60-minute lecture to locate a 2-minute formula wastes up to 80% of study time.  
+> - **Absence of In-Video Semantic Search:** Standard media players cannot search through spoken dialogue, mathematical definitions, or visual slide transitions.  
+> - **Ephemeral Cloud Media Loss:** Cloud containers on hosts like Render or AWS ECS wipe local disks during restarts, causing uploaded media to be lost.  
+> - **Passive Cognitive Decay:** Passive video consumption leads to rapid memory degradation without active recall and conceptual synthesis.  
 >  
-> *On the left, the primary friction is linear scrubbing—spending an hour scrubbing through a lecture just to find a two-minute theorem. Furthermore, standard players offer zero in-video search, passive watching leads to rapid cognitive decay, and cloud container restarts wipe uploaded videos.*  
->  
-> *On the right is ClipMind AI's solution: we provide sub-second word-level seeking powered by Whisper, dual-tier extractive and abstractive summaries, automated practice quizzes, and zero-loss cloud storage backed by Google Drive with sub-20 millisecond HTTP 206 streaming."*
+> *Opposite these bottlenecks, ClipMind AI introduces sub-second word-level seeking, dual-tier summarization, Google Drive zero-loss cloud storage with sub-20ms streaming, and active recall learning."*
 
 ---
 
-### Slide 3: System Architecture Blueprint (5-Layer Modular Flow)
-> *"On Slide 3, you can see our decoupled, five-layer system architecture:*  
-> - At the **Presentation Layer**, we engineered a human-crafted dark/light interface with React 19, TypeScript, and Vite, featuring custom vector SVG icons and responsive mobile-to-desktop layouts.  
-> - At the **API Gateway**, FastAPI coordinates JWT security, Google Identity Services (GIS), and our custom HTTP 206 byte-range streaming proxy.  
-> - Behind the gateway, our **Asynchronous AI Workers** demux audio to 16kHz mono WAV via FFmpeg, transcribe via Whisper, summarize with LexRank and LLMs, and detect slide cuts using OpenCV.  
-> - For **Data Persistence**, we employ a polyglot architecture: relational SQL for ACID user authentication and MongoDB Atlas for hierarchical video documents.  
-> - Finally, our **Cloud Storage Layer** interfaces with Google Drive API v3 to provide 15 gigabytes of free persistent personal storage per user."*
+### Slide 3: Proposed Solution & Novelty (6 Architectural Pillars)
+> *"Slide 3 presents our architectural novelty matrix—six foundational engineering pillars:*  
+> 1. **Google Drive 15GB Cloud Storage & HTTP 206 Streaming:** Direct OAuth 2.0 GIS token exchange gives every user 15 GB of persistent personal cloud storage with sub-20ms byte-range seeking.  
+> 2. **Universal Pipeline Cloud Fallback:** If local container disk is reset, our pipeline automatically downloads media from Google Drive into a high-speed working buffer for seamless 7-stage processing.  
+> 3. **Interactive AI Concept Mind Maps:** Synthesizes lecture transcripts into a hierarchical visual knowledge graph with click-to-seek video synchronization.  
+> 4. **Multimodal Video Intelligence Engine:** Integrates OpenAI Whisper ASR (4.18% WER) with OpenCV 1 fps visual frame differencing for slide cut detection.  
+> 5. **Dual-Tier NLP Summarization:** Combines LexRank graph centrality (<1.5s) for instant TL;DRs with generative LLMs for modular chapters and quizzes.  
+> 6. **5-Tab Educator Studio & Active Recall Suite:** An authoring workspace providing transcript editing, chapter structuring, quiz creation, flashcards, and student preview."*
 
 ---
 
-### Slide 4: End-to-End 7-Stage Video Processing Pipeline
-> *"Slide 4 diagrams our 7-stage processing workflow, with real-time WebSocket telemetry streamed directly to the frontend:*  
-> - **Stage 1 (15%)**: Metadata validation, MIME verification, and probe analysis.  
-> - **Stage 2 (35%)**: High-speed audio extraction to 16kHz mono 16-bit PCM WAV.  
-> - **Stage 3 (65%)**: Speech recognition using Whisper, generating word-level timestamps.  
-> - **Stage 4 (75%)**: Dual-tier summarization combining LexRank graph centrality and LLM chapter structuring.  
-> - **Stage 5 (85%)**: OpenCV computer vision detecting slide transitions at 1 frame per second.  
-> - **Stage 6 (90%)**: Concept mind map synthesis, structuring lecture relationships.  
-> - **Stage 7 (100%)**: Final persistence join in MongoDB and instant HTTP 206 stream readiness."*
+### Slide 4: Architecture Structural Flow & Layer Interconnections
+> *"Slide 4 diagrams our five-layer decoupled, service-oriented architecture:*  
+> - **Layer 1: Frontend Client Presentation:** Built with React 19, TypeScript 5.5, and Vite 8.2, featuring a bespoke engineering UI and SVG iconography.  
+> - **Layer 2: API Gateway & Security:** FastAPI ASGI server coordinating OAuth2 JWT authentication, Google Identity Services, declarative RBAC guards, and HTTP 206 streaming.  
+> - **Layer 3: Asynchronous Media & AI Engine:** FFmpeg demuxes audio to 16kHz mono WAV, Whisper transcribes with word timestamps, LexRank/LLMs summarize, and OpenCV detects scene cuts.  
+> - **Layer 4: Polyglot Persistence:** SQLite/PostgreSQL provides ACID compliance for user authentication, while MongoDB Atlas stores unstructured intelligence documents.  
+> - **Layer 5: Zero-Loss Cloud Storage:** Interfaces with Google Drive API v3 and high-speed temporary buffers to guarantee zero data loss."*
 
 ---
 
-### Slide 5: Zero-Loss Cloud Architecture: Google Drive & HTTP 206 Streaming
-> *"Slide 5 highlights our zero-loss cloud storage innovation:*  
->  
-> *When deploying on modern cloud containers like Render or AWS ECS, local disks are ephemeral and wiped clean whenever the container restarts or goes to sleep.*  
->  
-> *To solve this permanently, ClipMind AI connects directly to the user's personal Google Drive via OAuth. When a video is uploaded, our backend automatically uploads a backup copy to Google Drive in the background. Even if Render restarts and purges the local disk, our custom HTTP 206 streaming proxy continues streaming the video smoothly with sub-20ms seeking. If the AI pipeline needs to re-process the video, it automatically streams the media from Google Drive into a high-speed buffer. The user never experiences missing videos."*
+### Slide 5: End-to-End Processing Workflow (Complete Data Lifecycle)
+> *"Slide 5 traces the complete end-to-end data lifecycle across five operational phases:*  
+> - **Phase 1: Ingestion Sources:** Supports local MP4, MOV, MKV, WebM uploads, YouTube URL ingestion via yt-dlp, or Google Drive cloud media.  
+> - **Phase 2: Gateway & Cloud Storage:** Validates MIME types, assigns UUIDs, triggers background auto-backup to Google Drive, and opens WebSocket connections.  
+> - **Phase 3: Multimodal AI Inference:** Sequentially extracts 16kHz WAV audio, transcribes via Whisper, extracts LexRank and LLM chapters, and calculates OpenCV HSV histograms.  
+> - **Phase 4: Persistence & Delivery:** Writes structured intelligence to MongoDB Atlas, marks video completed, and configures the HTTP 206 byte-range proxy.  
+> - **Phase 5: Role Workspaces:** Dispatches tailored views to Content Creators, Learners, Educators, and Administrators."*
 
 ---
 
-### Slide 6: Dual-Tier NLP Summarization & Interactive AI Concept Mind Maps
-> *"On Slide 6, we showcase our dual-tier NLP summarization and our interactive Concept Mind Map:*  
->  
-> *Tier 1 uses LexRank graph centrality to compute sentence similarities locally in under 1.5 seconds without incurring LLM API costs. Tier 2 uses generative LLMs to synthesize structured chapters, takeaways, and quiz questions.*  
->  
-> *Furthermore, ClipMind AI synthesizes these chapters into an interactive visual Concept Mind Map. Students can explore an interactive SVG canvas showing the central topic, core modules, and sub-concepts. Clicking any node jumps the video player immediately to that exact timestamp, uniting visual spatial thinking with temporal video playback."*
+### Slide 6: Detailed 7-Stage Video Processing Pipeline
+> *"Slide 6 provides granular detail on our 7-stage processing pipeline with sub-second WebSocket telemetry:*  
+> - **Stage 1 (15% - Ingestion & Probe):** Validates MIME types and stages media in working buffers.  
+> - **Stage 2 (35% - Media Demuxing):** FFmpeg converts video audio to 16kHz mono 16-bit PCM WAV.  
+> - **Stage 3 (65% - Whisper Speech-to-Text):** Generates word-level timestamps across 80-channel Log-Mel spectrograms.  
+> - **Stage 4 (75% - Dual-Tier Summarization):** LexRank graph centrality produces instant TL;DR while LLMs synthesize chapters.  
+> - **Stage 5 (85% - OpenCV Vision Cuts):** Detects slide transitions and visual shifts at 1 fps, saving WebP thumbnails.  
+> - **Stage 6 (90% - Concept Mind Map):** Structures lecture concepts into a hierarchical knowledge tree.  
+> - **Stage 7 (100% - Persistence & HTTP 206):** Commits documents to MongoDB Atlas and activates sub-20ms seeking playback."*
 
 ---
 
-### Slide 7: Multi-Persona Role-Based Access Control (RBAC) & Educator Studio
-> *"Slide 7 illustrates our four tailored stakeholder personas:*  
-> - **Content Creators**: Ingest videos, monitor live progress, and export comprehensive study packages in PDF, DOCX, TXT, SRT, and VTT.  
-> - **Learners**: Enjoy synchronized playback with auto-scrolling transcripts, click-to-seek, and active recall modules.  
-> - **Educators**: Have access to our 5-Tab Authoring Studio to edit transcripts, adjust speaker diarization tags, organize modular curriculum chapters, author quizzes and flashcards, and inspect a live student preview.  
-> - **Administrators**: Enjoy complete platform governance, user management, 50+ event audit logging, and cache maintenance."*
+### Slide 7: Milestone-Wise Technical Implementation Roadmap (Weeks 1–8)
+> *"Slide 7 showcases our 8-week engineering lifecycle, executed with 100% adherence to the Infosys Springboard Specification:*  
+> - **Milestone 1 (Weeks 1 & 2):** Architecture, Polyglot Database, Salted Bcrypt Auth, and Chunked Video Ingestion.  
+> - **Milestone 2 (Weeks 3 & 4):** OpenAI Whisper STT, Sub-Second Word Timestamps, LexRank Extractive Summarizer, and LLM Chapters.  
+> - **Milestone 3 (Weeks 5 & 6):** OpenCV Scene Cuts, 5-Tab Educator Studio, Learner Study Room, Multi-Format Exports, and WebSocket Telemetry.  
+> - **Milestone 4 (Weeks 7 & 8):** Google Drive 15GB Cloud Integration, HTTP 206 Range Proxy, Interactive Concept Mind Maps, Docker Containerization, and 100% Test Pass Rate."*
 
 ---
 
-### Slide 8: Interactive Active Recall & Spaced Repetition Learning Suite
-> *"On Slide 8, we present our active recall learning suite, engineered to eliminate cognitive decay:*  
->  
-> *First, our synchronized video player aligns every word to sub-second timestamps with auto-scrolling and click-to-seek.  
-> Second, our auto-graded quizzes test comprehension immediately after watching, providing instant emerald and rose indicators with pedagogical explanations.  
-> Third, our 3D spaced-repetition flashcards allow students to flip cards between concepts and definitions with timestamp synchronization for contextual review."*
+### Slide 8: Multi-Persona Role-Based Access Control (RBAC) & Educator Studio
+> *"Slide 8 highlights our four dedicated stakeholder personas and our Educator Studio:*  
+> - **Content Creators:** Manage video libraries, monitor AI processing, view analytics, and export packages in PDF, DOCX, TXT, SRT, and VTT.  
+> - **Learners:** Benefit from synchronized playback with auto-scrolling transcripts, click-to-seek, auto-graded quizzes, and 3D flip flashcards.  
+> - **Educators:** Utilize our **5-Tab Authoring Studio** to:  
+>   - *Tab 1:* Edit transcripts and adjust speaker diarization tags.  
+>   - *Tab 2:* Organize modular curriculum chapters and time bounds.  
+>   - *Tab 3:* Author interactive quizzes with answer keys and explanations.  
+>   - *Tab 4:* Create active recall flashcard decks.  
+>   - *Tab 5:* Test in a WYSIWYG Student Preview mode before publishing.  
+> - **Administrators:** Oversee user governance, role privileges, 50+ event audit logs, and one-click cache maintenance."*
 
 ---
 
 ### Slide 9: Quantitative Benchmarks, Telemetry & Performance Evaluation
-> *"Slide 9 summarizes our empirical benchmarks and quantitative telemetry:*  
-> - **4.18% Word Error Rate (WER)**, translating to 95.82% speech recognition accuracy.  
-> - **46.8% ROUGE-1 and 42.1% ROUGE-L** scores in summarization, verifying strong alignment with human lecture notes.  
-> - **92.4% Precision and 89.6% Recall** in OpenCV visual slide cut detection.  
-> - **2.6× real-time processing acceleration**, processing an hour of video in just 2.6 minutes.  
-> - **Sub-20 millisecond seek latency** through HTTP 206 chunked streaming.  
-> - **100% test pass rate** across our comprehensive end-to-end verification suite."*
+> *"Slide 9 presents our verified empirical benchmarks:*  
+> - **4.18% Word Error Rate (WER)** with Whisper STT (95.82% speech recognition accuracy).  
+> - **46.8% ROUGE-1 and 42.1% ROUGE-L** summarization scores capturing human-level core topics.  
+> - **92.4% Precision** in OpenCV visual presentation slide transition detection.  
+> - **2.6× Real-Time Speedup**, transcribing and analyzing an hour of lecture video in just 2.6 minutes.  
+> - **< 20ms Seek Latency** via our custom HTTP 206 Partial Content video streaming proxy.  
+> - **100% Automated Test Pass Rate** across all 28/28 end-to-end integration tests."*
 
 ---
 
 ### Slide 10: Conclusion, Technical Stack & Operational Readiness
-> *"To conclude on Slide 10, ClipMind AI is a production-ready, enterprise-grade video intelligence platform that 100% fulfills and exceeds the Infosys Springboard Project Specification.*  
+> *"To conclude on Slide 10, ClipMind AI delivers an enterprise-grade, production-ready solution that transforms video learning:*  
+> - Fully containerized with multi-stage Dockerfiles and docker-compose.  
+> - Eliminates video data loss permanently through Google Drive cloud integration.  
+> - Combines acoustic speech recognition, natural language processing, computer vision, and knowledge graphs into a unified reactive platform.  
 >  
-> *Our technical stack brings together React 19, FastAPI, OpenAI Whisper, OpenCV, MongoDB Atlas, Google Drive API, and Docker multi-stage containerization.*  
->  
-> *Thank you very much for your time and attention. I am now ready for our live platform demonstration and your questions."*
+> *Thank you very much for your time and guidance. I am now ready to present our live application walkthrough and answer your questions."*
+
