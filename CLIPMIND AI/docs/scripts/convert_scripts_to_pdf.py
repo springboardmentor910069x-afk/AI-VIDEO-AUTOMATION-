@@ -52,8 +52,13 @@ class ScriptNumberedCanvas(canvas.Canvas):
 
 def md_inline_to_reportlab(text):
     text = html.escape(text)
-    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    text = re.sub(r'(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)', r'<i>\1</i>', text)
+    # Handle bold-italic ***text*** first
+    text = re.sub(r'\*\*\*(.+?)\*\*\*', r'<b><i>\1</i></b>', text)
+    # Handle bold **text**
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+    # Handle italic *text* (avoiding match across multiple lines or tags)
+    text = re.sub(r'(?<!\*)\*([^\*\n<]+?)\*(?!\*)', r'<i>\1</i>', text)
+    # Inline code
     text = re.sub(r'`(.*?)`', r'<font name="Courier" color="#B91C1C">\1</font>', text)
     text = text.replace(r'\|', '|').replace(r'\_', '_')
     return text
@@ -87,6 +92,25 @@ def parse_script_markdown(md_content):
                 "lang": lang,
                 "content": "\n".join(code_lines)
             })
+            continue
+
+        # Table
+        if stripped.startswith("|") and stripped.endswith("|"):
+            table_lines = []
+            while i < n and lines[i].strip().startswith("|") and lines[i].strip().endswith("|"):
+                table_lines.append(lines[i].strip())
+                i += 1
+            rows = []
+            for t_line in table_lines:
+                cells = [c.strip() for c in t_line.split("|")[1:-1]]
+                if all(re.match(r'^:?-+:?$', c) for c in cells if c):
+                    continue
+                rows.append(cells)
+            if rows:
+                blocks.append({
+                    "type": "table",
+                    "rows": rows
+                })
             continue
             
         # Blockquote / Narration quote
@@ -158,6 +182,7 @@ def parse_script_markdown(md_content):
             next_strip = next_line.strip()
             if (not next_strip or 
                 next_strip.startswith("```") or 
+                (next_strip.startswith("|") and next_strip.endswith("|")) or
                 next_strip.startswith(">") or
                 re.match(r'^-{3,}$', next_strip) or
                 re.match(r'^(#{1,6})\s+', next_strip) or
@@ -264,6 +289,22 @@ def generate_script_pdf(blocks, output_path, title_header="ClipMind AI Script"):
         spaceBefore=2,
         spaceAfter=2
     )
+    table_header_style = ParagraphStyle(
+        'ScriptTableHead',
+        parent=body_style,
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10,
+        textColor=colors.white
+    )
+    table_body_style = ParagraphStyle(
+        'ScriptTableBody',
+        parent=body_style,
+        fontName='Helvetica',
+        fontSize=7.5,
+        leading=9.5,
+        textColor=colors.HexColor('#1E293B')
+    )
 
     story = []
 
@@ -284,18 +325,60 @@ def generate_script_pdf(blocks, output_path, title_header="ClipMind AI Script"):
                 
         elif b_type == "paragraph":
             story.append(Paragraph(md_inline_to_reportlab(block["text"]), body_style))
+
+        elif b_type == "table":
+            rows = block["rows"]
+            if not rows:
+                continue
+            table_data = []
+            num_cols = max(len(r) for r in rows)
+            for r_idx, row in enumerate(rows):
+                row_paras = []
+                for c_idx in range(num_cols):
+                    cell_text = row[c_idx] if c_idx < len(row) else ""
+                    if r_idx == 0:
+                        p = Paragraph(f"<b>{md_inline_to_reportlab(cell_text)}</b>", table_header_style)
+                    else:
+                        p = Paragraph(md_inline_to_reportlab(cell_text), table_body_style)
+                    row_paras.append(p)
+                table_data.append(row_paras)
+
+            # Proportional widths
+            total_width = 540
+            if num_cols == 5:
+                col_widths = [75, 110, 85, 200, 70]
+            else:
+                col_widths = [total_width / num_cols] * num_cols
+
+            t = Table(table_data, colWidths=col_widths)
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#FFFFFF'), colors.HexColor('#F8FAFC')]),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ('LEFTPADDING', (0, 0), (-1, -1), 5),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+            ]))
+            story.append(Spacer(1, 3))
+            story.append(t)
+            story.append(Spacer(1, 5))
             
         elif b_type == "quote":
             # Render spoken narration in a styled callout box table
             clean_q = block["text"].strip()
-            if clean_q.startswith('"*') and clean_q.endswith('*"'):
-                clean_q = clean_q[2:-2].strip()
-            elif clean_q.startswith('*') and clean_q.endswith('*'):
-                clean_q = clean_q[1:-1].strip()
-            elif clean_q.startswith('"') and clean_q.endswith('"'):
-                clean_q = clean_q[1:-1].strip()
+            # Strip enclosing quotes or asterisks if any
+            for _ in range(2):
+                clean_q = clean_q.strip()
+                if clean_q.startswith('"') and clean_q.endswith('"'):
+                    clean_q = clean_q[1:-1].strip()
+                elif clean_q.startswith('*') and clean_q.endswith('*'):
+                    clean_q = clean_q[1:-1].strip()
+                elif clean_q.startswith('“') and clean_q.endswith('”'):
+                    clean_q = clean_q[1:-1].strip()
 
-            p_q = Paragraph(f"<b>Verbal Narration:</b><br/><i>\"{md_inline_to_reportlab(clean_q)}\"</i>", quote_style)
+            p_q = Paragraph(f"<b>Verbal Narration:</b><br/>\"{md_inline_to_reportlab(clean_q)}\"", quote_style)
             tbl = Table([[p_q]], colWidths=[540])
             tbl.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F8FAFC')),
@@ -346,6 +429,7 @@ def convert_all_scripts():
         ("PPT_EXPLANATION_SCRIPT.md", "PPT_EXPLANATION_SCRIPT.pdf", "ClipMind AI — 10-Slide Narration Script"),
         ("PROJECT_DEMO_EXPLANATION_SCRIPT.md", "PROJECT_DEMO_EXPLANATION_SCRIPT.pdf", "ClipMind AI — Live Demonstration Script"),
         ("PROJECT_FILE_EXPLANATION_SCRIPT.md", "PROJECT_FILE_EXPLANATION_SCRIPT.pdf", "ClipMind AI — Codebase & Architecture File Guide"),
+        ("7_PEOPLE_PRESENTATION_PLAN.md", "7_PEOPLE_PRESENTATION_PLAN.pdf", "ClipMind AI — 7-Person Team Presentation Plan"),
     ]
 
     for md_name, pdf_name, title in scripts:
