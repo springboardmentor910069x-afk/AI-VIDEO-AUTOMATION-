@@ -228,7 +228,7 @@ export default function AdminDashboard() {
       <div className="glass-card" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14, flexWrap: 'wrap', gap: 14 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>🛡️</span> Administrator Operations & Management Console
+            <span></span> Administrator Operations & Management Console
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             Direct governance for user permissions, platform video catalog, and security audit trails.
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
               color: 'var(--text-primary)', cursor: loading ? 'not-allowed' : 'pointer'
             }}
           >
-            <span>🧹</span> {loading ? 'Cleaning...' : 'Clean Cache'}
+            <span></span> {loading ? 'Cleaning...' : 'Clean Cache'}
           </button>
           <button
             className="btn-primary"
@@ -260,9 +260,9 @@ export default function AdminDashboard() {
       {/* Main Management Tab Navigation */}
       <div className="tabs-scroll-container" style={{ display: 'flex', gap: 8, background: 'var(--bg-surface)', padding: 6, borderRadius: 12, border: '1px solid var(--border-glass)', overflowX: 'auto' }}>
         {[
-          { id: 'users', label: '👥 User Governance', badge: `${users.length}` },
-          { id: 'videos', label: '🎬 Video Catalog', badge: `${videos.length}` },
-          { id: 'logs', label: '📋 Audit Trail', badge: `${logs.length}` },
+          { id: 'users', label: 'User Governance', badge: `${users.length}` },
+          { id: 'videos', label: 'Video Catalog', badge: `${videos.length}` },
+          { id: 'logs', label: 'Audit Trail', badge: `${logs.length}` },
         ].map(tab => (
           <button
             key={tab.id}
@@ -337,7 +337,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <span className="tag-pill" style={{ background: 'rgba(99, 102, 241, 0.25)', color: '#818cf8', fontWeight: 700 }}>
-                  ⚡ Action Required
+                  Action Required
                 </span>
               </div>
               <div style={{ overflowX: 'auto' }}>
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
                             color: pu.role === 'Educator' ? '#38bdf8' : '#34d399',
                             fontWeight: 700
                           }}>
-                            {pu.role === 'Educator' ? '✏️ Educator' : '🎬 Creator'}
+                            {pu.role === 'Educator' ? 'Educator' : 'Creator'}
                           </span>
                         </td>
                         <td style={{ padding: '14px 18px', color: 'var(--text-muted)', fontSize: 12 }}>
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                                 gap: 6
                               }}
                             >
-                              <span>✅</span> Verify & Approve
+                              <span>OK</span> Verify & Approve
                             </button>
                             <button
                               onClick={() => handleRejectUser(pu.id, pu.name)}
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
                                 cursor: 'pointer'
                               }}
                             >
-                              ❌ Reject
+                              Cancel Reject
                             </button>
                           </div>
                         </td>
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
               alignItems: 'center',
               gap: 8
             }}>
-              <span>🛡️</span>
+              <span></span>
               <span>All Creator & Educator accounts are verified. No pending approval requests.</span>
             </div>
           )}
@@ -521,10 +521,10 @@ export default function AdminDashboard() {
                                 '#818cf8',
                         }}
                       >
-                        <option value="Learner">🎓 Learner</option>
-                        <option value="Creator">🎥 Creator</option>
-                        <option value="Educator">✏️ Educator</option>
-                        <option value="Admin">🛡️ Admin</option>
+                        <option value="Learner">Learner</option>
+                        <option value="Creator"> Creator</option>
+                        <option value="Educator">Educator</option>
+                        <option value="Admin">Admin</option>
                       </select>
                     </td>
 
@@ -761,10 +761,10 @@ export default function AdminDashboard() {
                 onChange={e => setNewUserRole(e.target.value as any)}
                 style={{ cursor: 'pointer' }}
               >
-                <option value="Learner">🎓 Learner (Study room, flashcards, quizzes)</option>
-                <option value="Creator">🎥 Creator (Upload studio, subtitle generator)</option>
-                <option value="Educator">✏️ Educator (Lecture studio, Word guides)</option>
-                <option value="Admin">🛡️ Admin (Full platform governance)</option>
+                <option value="Learner">Learner (Study room, flashcards, quizzes)</option>
+                <option value="Creator"> Creator (Upload studio, subtitle generator)</option>
+                <option value="Educator">Educator (Lecture studio, Word guides)</option>
+                <option value="Admin">Admin (Full platform governance)</option>
               </select>
             </div>
 

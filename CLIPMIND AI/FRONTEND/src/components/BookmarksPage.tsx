@@ -18,7 +18,7 @@ interface Bookmark {
 type FilterType = 'all' | 'note' | 'flashcard' | 'highlight' | 'key-moment'
 
 const TYPE_ICONS: Record<string, string> = {
-  'note': '📝', 'flashcard': '🃏', 'highlight': '✏️', 'key-moment': '📍'
+  'note': '', 'flashcard': '', 'highlight': '', 'key-moment': ''
 }
 const TYPE_LABELS: Record<string, string> = {
   'note': 'Note', 'flashcard': 'Flashcard', 'highlight': 'Highlight', 'key-moment': 'Key Moment'
@@ -123,7 +123,7 @@ export default function BookmarksPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {exported && <span style={{ fontSize: 13, color: 'var(--accent-emerald)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>✓ Study guide exported</span>}
-          <button className="btn-glass" onClick={exportStudyGuide} style={{ padding: '8px 16px', borderRadius: 9, fontSize: 13 }}>📚 Export Study Guide</button>
+          <button className="btn-glass" onClick={exportStudyGuide} style={{ padding: '8px 16px', borderRadius: 9, fontSize: 13 }}> Export Study Guide</button>
           <button className="btn-primary" onClick={() => navigate('/dashboard/videos')} style={{ padding: '8px 16px', borderRadius: 9, fontSize: 13 }}>+ Add Bookmark</button>
         </div>
 
@@ -135,8 +135,8 @@ export default function BookmarksPage() {
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{selected.size} selected</span>
           <button onClick={clearSelection} className="btn-glass" style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12 }}>Clear</button>
           <button onClick={selectAll} className="btn-glass" style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12 }}>Select All ({filtered.length})</button>
-          <button onClick={deleteSelected} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--accent-rose)', cursor: 'pointer', fontFamily: 'inherit' }}>🗑 Delete Selected</button>
-          <button className="btn-glass" onClick={exportStudyGuide} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12 }}>📚 Export Selected</button>
+          <button onClick={deleteSelected} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: 'var(--accent-rose)', cursor: 'pointer', fontFamily: 'inherit' }}>Delete Delete Selected</button>
+          <button className="btn-glass" onClick={exportStudyGuide} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12 }}> Export Selected</button>
         </div>
       )}
 
@@ -155,7 +155,7 @@ export default function BookmarksPage() {
             color: filter === f ? '#fff' : 'var(--text-secondary)',
             borderWidth: 1, borderStyle: 'solid', borderColor: filter === f ? 'transparent' : 'var(--border-glass)',
           }}>
-            {f === 'all' ? '🔖 All' : `${TYPE_ICONS[f]} ${TYPE_LABELS[f]}s`}
+            {f === 'all' ? ' All' : `${TYPE_ICONS[f]} ${TYPE_LABELS[f]}s`}
           </button>
         ))}
 
@@ -197,7 +197,7 @@ export default function BookmarksPage() {
 
       {filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 32px', color: 'var(--text-secondary)' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>🔖</div>
+          <div style={{ fontSize: 40, marginBottom: 16 }}></div>
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>No bookmarks found</div>
           <div style={{ fontSize: 14 }}>Save notes and highlights from any video transcript to see them here.</div>
         </div>
@@ -249,7 +249,7 @@ function BookmarkCard({ bookmark: b, onOpen, onRemove, selected, onSelect, editi
       )}
 
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: 12, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' as const }}>{b.text}</p>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📹 {b.videoTitle}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}> {b.videoTitle}</div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
         {b.tags.map(t => <span key={t} className="tag-pill">{t}</span>)}
       </div>

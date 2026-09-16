@@ -569,7 +569,7 @@ export default function LearnerStudyRoom() {
 
     try {
       await api.saveFlashcardMastery(selectedVideoId, cardId, status)
-      showToast(status === 'know' ? 'Mastered card! 🌟' : 'Saved for review 📝', 'success')
+      showToast(status === 'know' ? 'Card mastered!' : 'Saved for review', 'success')
       if (cardIdx < filteredCards.length - 1) {
         setCardIdx(i => i + 1)
       }
@@ -594,7 +594,7 @@ export default function LearnerStudyRoom() {
       setVideoNotes(prev => [created, ...prev])
       setNewNoteText('')
       setNoteFormOpen(false)
-      showToast('Study note saved at current timestamp! 📝', 'success')
+      showToast('Study note saved at current timestamp', 'success')
     } catch (err) {
       showToast('Failed to save study note', 'error')
     } finally {
@@ -620,7 +620,7 @@ export default function LearnerStudyRoom() {
       try {
         await api.submitQuizResult(selectedVideoId, correctCount, quizQuestions.length, nextAnswers)
         const pct = Math.round((correctCount / quizQuestions.length) * 100)
-        showToast(`Quiz completed! Score: ${correctCount}/${quizQuestions.length} (${pct}%) 🎉`, 'success')
+        showToast(`Quiz completed! Score: ${correctCount}/${quizQuestions.length} (${pct}%) `, 'success')
       } catch (err) {
         console.error('Failed to record quiz submission:', err)
       }
@@ -655,7 +655,7 @@ export default function LearnerStudyRoom() {
   if (availableVideos.length === 0) {
     return (
       <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16 }}>
-        <div style={{ fontSize: 48 }}>🎓</div>
+        <div style={{ fontSize: 48 }}></div>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>No Videos Available For Study</h2>
         <p style={{ color: 'var(--text-secondary)', maxWidth: 440, textAlign: 'center', lineHeight: 1.6 }}>
           Upload a video lecture to unlock interactive AI study chat, timestamped flashcards, synchronized transcripts, and automated quizzes.
@@ -728,7 +728,7 @@ export default function LearnerStudyRoom() {
                   cursor: 'pointer'
                 }}
               >
-                <span>📤</span>
+                <span></span>
                 + Upload Video / URL
               </button>
             </div>
@@ -804,7 +804,7 @@ export default function LearnerStudyRoom() {
                     : 'linear-gradient(135deg, #080c18 0%, #0c1830 50%, #080c18 100%)',
                   padding: 20, textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: 42, marginBottom: 8 }}>🎓</div>
+                  <div style={{ fontSize: 42, marginBottom: 8 }}></div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', maxWidth: '80%' }}>
                     {video?.title || 'Interactive Lecture Room'}
                   </div>
@@ -910,7 +910,7 @@ export default function LearnerStudyRoom() {
                       borderColor: noteFormOpen ? 'var(--accent-indigo)' : 'var(--border-glass)'
                     }}
                   >
-                    📝 Add Note [{formatTime(currentTimeSec)}]
+                    Add Note [{formatTime(currentTimeSec)}]
                   </button>
 
                   {/* Playback speed buttons */}
@@ -948,7 +948,7 @@ export default function LearnerStudyRoom() {
           {videoNotes.length > 0 && (
             <div className="glass-card" style={{ padding: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, display: 'flex', justifyContent: 'space-between' }}>
-                <span>📝 My Notes on This Lecture ({videoNotes.length})</span>
+                <span>My Notes on This Lecture ({videoNotes.length})</span>
                 <span style={{ fontSize: 11, color: 'var(--accent-cyan)' }}>Click to jump to time</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflowY: 'auto' }}>
@@ -977,7 +977,7 @@ export default function LearnerStudyRoom() {
           {/* Key Moments */}
           <div className="glass-card" style={{ padding: 18 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
-              📌 Key Moments in this Video
+              Key Moments in this Video
             </div>
             {keyMoments.length === 0 ? (
               <div style={{ fontSize: 13, color: 'var(--text-secondary)', padding: '10px 0' }}>
@@ -1025,31 +1025,31 @@ export default function LearnerStudyRoom() {
               onClick={() => setActiveSection('chat')}
               style={{ flex: 1, minWidth: 90, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'chat' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'chat' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
-              💬 AI Tutor
+              AI Tutor
             </button>
             <button
               onClick={() => setActiveSection('flashcards')}
               style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'flashcards' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'flashcards' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
-              🃏 Cards ({flashcards.length})
+              Cards ({flashcards.length})
             </button>
             <button
               onClick={() => setActiveSection('quiz')}
               style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'quiz' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'quiz' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
-              📝 Quiz ({quizQuestions.length})
+              Quiz ({quizQuestions.length})
             </button>
             <button
               onClick={() => setActiveSection('transcript')}
               style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'transcript' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'transcript' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
-              📜 Transcript
+              Transcript
             </button>
             <button
               onClick={() => setActiveSection('mindmap')}
               style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'mindmap' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'mindmap' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
-              🧠 Mind Map
+              Mind Map
             </button>
           </div>
 
@@ -1076,7 +1076,7 @@ export default function LearnerStudyRoom() {
                       cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s'
                     }}
                   >
-                    💡 {s}
+                     {s}
                   </button>
                 ))}
               </div>
@@ -1130,7 +1130,7 @@ export default function LearnerStudyRoom() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
               {flashcards.length === 0 ? (
                 <div className="glass-card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>🃏</div>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}></div>
                   <p>No flashcards generated yet. Audio transcript is needed to build study cards.</p>
                 </div>
               ) : (
@@ -1162,7 +1162,7 @@ export default function LearnerStudyRoom() {
                             fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
                           }}
                         >
-                          {f === 'all' ? 'All' : f === 'know' ? '✅ Mastered' : '😅 Review'}
+                          {f === 'all' ? 'All' : f === 'know' ? 'Mastered' : 'Needs Review'}
                         </button>
                       ))}
                     </div>
@@ -1208,13 +1208,13 @@ export default function LearnerStudyRoom() {
                           onClick={() => handleScoreCard('review')}
                           style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.1)', color: 'var(--accent-rose)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
                         >
-                          😅 Need Review
+                          Need Review
                         </button>
                         <button
                           onClick={() => handleScoreCard('know')}
                           style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1px solid rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.1)', color: 'var(--accent-emerald)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
                         >
-                          ✅ Know It
+                          Know It
                         </button>
                       </div>
                     </>
@@ -1229,7 +1229,7 @@ export default function LearnerStudyRoom() {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
               {quizQuestions.length === 0 ? (
                 <div className="glass-card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}></div>
                   <p>No quiz questions available for this video yet.</p>
                 </div>
               ) : (
@@ -1282,7 +1282,7 @@ export default function LearnerStudyRoom() {
 
                     {quizRevealed[quizIdx] && (
                       <div style={{ marginTop: 14, padding: '10px 12px', background: 'rgba(6,182,212,0.07)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 8 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: 4 }}>💡 Explanation</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-cyan)', marginBottom: 4 }}> Explanation</div>
                         <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{quizQuestions[quizIdx].explanation}</p>
                       </div>
                     )}
@@ -1293,7 +1293,7 @@ export default function LearnerStudyRoom() {
                     {quizIdx < quizQuestions.length - 1 ? (
                       <button className="btn-primary" onClick={() => setQuizIdx(i => i + 1)} disabled={!quizRevealed[quizIdx]} style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 13, opacity: !quizRevealed[quizIdx] ? 0.4 : 1 }}>Next →</button>
                     ) : (
-                      <button className="btn-primary" onClick={() => { setQuizIdx(0); setQuizAnswers(Array(quizQuestions.length).fill(null)); setQuizRevealed(Array(quizQuestions.length).fill(false)); setQuizSubmitted(false) }} style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 13 }}>🔄 Restart Quiz</button>
+                      <button className="btn-primary" onClick={() => { setQuizIdx(0); setQuizAnswers(Array(quizQuestions.length).fill(null)); setQuizRevealed(Array(quizQuestions.length).fill(false)); setQuizSubmitted(false) }} style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: 13 }}> Restart Quiz</button>
                     )}
                   </div>
                 </>

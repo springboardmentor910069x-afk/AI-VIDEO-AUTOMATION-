@@ -351,7 +351,7 @@ export default function EducatorEditor() {
   if (availableVideos.length === 0) {
     return (
       <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16 }}>
-        <div style={{ fontSize: 48 }}>✏️</div>
+        <div style={{ fontSize: 48 }}></div>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>No Lecture Videos Found</h2>
         <p style={{ color: 'var(--text-secondary)', maxWidth: 440, textAlign: 'center', lineHeight: 1.6 }}>
           Upload a video lecture to edit transcripts, annotate section breaks, build quizzes, and organize study chapters.
@@ -369,7 +369,7 @@ export default function EducatorEditor() {
       <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, borderRadius: 12, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>🎓</span> Educator Curriculum Studio
+            <span></span> Educator Curriculum Studio
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Lecture Asset:</span>
@@ -404,11 +404,11 @@ export default function EducatorEditor() {
         {/* Global Tab Navigation */}
         <div className="tabs-scroll-container" style={{ background: 'var(--bg-surface)', borderRadius: 10, padding: 4, border: '1px solid var(--border-glass)', gap: 4, maxWidth: '100%' }}>
           {[
-            { id: 'transcript', label: '🎙️ Transcript', count: segments.length },
-            { id: 'chapters', label: '📑 Chapters', count: chapters.length },
-            { id: 'quizzes', label: '📝 Quizzes', count: quizzes.length },
-            { id: 'flashcards', label: '🃏 Flashcards', count: flashcards.length },
-            { id: 'preview', label: '👁️ Student Preview' },
+            { id: 'transcript', label: 'Transcript', count: segments.length },
+            { id: 'chapters', label: 'Chapters', count: chapters.length },
+            { id: 'quizzes', label: 'Quizzes', count: quizzes.length },
+            { id: 'flashcards', label: 'Flashcards', count: flashcards.length },
+            { id: 'preview', label: 'Student Preview' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -478,7 +478,7 @@ export default function EducatorEditor() {
               disabled={publishingTranscript || segments.length === 0}
               style={{ marginTop: 'auto', padding: '10px 16px', borderRadius: 8, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
-              {publishingTranscript ? 'Publishing...' : '🚀 Publish Transcript'}
+              {publishingTranscript ? 'Publishing...' : 'Publish Transcript'}
             </button>
           </div>
 
@@ -486,7 +486,7 @@ export default function EducatorEditor() {
           <div style={{ flex: '2 1 320px', minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {segments.length === 0 ? (
               <div className="glass-card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                <div style={{ fontSize: 32, marginBottom: 10 }}>🎙️</div>
+                <div style={{ fontSize: 32, marginBottom: 10 }}></div>
                 <p>No transcript segments available. Transcribing or processing lecture audio...</p>
               </div>
             ) : (
@@ -534,7 +534,7 @@ export default function EducatorEditor() {
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button className="btn-glass" onClick={() => startEdit(seg)} style={{ padding: '4px 10px', fontSize: 12, borderRadius: 6 }}>Edit</button>
                           <button className="btn-glass" onClick={() => setShowAddSection(seg.id)} style={{ padding: '4px 10px', fontSize: 12, borderRadius: 6 }}>+ Section</button>
-                          <button onClick={() => removeSegment(seg.id)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px 6px', fontSize: 13 }}>🗑</button>
+                          <button onClick={() => removeSegment(seg.id)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px 6px', fontSize: 13 }}>Delete</button>
                         </div>
                       </div>
 
@@ -596,7 +596,7 @@ export default function EducatorEditor() {
                 + Add Chapter
               </button>
               <button className="btn-primary" onClick={handleSaveChapters} disabled={savingChapters} style={{ padding: '8px 18px', borderRadius: 8, fontSize: 13 }}>
-                {savingChapters ? 'Saving...' : '💾 Save & Publish Chapters'}
+                {savingChapters ? 'Saving...' : 'Save & Publish Chapters'}
               </button>
             </div>
           </div>
@@ -634,7 +634,7 @@ export default function EducatorEditor() {
                     onClick={() => setChapters(prev => prev.filter((_, i) => i !== idx))}
                     style={{ background: 'none', border: 'none', color: 'var(--accent-rose)', cursor: 'pointer', fontSize: 14 }}
                   >
-                    🗑
+                    Delete
                   </button>
                 </div>
 
@@ -682,7 +682,7 @@ export default function EducatorEditor() {
                 + Add Question
               </button>
               <button className="btn-primary" onClick={handleSaveQuizzes} disabled={savingQuizzes} style={{ padding: '8px 18px', borderRadius: 8, fontSize: 13 }}>
-                {savingQuizzes ? 'Saving...' : '💾 Save & Publish Quiz'}
+                {savingQuizzes ? 'Saving...' : 'Save & Publish Quiz'}
               </button>
             </div>
           </div>
@@ -708,7 +708,7 @@ export default function EducatorEditor() {
                     onClick={() => setQuizzes(prev => prev.filter((_, i) => i !== idx))}
                     style={{ background: 'none', border: 'none', color: 'var(--accent-rose)', cursor: 'pointer', fontSize: 14 }}
                   >
-                    🗑
+                    Delete
                   </button>
                 </div>
 
@@ -775,7 +775,7 @@ export default function EducatorEditor() {
                 + Add Card
               </button>
               <button className="btn-primary" onClick={handleSaveFlashcards} disabled={savingFlashcards} style={{ padding: '8px 18px', borderRadius: 8, fontSize: 13 }}>
-                {savingFlashcards ? 'Saving...' : '💾 Save & Publish Flashcards'}
+                {savingFlashcards ? 'Saving...' : 'Save & Publish Flashcards'}
               </button>
             </div>
           </div>
@@ -800,7 +800,7 @@ export default function EducatorEditor() {
                     onClick={() => setFlashcards(prev => prev.filter((_, i) => i !== idx))}
                     style={{ background: 'none', border: 'none', color: 'var(--accent-rose)', cursor: 'pointer', fontSize: 14 }}
                   >
-                    🗑
+                    Delete
                   </button>
                 </div>
 
@@ -840,7 +840,7 @@ export default function EducatorEditor() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, background: 'rgba(6,182,212,0.1)', border: '1px solid var(--accent-cyan)', borderRadius: 12, flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 24 }}>👁️</span>
+              <span style={{ fontSize: 24 }}></span>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>Live Student Preview Mode</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>This shows the exact study experience students will receive in the Study Room.</div>
@@ -853,7 +853,7 @@ export default function EducatorEditor() {
 
           {/* Chapters Preview */}
           <div className="glass-card" style={{ padding: 20 }}>
-            <h4 style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--accent-cyan)' }}>📑 Published Chapters ({chapters.length})</h4>
+            <h4 style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--accent-cyan)' }}> Published Chapters ({chapters.length})</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {chapters.map((ch, i) => (
                 <div key={i} style={{ padding: 12, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border-glass)' }}>
@@ -874,7 +874,7 @@ export default function EducatorEditor() {
 
           {/* Quizzes Preview */}
           <div className="glass-card" style={{ padding: 20 }}>
-            <h4 style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--accent-indigo)' }}>📝 Published Quiz Questions ({quizzes.length})</h4>
+            <h4 style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--accent-indigo)' }}> Published Quiz Questions ({quizzes.length})</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {quizzes.map((q, i) => (
                 <div key={i} style={{ padding: 14, background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border-glass)' }}>

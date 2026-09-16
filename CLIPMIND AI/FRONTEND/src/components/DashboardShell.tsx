@@ -620,7 +620,7 @@ export default function DashboardShell() {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <span style={{ fontSize: 14 }}>📤</span>
+                  <span style={{ fontSize: 14 }}></span>
                   {!isMobile && <span>Upload Video</span>}
                 </button>
                 <button
@@ -705,12 +705,12 @@ export default function DashboardShell() {
                 }}
                 title={authenticatedRole === 'Admin' ? 'Click to switch workspace preview' : `Verified account role: ${authenticatedRole}`}
               >
-                <span>{activeRole === 'Creator' ? '🎬' : activeRole === 'Learner' ? '🎓' : activeRole === 'Educator' ? '✏️' : '🛡️'}</span>
+                <span>{activeRole === 'Creator' ? '' : activeRole === 'Learner' ? '' : activeRole === 'Educator' ? '' : ''}</span>
                 <span>{activeRole}</span>
                 {authenticatedRole === 'Admin' ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
                 ) : (
-                  <span style={{ fontSize: 10, opacity: 0.7 }}>🔒</span>
+                  <span style={{ fontSize: 10, opacity: 0.7 }}></span>
                 )}
               </button>
 
@@ -737,7 +737,7 @@ export default function DashboardShell() {
                         cursor: 'pointer', textAlign: 'left',
                       }}
                     >
-                      <span>{role === 'Creator' ? '🎬' : role === 'Learner' ? '🎓' : role === 'Educator' ? '✏️' : '🛡️'}</span>
+                      <span>{role === 'Creator' ? '' : role === 'Learner' ? '' : role === 'Educator' ? '' : ''}</span>
                       <span>{role} {role === 'Admin' ? '(Console)' : '(Preview)'}</span>
                       {activeRole === role && <span style={{ marginLeft: 'auto', fontSize: 12 }}>✓</span>}
                     </button>
@@ -790,7 +790,7 @@ export default function DashboardShell() {
                           if (n.type === 'success') showToast('Opening video...', 'info')
                         }}
                       >
-                        <span style={{ fontSize: 14, marginTop: 1 }}>{n.type === 'success' ? '✅' : n.type === 'error' ? '❌' : 'ℹ️'}</span>
+                        <span style={{ fontSize: 14, marginTop: 1 }}>{n.type === 'success' ? 'OK' : n.type === 'error' ? 'Cancel' : 'ℹ️'}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>{n.text}</div>
                           <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3 }}>{n.time}</div>

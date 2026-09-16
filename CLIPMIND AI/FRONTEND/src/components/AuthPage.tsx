@@ -486,7 +486,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 13 }}>🎙️</span>
+              <span style={{ fontSize: 13 }}></span>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#F8FAFC', letterSpacing: '0.04em' }}>
                 NEURAL SPEECH STREAM
               </span>
@@ -605,7 +605,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                   borderColor: showcaseRole === r ? AI_CAPABILITIES[r].accent : 'transparent'
                 }}
               >
-                <span>{r === 'Creator' ? '🎬' : r === 'Learner' ? '🎓' : '✏️'}</span>
+                <span>{r === 'Creator' ? '' : r === 'Learner' ? '' : ''}</span>
                 <span>{r}</span>
               </button>
             ))}
@@ -731,7 +731,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                   borderColor: role === r ? 'var(--accent-indigo)' : 'var(--border-glass)',
                   boxShadow: role === r ? '0 0 12px var(--accent-indigo-glow)' : 'none',
                 }}>
-                  {r === 'Creator' ? '🎬' : r === 'Learner' ? '🎓' : '✏️'} {r}
+                  {r === 'Creator' ? '' : r === 'Learner' ? '' : ''} {r}
                 </button>
               ))}
             </div>
@@ -773,7 +773,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             alignItems: 'center',
             gap: 8
           }}>
-            <span>⚠️</span>
+            <span></span>
             <span>{errorMsg}</span>
           </div>
         )}
@@ -980,7 +980,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                       transition: 'all 0.15s'
                     }}
                   >
-                    <span>{r === 'Creator' ? '🎬' : r === 'Learner' ? '🎓' : '✏️'}</span>
+                    <span>{r === 'Creator' ? '' : r === 'Learner' ? '' : ''}</span>
                     <span>{r}</span>
                   </button>
                 ))}
@@ -1027,7 +1027,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                 display: 'flex', alignItems: 'center', gap: 8,
                 marginBottom: 20
               }}>
-                <span>🔒</span>
+                <span></span>
                 <span>Instant Google SSO • Pure Database Verification</span>
               </div>
 
@@ -1133,7 +1133,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                   borderColor: 'var(--accent-indigo)'
                 }}
               >
-                <span>⚡</span>
+                <span></span>
                 <span>One-Click Restore via Google Popup</span>
               </button>
             </div>

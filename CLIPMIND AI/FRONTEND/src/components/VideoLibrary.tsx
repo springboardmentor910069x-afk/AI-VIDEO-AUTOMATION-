@@ -340,7 +340,7 @@ export default function VideoLibrary() {
 
         return (
           <div style={{ textAlign: 'center', padding: '60px 32px', color: 'var(--text-secondary)' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>{isLearner ? '🎓' : '🎬'}</div>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>{isLearner ? '' : ''}</div>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>
               {isLearner ? 'No study lectures available yet' : 'No videos in your library yet'}
             </div>
@@ -353,7 +353,7 @@ export default function VideoLibrary() {
               </button>
               {isLearner && (
                 <button className="btn-primary" onClick={() => navigate('/dashboard/learner/study')} style={{ padding: '10px 24px', borderRadius: 10, fontSize: 14, background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo))' }}>
-                  🎓 Open Study Room
+                   Open Study Room
                 </button>
               )}
             </div>

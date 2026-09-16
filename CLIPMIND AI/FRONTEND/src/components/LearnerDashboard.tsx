@@ -99,7 +99,7 @@ export default function LearnerDashboard() {
 
     try {
       await api.saveFlashcardMastery(activeDeckVideoId, cardId, status)
-      showToast(status === 'know' ? 'Card mastered! 🌟' : 'Marked for review 📝', 'success')
+      showToast(status === 'know' ? 'Card mastered' : 'Marked for review', 'success')
       // Advance to next card
       if (cardIdx < flashcards.length - 1) {
         setCardIdx(i => i + 1)
@@ -183,7 +183,7 @@ export default function LearnerDashboard() {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <span style={{ fontSize: 24 }}>👋</span>
+            <span style={{ fontSize: 24 }}></span>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               Welcome back, {studentName}!
             </h1>
@@ -199,7 +199,7 @@ export default function LearnerDashboard() {
               alignItems: 'center',
               gap: 4
             }}>
-              🔥 {streakDays > 0 ? `${streakDays} Day Streak` : 'Start your streak today'}
+               {streakDays > 0 ? `${streakDays} Day Streak` : 'Start your streak today'}
             </span>
           </div>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
@@ -283,7 +283,7 @@ export default function LearnerDashboard() {
             onClick={() => navigate('/dashboard/upload')}
             style={{ padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <span>📤</span>
+            <span></span>
             Upload New Lecture
           </button>
         </div>
@@ -323,7 +323,7 @@ export default function LearnerDashboard() {
               </div>
             </div>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-              📚
+              
             </div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -343,7 +343,7 @@ export default function LearnerDashboard() {
               </div>
             </div>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-              🃏
+              
             </div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -363,7 +363,7 @@ export default function LearnerDashboard() {
               </div>
             </div>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(245, 158, 11, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-              🎯
+              
             </div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -381,7 +381,7 @@ export default function LearnerDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
               <div>
                 <h2 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  📚 My Video Lectures
+                  My Video Lectures
                 </h2>
                 <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                   Interactive study rooms with synchronized transcripts and AI tutoring
@@ -398,7 +398,7 @@ export default function LearnerDashboard() {
                   onChange={e => setSearch(e.target.value)}
                   style={{ height: 34, paddingLeft: 30, fontSize: 12, borderRadius: 8 }}
                 />
-                <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 12, opacity: 0.6 }}>🔍</span>
+                <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 12, opacity: 0.6 }}></span>
               </div>
             </div>
 
@@ -431,7 +431,7 @@ export default function LearnerDashboard() {
           {/* Lecture Cards List */}
           {filteredLectures.length === 0 ? (
             <div className="glass-card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🎓</div>
+              <div style={{ fontSize: 32, marginBottom: 8 }}></div>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>No Lectures Found</div>
               <p style={{ fontSize: 13, marginTop: 4 }}>
                 {search || selectedCategory !== 'All' ? 'Try adjusting your search or category filter.' : 'Upload your first lecture to unlock interactive AI study tools.'}
@@ -485,7 +485,7 @@ export default function LearnerDashboard() {
                         />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #111827 0%, #1e1b4b 100%)' }}>
-                          <span style={{ fontSize: 36 }}>🎓</span>
+                          <span style={{ fontSize: 36 }}></span>
                         </div>
                       )}
 
@@ -559,7 +559,7 @@ export default function LearnerDashboard() {
                           title="Practice Flashcards"
                           style={{ padding: '7px 10px', borderRadius: 8, fontSize: 12 }}
                         >
-                          🃏
+                          
                         </button>
                       </div>
                     </div>
@@ -572,7 +572,7 @@ export default function LearnerDashboard() {
           {/* Badges and Milestones Section */}
           <div className="glass-card" style={{ padding: '20px 22px', borderRadius: 14 }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', margin: 0, marginBottom: 14 }}>
-              🏆 Study Achievements & Milestones
+              Study Achievements & Milestones
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
               {(data?.milestones || []).map(m => (
@@ -617,7 +617,7 @@ export default function LearnerDashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div>
                 <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  🃏 Flashcard Quick-Practice
+                  Flashcard Quick-Practice
                 </h2>
                 <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                   Test your recall with real persistent mastery tracking
@@ -655,7 +655,7 @@ export default function LearnerDashboard() {
               </div>
             ) : flashcards.length === 0 ? (
               <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
-                <div style={{ fontSize: 24, marginBottom: 6 }}>📭</div>
+                <div style={{ fontSize: 24, marginBottom: 6 }}></div>
                 No flashcards available for this video yet. Upload a lecture with audio to auto-generate cards.
               </div>
             ) : (
@@ -666,7 +666,7 @@ export default function LearnerDashboard() {
                     color: flashcards[cardIdx]?.score === 'know' ? 'var(--accent-emerald)' : flashcards[cardIdx]?.score === 'review' ? 'var(--accent-rose)' : 'var(--text-secondary)',
                     fontWeight: 700
                   }}>
-                    {flashcards[cardIdx]?.score === 'know' ? '✅ Mastered' : flashcards[cardIdx]?.score === 'review' ? '😅 Needs Review' : 'Not practiced yet'}
+                    {flashcards[cardIdx]?.score === 'know' ? 'Mastered' : flashcards[cardIdx]?.score === 'review' ? ' Needs Review' : 'Not practiced yet'}
                   </span>
                 </div>
 
@@ -737,7 +737,7 @@ export default function LearnerDashboard() {
                       fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
                     }}
                   >
-                    😅 Need Review
+                    Need Review
                   </button>
                   <button
                     onClick={() => handleCardMastery('know')}
@@ -749,7 +749,7 @@ export default function LearnerDashboard() {
                       fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
                     }}
                   >
-                    ✅ Know It
+                    Know It
                   </button>
                 </div>
 
@@ -780,7 +780,7 @@ export default function LearnerDashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div>
                 <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  📝 My In-Lecture Study Notes
+                  My In-Lecture Study Notes
                 </h2>
                 <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                   Timestamped bookmarks taken during video playback

@@ -31,15 +31,15 @@ export default function CommandPalette({ open, onClose }: Props) {
   const listRef = useRef<HTMLDivElement>(null)
 
   const COMMANDS: Command[] = [
-    { id: 'nav-upload', icon: '📤', label: 'Upload New Video', category: 'Navigation', shortcut: 'U', action: () => { showToast('Opening Upload Studio...', 'info'); navigate('/dashboard/upload'); onClose() } },
-    { id: 'nav-library', icon: '🎥', label: 'Video Library', category: 'Navigation', shortcut: 'L', action: () => { showToast('Opening Video Library...', 'info'); navigate('/dashboard/videos'); onClose() } },
-    { id: 'nav-analytics', icon: '📊', label: 'Analytics Dashboard', category: 'Navigation', action: () => { showToast('Opening Analytics Dashboard...', 'info'); navigate('/dashboard/analytics'); onClose() } },
-    { id: 'nav-bookmarks', icon: '🔖', label: 'Bookmarks & Notes', category: 'Navigation', action: () => { showToast('Opening Bookmarks & Notes...', 'info'); navigate('/dashboard/bookmarks'); onClose() } },
-    { id: 'nav-learner', icon: '🎓', label: 'Learner Study Room', category: 'Navigation', action: () => { showToast('Opening Study Room...', 'info'); navigate('/dashboard/learner/study'); onClose() } },
-    { id: 'nav-educator', icon: '✏️', label: 'Educator Lecture Studio', category: 'Navigation', action: () => { showToast('Opening Educator Studio...', 'info'); navigate('/dashboard/educator/lectures'); onClose() } },
-    { id: 'nav-admin', icon: '🛡️', label: 'Admin Dashboard', category: 'Navigation', action: () => { showToast('Opening Admin Console...', 'info'); navigate('/dashboard/admin'); onClose() } },
-    { id: 'nav-settings', icon: '⚙️', label: 'Account Settings', category: 'Navigation', action: () => { showToast('Opening Settings...', 'info'); navigate('/dashboard/settings'); onClose() } },
-    { id: 'action-theme', icon: '🎨', label: 'Toggle Dark / Light Theme', category: 'Actions', shortcut: 'T', action: () => { document.documentElement.classList.toggle('light'); showToast('Theme toggled', 'success'); onClose() } },
+    { id: 'nav-upload', icon: '', label: 'Upload New Video', category: 'Navigation', shortcut: 'U', action: () => { showToast('Opening Upload Studio...', 'info'); navigate('/dashboard/upload'); onClose() } },
+    { id: 'nav-library', icon: '', label: 'Video Library', category: 'Navigation', shortcut: 'L', action: () => { showToast('Opening Video Library...', 'info'); navigate('/dashboard/videos'); onClose() } },
+    { id: 'nav-analytics', icon: '', label: 'Analytics Dashboard', category: 'Navigation', action: () => { showToast('Opening Analytics Dashboard...', 'info'); navigate('/dashboard/analytics'); onClose() } },
+    { id: 'nav-bookmarks', icon: '', label: 'Bookmarks & Notes', category: 'Navigation', action: () => { showToast('Opening Bookmarks & Notes...', 'info'); navigate('/dashboard/bookmarks'); onClose() } },
+    { id: 'nav-learner', icon: '', label: 'Learner Study Room', category: 'Navigation', action: () => { showToast('Opening Study Room...', 'info'); navigate('/dashboard/learner/study'); onClose() } },
+    { id: 'nav-educator', icon: '', label: 'Educator Lecture Studio', category: 'Navigation', action: () => { showToast('Opening Educator Studio...', 'info'); navigate('/dashboard/educator/lectures'); onClose() } },
+    { id: 'nav-admin', icon: '', label: 'Admin Dashboard', category: 'Navigation', action: () => { showToast('Opening Admin Console...', 'info'); navigate('/dashboard/admin'); onClose() } },
+    { id: 'nav-settings', icon: '', label: 'Account Settings', category: 'Navigation', action: () => { showToast('Opening Settings...', 'info'); navigate('/dashboard/settings'); onClose() } },
+    { id: 'action-theme', icon: '', label: 'Toggle Dark / Light Theme', category: 'Actions', shortcut: 'T', action: () => { document.documentElement.classList.toggle('light'); showToast('Theme toggled', 'success'); onClose() } },
     { id: 'action-shortcut', icon: '⌨️', label: 'View Keyboard Shortcuts', category: 'Actions', action: () => {
       showToast('Keyboard shortcuts listed in dialog', 'info')
       window.alert('Keyboard shortcuts:\n⌘K — Open Command Palette\nU — Upload New Video\nT — Toggle Dark / Light Theme\nL — Video Library\nEsc — Close Palette')
@@ -156,7 +156,7 @@ export default function CommandPalette({ open, onClose }: Props) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {RECENT_SEARCHES.map(s => (
                 <button key={s} onClick={() => setQuery(s)} className="tag-pill" style={{ fontSize: 12 }}>
-                  🕐 {s}
+                   {s}
                 </button>
               ))}
             </div>
@@ -202,7 +202,7 @@ export default function CommandPalette({ open, onClose }: Props) {
 
           {filtered.length === 0 && (
             <div style={{ padding: '32px 18px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 14 }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+              <div style={{ fontSize: 32, marginBottom: 8 }}></div>
               No results for "{query}"
             </div>
           )}

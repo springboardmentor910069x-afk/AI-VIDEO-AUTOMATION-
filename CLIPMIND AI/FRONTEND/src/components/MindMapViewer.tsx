@@ -51,7 +51,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
   if (!rootNode) {
     return (
       <div style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32, textAlign: 'center', color: 'var(--text-secondary)' }}>
-        <div style={{ fontSize: 42, opacity: 0.8 }}>🧠</div>
+        <div style={{ fontSize: 42, opacity: 0.8 }}></div>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>No Mind Map Available Yet</div>
         <div style={{ fontSize: 13, maxWidth: 360, lineHeight: 1.5 }}>
           Once the video finishes AI transcription and summarization, your interactive concept tree will appear here automatically.
@@ -168,7 +168,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: depth === 0 ? 16 : 12 }}>
-              {depth === 0 ? '🧠' : node.type === 'chapter' ? '📑' : node.type === 'moment' ? '📍' : '💡'}
+              {depth === 0 ? '' : node.type === 'chapter' ? '' : node.type === 'moment' ? '' : ''}
             </span>
             {node.timestamp && (
               <span
@@ -282,7 +282,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 16 }}>🧠</span>
+          <span style={{ fontSize: 16 }}></span>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
             Interactive AI Mind Map
           </span>
@@ -301,7 +301,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
             className="input-field"
             style={{ height: 32, paddingLeft: 28, fontSize: 12, borderRadius: 8, background: 'var(--bg-surface)' }}
           />
-          <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, opacity: 0.6 }}>🔍</span>
+          <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, opacity: 0.6 }}></span>
         </div>
 
         {/* Zoom & Action Buttons */}
@@ -336,7 +336,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
             style={{ padding: '4px 12px', height: 32, borderRadius: 8, fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
             title="Export Mind Map"
           >
-            <span>📥</span> Export SVG
+            <span></span> Export SVG
           </button>
         </div>
       </div>
@@ -373,7 +373,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
 
       {/* Bottom hint */}
       <div style={{ padding: '8px 16px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-secondary)' }}>
-        <span>💡 Drag canvas to pan • Scroll / buttons to zoom</span>
+        <span> Drag canvas to pan • Scroll / buttons to zoom</span>
         <span>Click any timestamp chip (⏱) to jump the video player</span>
       </div>
     </div>

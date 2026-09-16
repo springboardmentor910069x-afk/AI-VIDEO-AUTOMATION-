@@ -4,10 +4,10 @@ import { api } from '../services/api'
 type SettingsTab = 'profile' | 'preferences' | 'storage' | 'notifications'
 
 const TABS: { id: SettingsTab; label: string; icon: string }[] = [
-  { id: 'profile', label: 'Profile', icon: '👤' },
-  { id: 'preferences', label: 'AI & System', icon: '⚙️' },
-  { id: 'storage', label: 'Cloud Storage', icon: '☁️' },
-  { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'profile', label: 'Profile', icon: '' },
+  { id: 'preferences', label: 'AI & System', icon: '' },
+  { id: 'storage', label: 'Cloud Storage', icon: '' },
+  { id: 'notifications', label: 'Notifications', icon: '' },
 ]
 
 export default function SettingsPage() {
@@ -547,7 +547,7 @@ function CloudStorageTab({
             width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 22, background: isConnected ? 'rgba(16,185,129,0.15)' : 'rgba(99,102,241,0.15)'
           }}>
-            {isConnected ? '☁️' : '📁'}
+            {isConnected ? '' : ''}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -593,7 +593,7 @@ function CloudStorageTab({
                 display: 'flex', alignItems: 'center', gap: 8
               }}
             >
-              <span>🔗</span>
+              <span></span>
               {loading ? 'Connecting...' : 'Connect Google Drive'}
             </button>
           )}
@@ -621,7 +621,7 @@ function CloudStorageTab({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>🖥️ Local Server Storage</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>️ Local Server Storage</span>
               <input type="radio" checked={storageTarget === 'local'} onChange={() => onSetTarget('local')} />
             </div>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
@@ -647,7 +647,7 @@ function CloudStorageTab({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>☁️ Google Drive Cloud</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}> Google Drive Cloud</span>
               <input type="radio" checked={storageTarget === 'google_drive'} onChange={() => onSetTarget('google_drive')} />
             </div>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
@@ -666,7 +666,7 @@ function CloudStorageTab({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-              📊 Google Drive Quota Metrics
+               Google Drive Quota Metrics
             </span>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: 'var(--accent-cyan)' }}>
               {quota.usage_gb || 0} GB used of {quota.limit_gb || 15} GB ({percentUsed}%)
@@ -688,7 +688,7 @@ function CloudStorageTab({
 
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-secondary)' }}>
             <span>Available Free Cloud Space: <strong style={{ color: 'var(--text-primary)' }}>{quota.free_gb || 15} GB</strong></span>
-            <span>ClipMind App Folder: <strong style={{ color: 'var(--accent-indigo)' }}>📁 ClipMind AI</strong></span>
+            <span>ClipMind App Folder: <strong style={{ color: 'var(--accent-indigo)' }}> ClipMind AI</strong></span>
           </div>
         </div>
       )}
@@ -699,7 +699,7 @@ function CloudStorageTab({
           onClick={() => setShowManual(!showManual)}
           style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          <span>⚙️</span>
+          <span></span>
           {showManual ? 'Hide Advanced Token Input' : 'Advanced: Link with Google OAuth Access Token'}
         </button>
 

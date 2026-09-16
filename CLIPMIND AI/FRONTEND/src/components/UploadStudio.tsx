@@ -8,14 +8,14 @@ type SummaryDepth = 'Short TL;DR' | 'Detailed Breakdown' | 'Full Study Guide'
 type Domain = 'Academic Lecture' | 'Tech Demo' | 'Business Meeting' | 'General'
 
 const PIPELINE_STAGES_DEF = [
-  { key: 'ingest', label: 'Validating & Ingesting', icon: '📦', duration: 2000 },
-  { key: 'audio', label: 'Extracting Audio Track', icon: '🎵', duration: 3000 },
-  { key: 'asr', label: 'Whisper ASR Transcription', icon: '🎙️', duration: 6000 },
-  { key: 'nlp', label: 'NLP Post-Processing', icon: '🔬', duration: 2500 },
-  { key: 'summarize', label: 'BART Summarization', icon: '📝', duration: 4000 },
-  { key: 'moments', label: 'Key Moment Detection', icon: '📍', duration: 3000 },
-  { key: 'embed', label: 'Semantic Embeddings', icon: '🧠', duration: 2000 },
-  { key: 'done', label: 'Finalizing & Indexing', icon: '✅', duration: 1000 },
+  { key: 'ingest', label: 'Validating & Ingesting', icon: '', duration: 2000 },
+  { key: 'audio', label: 'Extracting Audio Track', icon: '', duration: 3000 },
+  { key: 'asr', label: 'Whisper ASR Transcription', icon: '', duration: 6000 },
+  { key: 'nlp', label: 'NLP Post-Processing', icon: '', duration: 2500 },
+  { key: 'summarize', label: 'BART Summarization', icon: '', duration: 4000 },
+  { key: 'moments', label: 'Key Moment Detection', icon: '', duration: 3000 },
+  { key: 'embed', label: 'Semantic Embeddings', icon: '', duration: 2000 },
+  { key: 'done', label: 'Finalizing & Indexing', icon: 'OK', duration: 1000 },
 ]
 
 interface QueueItem {
@@ -142,7 +142,7 @@ export default function UploadStudio() {
             setQueue(prev => prev.map(q => (q.id === tempId || q.id === vidRes.id) ? {
               ...q,
               id: vidRes.id,
-              stage: status.message || `${PIPELINE_STAGES_DEF[idx]?.icon || '⚙️'} ${PIPELINE_STAGES_DEF[idx]?.label || 'Processing'}...`,
+              stage: status.message || `${PIPELINE_STAGES_DEF[idx]?.icon || ''} ${PIPELINE_STAGES_DEF[idx]?.label || 'Processing'}...`,
               pipelineStage: isFinished ? PIPELINE_STAGES_DEF.length - 1 : idx,
               uploadPct: 100,
               done: isFinished
@@ -178,7 +178,7 @@ export default function UploadStudio() {
               setQueue(prev => prev.map(q => (q.id === tempId || q.id === vidRes.id) ? {
                 ...q,
                 id: vidRes.id,
-                stage: `${PIPELINE_STAGES_DEF[idx]?.icon || '⚙️'} ${PIPELINE_STAGES_DEF[idx]?.label || 'Processing'}...`,
+                stage: `${PIPELINE_STAGES_DEF[idx]?.icon || ''} ${PIPELINE_STAGES_DEF[idx]?.label || 'Processing'}...`,
                 pipelineStage: idx,
                 uploadPct: 100
               } : q))
@@ -293,10 +293,10 @@ export default function UploadStudio() {
 
         {/* Floating AI Badges */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}>⚡ Whisper v3 ASR</span>
-          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}>🧠 Groq LPU Summarizer</span>
-          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}>📍 Visual Key Moments</span>
-          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}>🎯 98%+ WER Accuracy</span>
+          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}> Whisper v3 ASR</span>
+          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}> Groq LPU Summarizer</span>
+          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}> Visual Key Moments</span>
+          <span className="tag-pill" style={{ fontSize: 11, padding: '3px 10px' }}> 98%+ WER Accuracy</span>
         </div>
 
         {/* Prominent Start / Browse Files Button */}
@@ -405,7 +405,7 @@ export default function UploadStudio() {
               }}
               style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6, padding: '0 20px', height: 42 }}
             >
-              <span>⚡</span> Ingest Stream
+              <span></span> Ingest Stream
             </button>
           </div>
         </div>
@@ -421,7 +421,7 @@ export default function UploadStudio() {
           }}
         >
           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>⚙️</span> AI Processing Configuration
+            <span></span> AI Processing Configuration
           </span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: accordionOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
             <polyline points="6 9 12 15 18 9"/>
@@ -604,7 +604,7 @@ function QueueCard({ item, onRemove, onView }: { item: QueueItem; onRemove: () =
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0 }}>{item.size}</span>
             {item.done && <span className="badge badge-success">✓ Ready</span>}
-            {isPipelining && <span className="badge badge-warning">⚙ Processing</span>}
+            {isPipelining && <span className="badge badge-warning"> Processing</span>}
           </div>
 
           {isUploading && (

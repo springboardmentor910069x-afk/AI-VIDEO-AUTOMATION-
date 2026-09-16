@@ -334,10 +334,10 @@ export default function AnalyticsDashboard() {
   ]
 
   const STAT_CARDS = [
-    { label: 'Total Video Views', value: totalViews.toLocaleString(), icon: '👁️', color: 'var(--accent-indigo)', data: viewsTimeline.data, change: analyticsData?.views_change_pct || '0%', positive: true },
-    { label: 'Videos Processed', value: totalVideos.toLocaleString(), icon: '🎬', color: 'var(--accent-cyan)', data: uploadsTimeline.data, change: analyticsData?.videos_change_pct || '0%', positive: true },
+    { label: 'Total Video Views', value: totalViews.toLocaleString(), icon: '', color: 'var(--accent-indigo)', data: viewsTimeline.data, change: analyticsData?.views_change_pct || '0%', positive: true },
+    { label: 'Videos Processed', value: totalVideos.toLocaleString(), icon: '', color: 'var(--accent-cyan)', data: uploadsTimeline.data, change: analyticsData?.videos_change_pct || '0%', positive: true },
     { label: 'Hours Transcribed', value: `${(hoursProcessed / 10).toFixed(1)}h`, icon: '⏱️', color: 'var(--accent-emerald)', data: hoursTimeline.data.slice(-7), change: analyticsData?.hours_change_pct || '0%', positive: true },
-    { label: 'Avg WER Accuracy', value: `${(avgWer / 10).toFixed(1)}%`, icon: '🎯', color: 'var(--accent-amber)', data: [0, 0, 0, 0, 0, (avgWer / 10), (avgWer / 10)], change: analyticsData?.wer_change_pct || '0%', positive: true },
+    { label: 'Avg WER Accuracy', value: `${(avgWer / 10).toFixed(1)}%`, icon: '', color: 'var(--accent-amber)', data: [0, 0, 0, 0, 0, (avgWer / 10), (avgWer / 10)], change: analyticsData?.wer_change_pct || '0%', positive: true },
   ]
 
   return (

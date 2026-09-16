@@ -68,7 +68,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               fontSize: 26,
               margin: '0 auto 16px auto',
             }}>
-              ⚠️
+              
             </div>
 
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
@@ -105,7 +105,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                   gap: 6,
                 }}
               >
-                🔄 Refresh View
+                Refresh View
               </button>
               <button
                 onClick={this.handleNavigateDashboard}
@@ -120,7 +120,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                   cursor: 'pointer',
                 }}
               >
-                🏠 Return to Dashboard
+                Return to Dashboard
               </button>
             </div>
           </div>

@@ -585,7 +585,7 @@ export default function VideoIntelligenceCenter() {
                 borderRadius: 10, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8,
                 backdropFilter: 'blur(10px)', animation: 'stream-in 0.3s ease forwards',
               }}>
-                <span style={{ fontSize: 16 }}>📍</span>
+                <span style={{ fontSize: 16 }}></span>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Key Moment: </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', flex: 1 }}>{showToast.text}</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--accent-cyan)' }}>{formatTime(currentTimeSec)}</span>
@@ -679,7 +679,7 @@ export default function VideoIntelligenceCenter() {
         {/* Key moments horizontal cards */}
         <div className="glass-card" style={{ padding: 14, flexShrink: 0 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>📍</span> Key Moments Timeline
+            <span></span> Key Moments Timeline
           </div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
             {keyMoments.length === 0 ? (
@@ -895,19 +895,19 @@ function SummariesTab({
             onChange={e => setSelectedDepth(e.target.value)}
             style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-glass)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 12, padding: '5px 10px', cursor: 'pointer', fontWeight: 600 }}
           >
-            <option value="Executive Summary">⚡ Quick Summary</option>
-            <option value="Detailed Breakdown">📖 Detailed Breakdown</option>
-            <option value="Technical Deep Dive">🔬 Deep Study Guide</option>
+            <option value="Executive Summary">Quick Summary</option>
+            <option value="Detailed Breakdown">Detailed Breakdown</option>
+            <option value="Technical Deep Dive">Deep Study Guide</option>
           </select>
           <button className="btn-primary" onClick={handleRegenerate} disabled={regenerating} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>
-            {regenerating ? 'Regenerating...' : '🔄 Refresh Summary'}
+            {regenerating ? 'Regenerating...' : 'Refresh Summary'}
           </button>
         </div>
 
         {/* Clean Student Indicator */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span className="badge badge-success" style={{ fontSize: 11, padding: '3px 8px' }}>
-            ✨ AI Verified ({werAcc} Accuracy)
+            AI Verified ({werAcc} Accuracy)
           </span>
         </div>
       </div>
@@ -915,7 +915,7 @@ function SummariesTab({
       {/* Executive TL;DR */}
       <div className="glass-card" style={{ padding: 18, background: 'var(--accent-indigo-dim)', border: '1px solid var(--accent-indigo-glow)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 16 }}>⚡</span>
+          <span style={{ fontSize: 16 }}></span>
           <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-accent)', textTransform: 'uppercase', letterSpacing: 0.8 }}>Executive Summary</span>
           <span className="badge badge-info" style={{ marginLeft: 'auto' }}>{activeSum?.depth || 'TL;DR'}</span>
         </div>
@@ -1392,12 +1392,12 @@ function ExportTab({
   }
 
   const EXPORTS = [
-    { icon: '📄', label: 'PDF Summary', desc: 'Structured summary report with key moments timeline and takeaways', action: 'Export PDF', fmt: 'pdf' },
-    { icon: '📝', label: 'DOCX Document', desc: 'Editable Word study guide with chapters and bullet points', action: 'Download DOCX', fmt: 'docx' },
-    { icon: '🎬', label: 'SRT Subtitles', desc: 'Standard SubRip subtitle file with time-aligned transcript', action: 'Download SRT', fmt: 'srt' },
-    { icon: '🌐', label: 'WebVTT Subtitles', desc: 'Web Subtitle format with speaker voice tags (<v Speaker>)', action: 'Download VTT', fmt: 'vtt' },
-    { icon: '📋', label: 'Plain Text Notes', desc: 'Formatted text file with transcript timestamps and summary', action: 'Download TXT', fmt: 'txt' },
-    { icon: '🔗', label: 'Share Link', desc: 'Copy direct shareable link for student and peer review', action: 'Copy Link', fmt: null },
+    { icon: '', label: 'PDF Summary', desc: 'Structured summary report with key moments timeline and takeaways', action: 'Export PDF', fmt: 'pdf' },
+    { icon: '', label: 'DOCX Document', desc: 'Editable Word study guide with chapters and bullet points', action: 'Download DOCX', fmt: 'docx' },
+    { icon: '', label: 'SRT Subtitles', desc: 'Standard SubRip subtitle file with time-aligned transcript', action: 'Download SRT', fmt: 'srt' },
+    { icon: '', label: 'WebVTT Subtitles', desc: 'Web Subtitle format with speaker voice tags (<v Speaker>)', action: 'Download VTT', fmt: 'vtt' },
+    { icon: '', label: 'Plain Text Notes', desc: 'Formatted text file with transcript timestamps and summary', action: 'Download TXT', fmt: 'txt' },
+    { icon: '', label: 'Share Link', desc: 'Copy direct shareable link for student and peer review', action: 'Copy Link', fmt: null },
   ]
 
   return (
@@ -1519,7 +1519,7 @@ function AIChatTab({ videoId, seekTo, videoTitle }: { videoId: string; seekTo: (
               cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s'
             }}
           >
-            💡 {s}
+             {s}
           </button>
         ))}
       </div>

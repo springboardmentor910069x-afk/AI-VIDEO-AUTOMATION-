@@ -71,13 +71,13 @@ function ToastCard({ toast, onClose }: { toast: ToastItem; onClose: () => void }
     success: {
       bg: 'rgba(16, 185, 129, 0.12)',
       border: 'rgba(16, 185, 129, 0.4)',
-      icon: '✅',
+      icon: 'OK',
       shadow: '0 8px 24px rgba(16,185,129,0.15)',
     },
     error: {
       bg: 'rgba(239, 68, 68, 0.12)',
       border: 'rgba(239, 68, 68, 0.4)',
-      icon: '❌',
+      icon: 'Cancel',
       shadow: '0 8px 24px rgba(239,68,68,0.15)',
     },
     info: {
@@ -89,7 +89,7 @@ function ToastCard({ toast, onClose }: { toast: ToastItem; onClose: () => void }
     warning: {
       bg: 'rgba(245, 158, 11, 0.12)',
       border: 'rgba(245, 158, 11, 0.4)',
-      icon: '⚠️',
+      icon: '',
       shadow: '0 8px 24px rgba(245,158,11,0.15)',
     },
   }
