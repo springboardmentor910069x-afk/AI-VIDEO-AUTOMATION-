@@ -521,7 +521,7 @@ function CloudStorageTab({
             }
           }
         })
-        client.requestAccessToken()
+        client.requestAccessToken({ prompt: 'select_account' })
         return
       } catch (err) {
         console.error('GIS token error:', err)
