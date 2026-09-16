@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import secrets
 import hashlib
-from typing import List
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.mongodb_models import User, Setting, APIKey
 from app.schemas import SettingSchema, APIKeyCreate, APIKeyResponse
