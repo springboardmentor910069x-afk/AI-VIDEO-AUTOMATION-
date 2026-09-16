@@ -533,9 +533,42 @@ class PipelineOrchestrator:
 
         logger.info(f"[Pipeline] Starting Accelerated Processing for: '{video.title}' ({video_id})")
 
+        # Resolve working physical file path for all pipeline stages
+        clean_name = video.file_path.replace("\\", "/").split("/")[-1] if video.file_path else (video.filename or "")
+        working_path = None
+        for cand in [
+            video.file_path,
+            os.path.join(settings.UPLOAD_DIR, clean_name),
+            os.path.join(settings.BASE_DIR, "uploads", clean_name),
+            os.path.join(settings.BASE_DIR, video.file_path) if video.file_path and not os.path.isabs(video.file_path) else None,
+            os.path.join(settings.UPLOAD_DIR, video.filename) if video.filename else None,
+        ]:
+            if cand and os.path.exists(cand) and os.path.getsize(cand) > 100:
+                working_path = cand
+                break
+
+        # If file is not present locally, but exists in Google Drive, download it for AI processing
+        if not working_path and getattr(video, "drive_file_id", None):
+            try:
+                from app.mongodb_models import Setting
+                from app.services.drive_storage import drive_storage
+                user_setting = await Setting.find_one(Setting.user_id == str(video.user_id)) if video.user_id else None
+                token = getattr(user_setting, "google_drive_token", None) if user_setting else None
+                if not token:
+                    any_setting = await Setting.find_one(Setting.google_drive_connected == True)
+                    token = getattr(any_setting, "google_drive_token", None) if any_setting else None
+                if token:
+                    dest = os.path.join(settings.UPLOAD_DIR, clean_name or f"{video_id}_video.mp4")
+                    working_path = await drive_storage.download_file(token, video.drive_file_id, dest)
+                    logger.info(f"[Pipeline] Downloaded video from Google Drive for processing: {working_path}")
+            except Exception as de:
+                logger.warning(f"[Pipeline] Could not download from Drive: {de}")
+
+        effective_file_path = working_path or video.file_path
+
         try:
             # Stage 1: Fast Validation & Probing
-            stage1_meta = await asyncio.to_thread(validate_and_probe_video, video.file_path, video.filename)
+            stage1_meta = await asyncio.to_thread(validate_and_probe_video, effective_file_path, video.filename)
             probed_dur = stage1_meta.get("duration_sec")
             if probed_dur and probed_dur > 0:
                 video.duration_sec = probed_dur
@@ -543,8 +576,8 @@ class PipelineOrchestrator:
             await self.broadcast_status(video_id, video, "stage1_upload", "Stage 1 completed: Metadata validated.", 15.0, t_start)
 
             # Stage 2: Media Processing (Audio Extraction & Keyframes)
-            media_result = await asyncio.to_thread(process_video_media, video_id, video.file_path)
-            audio_path = media_result.get("audio_path") or video.file_path
+            media_result = await asyncio.to_thread(process_video_media, video_id, effective_file_path)
+            audio_path = media_result.get("audio_path") or effective_file_path
             if media_result.get("thumbnail_url"):
                 video.thumbnail_url = media_result["thumbnail_url"]
             if media_result.get("keyframes"):

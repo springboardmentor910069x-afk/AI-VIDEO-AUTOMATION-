@@ -200,5 +200,24 @@ class GoogleDriveStorageService:
 
         return status_code, response_headers, stream_generator()
 
+    async def download_file(self, access_token: str, file_id: str, dest_path: str) -> str:
+        """
+        Downloads a video file from Google Drive to local disk for AI pipeline processing.
+        """
+        headers = {"Authorization": f"Bearer {access_token}"}
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            res = await client.get(
+                f"{DRIVE_API_BASE}/files/{file_id}?alt=media",
+                headers=headers,
+                follow_redirects=True
+            )
+            res.raise_for_status()
+            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+            with open(dest_path, "wb") as f:
+                f.write(res.content)
+            logger.info(f"Downloaded Drive video {file_id} to {dest_path} ({len(res.content)} bytes)")
+            return dest_path
+
 
 drive_storage = GoogleDriveStorageService()
+

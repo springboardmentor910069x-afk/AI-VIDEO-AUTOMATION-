@@ -100,61 +100,73 @@ If you prefer to configure each service manually in the Render dashboard:
    | `WHISPER_CLOUD_ENABLED` | `true` | Uses lightweight transcription |
    | `GROQ_API_KEY` | *(Optional)* | Your Groq API key |
    | `ANALYTICS_ZERO_BASELINE` | `true` | Clean zero baseline analytics |
+   | `GOOGLE_CLIENT_ID` | *(Optional)* | Google OAuth & Drive Client ID |
+   | `GOOGLE_CLIENT_SECRET` | *(Optional)* | Google OAuth & Drive Client Secret |
+   | `YOUTUBE_API_KEY` | *(Optional)* | YouTube Data API key for direct caption extraction |
 6. Click **Create Web Service**. Wait for build to complete.
 7. Copy the generated backend URL (e.g., `https://clipmind-backend-xyz.onrender.com`).
 
 ---
 
-### B. Deploy Frontend UI (`clipmind-frontend`)
+### B. Unified All-in-One Docker Deployment (Recommended Single Service)
+
+Alternatively, deploy both frontend and backend inside a single Render Web Service using the root `Dockerfile`:
+1. Click **New +** -> **Web Service** -> Select repository.
+2. Set **Environment**: `Docker` (Render auto-detects `Dockerfile`).
+3. Set Environment Variables (`MONGODB_URL`, `SECRET_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, etc.).
+4. The Docker container compiles the React 19 SPA, builds Python 3.11 with FFmpeg, and serves both frontend static assets and API on port `8000`.
+
+---
+
+### C. Deploy Frontend UI (`clipmind-frontend`) via Static Site
 1. In Render Dashboard, click **New +** -> **Static Site**.
 2. Select your GitHub repository.
 3. Configure the following fields:
    - **Name**: `clipmind-frontend`
-   - **Branch**: `main`
+   - **Branch**: `Intern-ADABALA-VENKATA-THRINADH` (or `main`)
    - **Root Directory**: `CLIPMIND AI/FRONTEND`
    - **Build Command**: `npm install && npm run build`
    - **Publish Directory**: `dist`
 4. Under **Environment Variables**, add:
    | Key | Value |
    | :--- | :--- |
-   | `VITE_BACKEND_URL` | `https://clipmind-backend-xyz.onrender.com` *(your backend URL from Step A)* |
+   | `VITE_BACKEND_URL` | `https://clipmind-backend-xyz.onrender.com` *(your backend URL)* |
+   | `VITE_GOOGLE_CLIENT_ID` | `96783937366-dc7o4rjij1jb5tismndbl0m3lulps2r5.apps.googleusercontent.com` |
 5. Expand **Redirects/Rewrites** -> Click **Add Rule**:
    - **Type**: `Rewrite`
    - **Source**: `/*`
    - **Destination**: `/index.html`
-   *(This ensures client-side React Router navigation works properly on page refresh)*.
+   *(Ensures client-side React Router navigation works properly on page refresh)*.
 6. Click **Create Static Site**.
-7. Once deployed, open your live frontend link!
 
 ---
 
-## 🔍 5. Post-Deployment Verification Checklist
+## ☁️ 5. Zero-Loss Persistent Storage with Google Drive
 
-1. **Verify Backend Health**:
-   Visit `https://<your-backend>.onrender.com/health` in your browser. You should receive:
-   ```json
-   {
-     "status": "healthy",
-     "app": "ClipMind AI",
-     "version": "1.0.0",
-     "services": {
-       "database": { "status": "connected" },
-       "storage": { "status": "ready", "writable": true },
-       "ai_engine": { "status": "ready" }
-     }
-   }
-   ```
-2. **Verify Interactive Player**:
-   - Open your frontend static site URL.
-   - Register or log in to a demo account (`educator@clipmind.ai` / `Admin@123456`).
-   - Open any video in the **Video Intelligence Center** or **Learner Study Room**.
-   - Test playback speed change (`0.5x`, `1.5x`, `2.0x`): audio and video speed adjust instantly in real time.
-   - Click Key Moment timeline cards and seekbar: playback seeks accurately.
-   - Verify transcript auto-scrolls in sync with playback.
+On Render free-tier instances, the local container filesystem is ephemeral and resets during container restarts or deployments. ClipMind AI solves this with native Google Drive cloud integration:
+
+1. **Setup Google Cloud OAuth Credentials**:
+   - In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), enable **Google Drive API**.
+   - Add Authorized JavaScript Origin: `https://your-frontend.onrender.com` and `http://localhost:5173`.
+   - Add Authorized Redirect URI: `https://your-backend.onrender.com/api/v1/settings/drive/callback` and `http://localhost:8000/api/v1/settings/drive/callback`.
+2. **Automatic Background Cloud Sync**:
+   - When Google Drive is connected in **Account Settings > Cloud Storage**, local video uploads automatically sync to your personal 15 GB Google Drive in the background.
+   - The video streaming router (`/api/v1/videos/{video_id}/stream`) proxies video byte streams with **HTTP 206 Partial Content range requests** directly from Google Drive, ensuring videos remain playable forever even through container restarts.
 
 ---
 
-## 💡 6. Render Free Tier Tips
+## 🔍 6. Post-Deployment Verification Checklist
+
+1. **Verify Backend Health**: Visit `https://<your-backend>.onrender.com/health`.
+2. **Verify Interactive Player & Mind Maps**:
+   - Open any video in **Video Intelligence Center**.
+   - Verify smooth scrubbing with HTTP 206 partial content streaming.
+   - Click the **Mind Map** tab to inspect the interactive concept hierarchy with clickable timestamp seek chips.
+3. **Verify Google OAuth Login**: Click "Continue with Google" on the login modal.
+
+---
+
+## 💡 7. Render Free Tier Tips
 
 * **Free Web Service Sleep**: Render's free web services automatically sleep after 15 minutes of inactivity. When a request comes in, it takes ~30–45 seconds for the backend container to wake up. The frontend static site never sleeps.
 * **Keep Alive (Optional)**: You can use a free pinging service like [UptimeRobot](https://uptimerobot.com) or [Cron-Job.org](https://cron-job.org) to ping your `/health` endpoint every 10 minutes to keep your backend warm 24/7.

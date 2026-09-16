@@ -79,9 +79,11 @@ Video has become the predominant vehicle for knowledge transfer across universit
 | **Transcription** | Auto-captions (poor timing) | Accurate STT only | **Word-level timestamped Whisper STT** |
 | **Visual Scene Detection** | None | None | **OpenCV frame-difference slide extraction** |
 | **Summarization Depth** | None | Flat single summary | **Tri-tier (TL;DR, Detailed, Key Takeaways)** |
+| **Concept Mind Maps** | None | None | **Interactive SVG Concept Graph with Click-to-Seek** |
+| **Persistent Cloud Storage** | Proprietary, bandwidth-limited | Paid subscription storage | **15GB Google Drive Zero-Loss Cloud + HTTP 206 Proxy** |
 | **Study Pack Generation** | None | None | **Interactive Quizzes (Bloom's Taxonomy) + Flashcards** |
 | **Export Versatility** | Closed format | Plain text / CSV | **PDF, DOCX, TXT, SRT, WebVTT styled documents** |
-| **Security & RBAC** | Single user or public | Team workspace | **4-tier granular RBAC + Audit Logging** |
+| **Security & RBAC** | Single user or public | Team workspace | **4-tier granular RBAC + Audit Logging + Google GIS** |
 
 ---
 
