@@ -126,12 +126,15 @@ async def google_login(req: GoogleAuthRequest):
     extracted_name = (req.name or "").strip()
     extracted_avatar = req.avatar_url
 
-    # If a real Google Identity Services token was provided, decode and verify with Google
-    if req.credential and req.credential != "google_oauth_token_client_auth":
-        if "." in req.credential:
+    token = (req.credential or "").strip()
+    if token and token != "google_oauth_token_client_auth":
+        is_jwt_id_token = token.startswith("eyJ") or (token.count(".") == 2 and not token.startswith("ya29."))
+
+        if is_jwt_id_token:
+            # ID Token verification with Google tokeninfo
             try:
                 import urllib.request, json
-                verify_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={req.credential}"
+                verify_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={token}"
                 v_req = urllib.request.Request(verify_url, headers={"User-Agent": "ClipMind-Auth/2.0"})
                 with urllib.request.urlopen(v_req, timeout=5) as resp:
                     if resp.status == 200:
@@ -146,7 +149,7 @@ async def google_login(req: GoogleAuthRequest):
                 # Fallback to base64url payload extraction
                 try:
                     import base64, json
-                    parts = req.credential.split(".")
+                    parts = token.split(".")
                     if len(parts) >= 2:
                         padding = "=" * (4 - len(parts[1]) % 4)
                         payload_bytes = base64.urlsafe_b64decode(parts[1] + padding)
@@ -160,12 +163,13 @@ async def google_login(req: GoogleAuthRequest):
                 except Exception:
                     pass
         else:
-            # OAuth2 access token (e.g. from initTokenClient popup flow)
+            # OAuth2 access token (e.g. from initTokenClient popup flow, ya29...)
+            # 1. Try Google userinfo endpoint with Bearer authorization
             try:
                 import urllib.request, json
                 userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
                 v_req = urllib.request.Request(userinfo_url, headers={
-                    "Authorization": f"Bearer {req.credential}",
+                    "Authorization": f"Bearer {token}",
                     "User-Agent": "ClipMind-Auth/2.0"
                 })
                 with urllib.request.urlopen(v_req, timeout=5) as resp:
@@ -180,6 +184,27 @@ async def google_login(req: GoogleAuthRequest):
             except Exception:
                 pass
 
+            # 2. Try Google tokeninfo with access_token parameter
+            if not extracted_email:
+                try:
+                    import urllib.request, json
+                    tokeninfo_url = f"https://oauth2.googleapis.com/tokeninfo?access_token={token}"
+                    v_req = urllib.request.Request(tokeninfo_url, headers={"User-Agent": "ClipMind-Auth/2.0"})
+                    with urllib.request.urlopen(v_req, timeout=5) as resp:
+                        if resp.status == 200:
+                            token_data = json.loads(resp.read().decode("utf-8"))
+                            if "email" in token_data:
+                                extracted_email = token_data["email"].strip().lower()
+                except Exception:
+                    pass
+
+    # If email was provided in request (e.g. from frontend Google userinfo fetch or Google Connect modal)
+    if not extracted_email and req.email and "@" in req.email:
+        extracted_email = req.email.strip().lower()
+        if req.name and not extracted_name:
+            extracted_name = req.name.strip()
+        if req.avatar_url and not extracted_avatar:
+            extracted_avatar = req.avatar_url
 
     if not extracted_email:
         raise HTTPException(
@@ -190,7 +215,7 @@ async def google_login(req: GoogleAuthRequest):
     email = extracted_email
     user = await MongoUser.find_one({"email": email})
     if not user:
-        role_val = UserRole.LEARNER
+        role_val = UserRole.CREATOR
         if req.role:
             for r in UserRole:
                 if r.value.lower() == req.role.lower() and r != UserRole.ADMIN:
@@ -219,9 +244,15 @@ async def google_login(req: GoogleAuthRequest):
         if extracted_avatar and not user.avatar_url:
             user.avatar_url = extracted_avatar
             updated = True
+        if not getattr(user, "is_verified", False):
+            user.is_verified = True
+            user.verification_status = "verified"
+            updated = True
+        if not getattr(user, "is_active", True):
+            user.is_active = True
+            updated = True
         if updated:
             await user.save()
-
 
     access_token = create_access_token(data={"sub": str(user.id), "email": user.email, "role": getattr(user.role, "value", user.role)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
@@ -231,10 +262,11 @@ async def google_login(req: GoogleAuthRequest):
         email=user.email,
         name=user.name,
         role=getattr(user.role, "value", user.role),
-        is_active=user.is_active,
+        avatar_url=user.avatar_url,
+        is_active=getattr(user, "is_active", True),
         is_verified=getattr(user, "is_verified", True),
         verification_status=getattr(user, "verification_status", "verified"),
-        created_at=user.created_at
+        created_at=getattr(user, "created_at", None) or datetime.utcnow()
     )
     return Token(
         access_token=access_token,

@@ -260,6 +260,7 @@ export const api = {
     const data: AuthResponse = await res.json()
     localStorage.setItem('clipmind_access_token', data.access_token)
     localStorage.setItem('clipmind_user_role', data.user.role)
+    localStorage.setItem('clipmind_active_role', data.user.role)
     localStorage.setItem('clipmind_user', JSON.stringify(data.user))
     return data
   },

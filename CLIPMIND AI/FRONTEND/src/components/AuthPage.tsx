@@ -145,33 +145,57 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   }, [])
 
 
+  // Sync mode prop to active tab
+  useEffect(() => {
+    setTab(mode)
+  }, [mode])
+
   // Google Identity Services (GIS) automatic initialization
   useEffect(() => {
     const clientId = GOOGLE_CLIENT_ID
-    if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
-      try {
-        (window as any).google.accounts.id.initialize({
-          client_id: clientId,
-          callback: async (response: any) => {
-            if (response?.credential) {
-              setLoading(true)
-              setErrorMsg(null)
-              try {
-                const res = await api.loginWithGoogle({ credential: response.credential, role })
-                const userRole = (res.user?.role as Role) || role
-                localStorage.setItem('clipmind_active_role', userRole)
-                showToast(`Signed in with Google as ${userRole}!`, 'success')
-                redirectByRole(userRole)
-              } catch (err: any) {
-                setErrorMsg(err.message || 'Google authentication failed.')
-              } finally {
-                setLoading(false)
+    if (!clientId || typeof window === 'undefined') return
+
+    const initGIS = () => {
+      if ((window as any).google?.accounts?.id) {
+        try {
+          (window as any).google.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (response: any) => {
+              if (response?.credential) {
+                setLoading(true)
+                setErrorMsg(null)
+                try {
+                  const res = await api.loginWithGoogle({ credential: response.credential, role })
+                  const userRole = (res.user?.role as Role) || role
+                  localStorage.setItem('clipmind_active_role', userRole)
+                  showToast(`Signed in with Google as ${userRole}!`, 'success')
+                  redirectByRole(userRole)
+                } catch (err: any) {
+                  const msg = err?.message || 'Google authentication failed.'
+                  setErrorMsg(msg)
+                  showToast(msg, 'error')
+                } finally {
+                  setLoading(false)
+                }
               }
             }
-          }
-        })
-      } catch (e) {
-        console.log('Google Identity Services notice:', e)
+          })
+          return true
+        } catch (e) {
+          console.log('Google Identity Services notice:', e)
+        }
+      }
+      return false
+    }
+
+    if (!initGIS()) {
+      const interval = setInterval(() => {
+        if (initGIS()) clearInterval(interval)
+      }, 300)
+      const timeout = setTimeout(() => clearInterval(interval), 6000)
+      return () => {
+        clearInterval(interval)
+        clearTimeout(timeout)
       }
     }
   }, [role])
@@ -217,6 +241,8 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
 
   const handleGoogleAuth = () => {
     const clientId = GOOGLE_CLIENT_ID
+    setErrorMsg(null)
+
     // 1. Try modern Google OAuth2 Token Client popup dialog
     if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
       try {
@@ -243,7 +269,31 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
               setLoading(true)
               setErrorMsg(null)
               try {
-                const res = await api.loginWithGoogle({ credential: tokenResponse.access_token, role })
+                // Fetch profile directly using Google userinfo API with the access token
+                let profileEmail = ''
+                let profileName = ''
+                let profileAvatar = ''
+                try {
+                  const uResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                  })
+                  if (uResp.ok) {
+                    const uData = await uResp.json()
+                    profileEmail = uData.email || ''
+                    profileName = uData.name || ''
+                    profileAvatar = uData.picture || ''
+                  }
+                } catch (e) {
+                  console.log('Client-side Google userinfo fetch notice:', e)
+                }
+
+                const res = await api.loginWithGoogle({
+                  credential: tokenResponse.access_token,
+                  email: profileEmail || undefined,
+                  name: profileName || undefined,
+                  avatar_url: profileAvatar || undefined,
+                  role
+                })
                 const userRole = (res.user?.role as Role) || role
                 localStorage.setItem('clipmind_active_role', userRole)
                 showToast(`Signed in with Google as ${userRole}!`, 'success')
@@ -288,6 +338,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
     }
 
     setGoogleLoading(true)
+    setErrorMsg(null)
     try {
       const res = await api.loginWithGoogle({
         email: cleanG,
@@ -300,7 +351,9 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
       setGoogleModalOpen(false)
       redirectByRole(userRole)
     } catch (err: any) {
-      showToast(err?.message || 'Google sign-in failed. Please check your credentials.', 'error')
+      const msg = err?.message || 'Google sign-in failed. Please check your credentials.'
+      setErrorMsg(msg)
+      showToast(msg, 'error')
     } finally {
       setGoogleLoading(false)
     }
