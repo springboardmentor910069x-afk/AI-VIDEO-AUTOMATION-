@@ -79,6 +79,10 @@ class Video(Document):
     domain: Optional[str] = "Academic Lecture"
     views_count: Optional[int] = 0
     language: Optional[str] = "en"
+    storage_type: Optional[str] = "local"
+    drive_file_id: Optional[str] = None
+    drive_folder_id: Optional[str] = None
+    drive_web_link: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -173,6 +177,10 @@ class Setting(Document):
     theme: str = "dark"
     email_notifications: bool = True
     auto_indexing: bool = True
+    storage_target: str = "local"
+    google_drive_connected: bool = False
+    google_drive_token: Optional[str] = None
+    google_drive_email: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

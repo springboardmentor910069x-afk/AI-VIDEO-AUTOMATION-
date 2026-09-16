@@ -400,3 +400,99 @@ input, select, textarea, button {
   display: inline-block;
 }
 
+/* ==============================================================================
+   Cross-Device Responsive System Utilities (Mobile, Tablet, Laptop, Desktop)
+   ============================================================================== */
+
+/* Responsive Page Containers */
+.responsive-page-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 14px;
+}
+
+@media (min-width: 768px) {
+  .responsive-page-container {
+    padding: 24px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-page-container {
+    padding: 28px 32px;
+  }
+}
+
+/* Mobile Off-Canvas Drawer Backdrop */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 95;
+  transition: opacity 0.25s ease;
+}
+
+/* Responsive Table Wrapper with Touch Scroll */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 9999px;
+}
+
+/* Responsive Tab Bar with Smooth Horizontal Overflow */
+.tabs-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: nowrap;
+  gap: 6px;
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive Hide/Show Helper Classes */
+@media (max-width: 767px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .show-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hide-on-tablet {
+    display: none !important;
+  }
+  .stack-on-tablet {
+    flex-direction: column !important;
+  }
+}
+
+/* Mobile Touch Optimization */
+@media (hover: none) and (pointer: coarse) {
+  button, select, a, input {
+    min-height: 38px;
+  }
+}
+

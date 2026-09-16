@@ -146,3 +146,112 @@ async def revoke_api_key(
     except Exception as e:
         print(f"[APIKey] Revoke notice: {e}")
     return {"success": True, "message": "API key removed"}
+
+# ============================================================================
+# Google Drive Cloud Storage Settings & Quota
+# ============================================================================
+
+from pydantic import BaseModel
+
+class DriveConnectRequest(BaseModel):
+    access_token: str
+    email: Optional[str] = None
+
+class StorageTargetRequest(BaseModel):
+    storage_target: str # 'local' or 'google_drive'
+
+@router.get("/drive/status")
+async def get_drive_status(current_user: User = Depends(get_current_user)):
+    user_id = str(current_user.id)
+    setting = await Setting.find_one(Setting.user_id == user_id)
+    
+    storage_target = getattr(setting, "storage_target", "local") if setting else "local"
+    is_connected = getattr(setting, "google_drive_connected", False) if setting else False
+    drive_token = getattr(setting, "google_drive_token", None) if setting else None
+    drive_email = getattr(setting, "google_drive_email", None) if setting else None
+
+    quota_data = {}
+    if is_connected and drive_token:
+        try:
+            from app.services.drive_storage import drive_storage
+            quota_data = await drive_storage.get_storage_quota(drive_token)
+            if not quota_data.get("connected"):
+                # Token might have expired
+                is_connected = False
+        except Exception as e:
+            quota_data = {"error": str(e)}
+
+    return {
+        "storage_target": storage_target,
+        "connected": is_connected,
+        "email": drive_email or current_user.email,
+        "quota": quota_data
+    }
+
+@router.post("/drive/connect")
+async def connect_google_drive(
+    req: DriveConnectRequest,
+    current_user: User = Depends(get_current_user)
+):
+    user_id = str(current_user.id)
+    from app.services.drive_storage import drive_storage
+
+    # Verify token by testing quota call
+    quota = await drive_storage.get_storage_quota(req.access_token)
+    if not quota.get("connected"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired Google Drive token. Please re-authenticate."
+        )
+
+    setting = await Setting.find_one(Setting.user_id == user_id)
+    if not setting:
+        setting = Setting(user_id=user_id)
+        await setting.insert()
+
+    setting.google_drive_connected = True
+    setting.google_drive_token = req.access_token
+    setting.google_drive_email = req.email or quota.get("user_email") or current_user.email
+    setting.storage_target = "google_drive"
+    setting.updated_at = datetime.now(timezone.utc)
+    await setting.save()
+
+    return {
+        "success": True,
+        "message": "Google Drive connected successfully for 15 GB cloud video storage.",
+        "quota": quota
+    }
+
+@router.post("/drive/disconnect")
+async def disconnect_google_drive(current_user: User = Depends(get_current_user)):
+    user_id = str(current_user.id)
+    setting = await Setting.find_one(Setting.user_id == user_id)
+    if setting:
+        setting.google_drive_connected = False
+        setting.google_drive_token = None
+        setting.storage_target = "local"
+        setting.updated_at = datetime.now(timezone.utc)
+        await setting.save()
+
+    return {
+        "success": True,
+        "message": "Google Drive disconnected. Storage target reverted to Local."
+    }
+
+@router.put("/storage-target")
+async def set_storage_target(
+    req: StorageTargetRequest,
+    current_user: User = Depends(get_current_user)
+):
+    user_id = str(current_user.id)
+    target = "google_drive" if req.storage_target == "google_drive" else "local"
+    setting = await Setting.find_one(Setting.user_id == user_id)
+    if not setting:
+        setting = Setting(user_id=user_id)
+        await setting.insert()
+
+    setting.storage_target = target
+    setting.updated_at = datetime.now(timezone.utc)
+    await setting.save()
+
+    return {"success": True, "storage_target": target}

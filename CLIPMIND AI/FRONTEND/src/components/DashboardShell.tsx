@@ -71,11 +71,30 @@ export default function DashboardShell() {
   const params = useParams()
   const { showToast } = useToast()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
+
+  // Track viewport width for responsive mobile drawer
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (!mobile) setMobileDrawerOpen(false)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Auto-close mobile drawer on route navigation
+  useEffect(() => {
+    setMobileDrawerOpen(false)
+  }, [location.pathname])
 
   // Dynamic user profile state from logged-in user session
   const [userName, setUserName] = useState<string>(() => {
@@ -301,32 +320,57 @@ export default function DashboardShell() {
         />
       )}
 
-      {/* SIDEBAR */}
+      {/* Mobile Drawer Overlay Backdrop */}
+      {isMobile && mobileDrawerOpen && (
+        <div
+          className="mobile-drawer-overlay"
+          onClick={() => setMobileDrawerOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR (Responsive Desktop Icon-Rail / Mobile Off-Canvas Drawer) */}
       <aside style={{
-        width: sidebarW, flexShrink: 0,
+        width: isMobile ? 260 : sidebarW,
+        flexShrink: 0,
         background: 'var(--sidebar-bg)',
         borderRight: '1px solid var(--border-glass)',
         display: 'flex', flexDirection: 'column',
-        transition: 'width 0.2s ease',
+        transition: isMobile ? 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)' : 'width 0.2s ease',
         position: 'fixed', top: 0, left: 0, bottom: 0,
-        zIndex: 50, overflow: 'hidden',
+        zIndex: isMobile ? 100 : 50,
+        transform: isMobile ? (mobileDrawerOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+        boxShadow: isMobile && mobileDrawerOpen ? '0 0 35px rgba(0,0,0,0.6)' : 'none',
+        overflow: 'hidden',
       }}>
         {/* Logo row */}
         <div style={{
           height: 64, display: 'flex', alignItems: 'center',
-          padding: sidebarCollapsed ? '0 16px' : '0 20px',
+          padding: (sidebarCollapsed && !isMobile) ? '0 16px' : '0 20px',
           borderBottom: '1px solid var(--border-glass)',
           gap: 10, cursor: 'pointer',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-        }} onClick={() => { showToast('Navigating to dashboard home', 'info'); navigate('/dashboard') }}>
+          justifyContent: (sidebarCollapsed && !isMobile) ? 'center' : 'flex-start',
+        }} onClick={() => {
+          if (isMobile) setMobileDrawerOpen(false)
+          showToast('Navigating to dashboard home', 'info')
+          navigate('/dashboard')
+        }}>
           <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 14px var(--accent-indigo-glow)' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
           </div>
-          {!sidebarCollapsed && <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>ClipMind<span style={{ color: 'var(--accent-indigo)' }}> AI</span></span>}
+          {(!sidebarCollapsed || isMobile) && <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>ClipMind<span style={{ color: 'var(--accent-indigo)' }}> AI</span></span>}
+          {isMobile && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setMobileDrawerOpen(false) }}
+              style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 16, padding: 4 }}
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Active Role Banner in Sidebar */}
-        {!sidebarCollapsed && (
+        {(!sidebarCollapsed || isMobile) && (
           <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-glass)' }}>
             <div style={{
               background: 'var(--bg-glass)', border: '1px solid var(--border-glass)',
@@ -349,34 +393,38 @@ export default function DashboardShell() {
             return (
               <button
                 key={item.label}
-                onClick={() => { showToast(`Navigating to ${item.label}`, 'info'); navigate(item.path) }}
-                title={sidebarCollapsed ? item.label : undefined}
+                onClick={() => {
+                  if (isMobile) setMobileDrawerOpen(false)
+                  showToast(`Navigating to ${item.label}`, 'info')
+                  navigate(item.path)
+                }}
+                title={(sidebarCollapsed && !isMobile) ? item.label : undefined}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center',
-                  gap: sidebarCollapsed ? 0 : 12,
-                  padding: sidebarCollapsed ? '12px 0' : '11px 20px',
-                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+                  gap: (sidebarCollapsed && !isMobile) ? 0 : 12,
+                  padding: (sidebarCollapsed && !isMobile) ? '12px 0' : '11px 20px',
+                  justifyContent: (sidebarCollapsed && !isMobile) ? 'center' : 'flex-start',
                   background: isActive ? 'var(--accent-indigo-dim)' : 'none',
                   borderTop: 'none', borderRight: 'none', borderBottom: 'none',
                   borderLeft: isActive ? '2px solid var(--accent-indigo)' : '2px solid transparent',
                   cursor: 'pointer', fontSize: 14, fontWeight: isActive ? 600 : 500,
                   color: isActive ? 'var(--accent-indigo)' : 'var(--text-secondary)',
                   transition: 'all 0.15s', fontFamily: 'inherit',
-                  borderRadius: sidebarCollapsed ? 0 : '0 8px 8px 0',
-                  marginRight: sidebarCollapsed ? 0 : 8,
+                  borderRadius: (sidebarCollapsed && !isMobile) ? 0 : '0 8px 8px 0',
+                  marginRight: (sidebarCollapsed && !isMobile) ? 0 : 8,
                 }}
                 onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
                 onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)' }}
               >
                 <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
-                {!sidebarCollapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
+                {(!sidebarCollapsed || isMobile) && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
               </button>
             )
           })}
         </nav>
 
         {/* Dynamic Storage meter */}
-        {!sidebarCollapsed && (
+        {(!sidebarCollapsed || isMobile) && (
           <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border-glass)' }}>
             <div style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', borderRadius: 12, padding: '12px 14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
@@ -392,16 +440,16 @@ export default function DashboardShell() {
 
         {/* User footer */}
         <div style={{
-          padding: sidebarCollapsed ? '12px 0' : '12px 16px',
+          padding: (sidebarCollapsed && !isMobile) ? '12px 0' : '12px 16px',
           borderTop: '1px solid var(--border-glass)',
           display: 'flex', alignItems: 'center',
-          gap: sidebarCollapsed ? 0 : 10,
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+          gap: (sidebarCollapsed && !isMobile) ? 0 : 10,
+          justifyContent: (sidebarCollapsed && !isMobile) ? 'center' : 'flex-start',
         }}>
           <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }} title={userName}>
             {userInitials}
           </div>
-          {!sidebarCollapsed && (
+          {(!sidebarCollapsed || isMobile) && (
             <>
               <div style={{ flex: 1, overflow: 'hidden' }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={userName}>{userName}</div>
@@ -416,7 +464,17 @@ export default function DashboardShell() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <div style={{ flex: 1, marginLeft: sidebarW, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin-left 0.2s ease' }}>
+      <div style={{
+        flex: 1,
+        marginLeft: isMobile ? 0 : sidebarW,
+        width: isMobile ? '100%' : `calc(100% - ${sidebarW}px)`,
+        maxWidth: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        overflowX: 'hidden',
+        transition: 'margin-left 0.2s ease'
+      }}>
         {/* TOP HEADER */}
         <header style={{
           height: 64, position: 'sticky', top: 0, zIndex: 40,
@@ -424,38 +482,64 @@ export default function DashboardShell() {
           WebkitBackdropFilter: 'blur(20px)',
           borderBottom: '1px solid var(--border-glass)',
           display: 'flex', alignItems: 'center',
-          padding: '0 24px', gap: 16,
+          padding: isMobile ? '0 12px' : '0 24px',
+          gap: isMobile ? 8 : 16,
         }}>
-          {/* Sidebar toggle */}
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 4 }} aria-label="Toggle sidebar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+          {/* Sidebar / Drawer toggle button */}
+          <button
+            onClick={() => {
+              if (isMobile) setMobileDrawerOpen(prev => !prev)
+              else setSidebarCollapsed(!sidebarCollapsed)
+            }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', padding: 6 }}
+            aria-label="Toggle navigation menu"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
           </button>
 
-          {/* Breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
-            {breadcrumbs.map((crumb, i) => (
-              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {i > 0 && <span>/</span>}
-                <span style={{ color: i === breadcrumbs.length - 1 ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: i === breadcrumbs.length - 1 ? 600 : 400 }}>{crumb}</span>
+          {/* Breadcrumb (Responsive: compact on mobile) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)', overflow: 'hidden' }}>
+            {isMobile ? (
+              <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 13, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {breadcrumbs[breadcrumbs.length - 1]}
               </span>
-            ))}
+            ) : (
+              breadcrumbs.map((crumb, i) => (
+                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {i > 0 && <span>/</span>}
+                  <span style={{ color: i === breadcrumbs.length - 1 ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: i === breadcrumbs.length - 1 ? 600 : 400 }}>{crumb}</span>
+                </span>
+              ))
+            )}
           </div>
 
           {/* Global search → opens Command Palette */}
-          <div style={{ flex: 1, maxWidth: 440, margin: '0 auto', position: 'relative' }}>
-            <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+          <div style={{ flex: 1, maxWidth: isMobile ? 180 : 440, margin: isMobile ? '0' : '0 auto', position: 'relative' }}>
+            <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
             <input
               type="search"
               className="input-field"
-              placeholder="⌘K  Search transcripts, videos, keywords..."
+              placeholder={isMobile ? "Search..." : "⌘K  Search transcripts, videos, keywords..."}
               value={searchVal}
               readOnly
               onClick={() => setCmdPaletteOpen(true)}
               onFocus={() => setCmdPaletteOpen(true)}
               onChange={e => setSearchVal(e.target.value)}
-              style={{ paddingLeft: 38, paddingRight: 64, borderRadius: 10, height: 40, fontSize: 13, cursor: 'pointer', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+              style={{
+                paddingLeft: 32,
+                paddingRight: isMobile ? 10 : 64,
+                borderRadius: 10,
+                height: 38,
+                fontSize: 12.5,
+                cursor: 'pointer',
+                background: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                width: '100%'
+              }}
             />
-            <kbd style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--text-secondary)', background: 'var(--bg-surface)', border: '1px solid var(--border-glass)', borderRadius: 4, padding: '2px 6px', pointerEvents: 'none' }}>⌘K</kbd>
+            {!isMobile && (
+              <kbd style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--text-secondary)', background: 'var(--bg-surface)', border: '1px solid var(--border-glass)', borderRadius: 4, padding: '2px 6px', pointerEvents: 'none' }}>⌘K</kbd>
+            )}
           </div>
 
           {/* Right controls */}
@@ -481,47 +565,50 @@ export default function DashboardShell() {
               </span>
             </div>
             {activeRole === 'Learner' ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: isMobile ? 4 : 8, alignItems: 'center' }}>
                 <button
                   className="btn-primary"
                   onClick={() => navigate('/dashboard/upload')}
+                  title="Upload Video"
                   style={{
-                    padding: '8px 14px',
+                    padding: isMobile ? '7px 9px' : '8px 14px',
                     borderRadius: 9,
                     fontSize: 13,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
+                    gap: 5,
                     whiteSpace: 'nowrap',
                   }}
                 >
                   <span style={{ fontSize: 14 }}>📤</span>
-                  Upload Video
+                  {!isMobile && <span>Upload Video</span>}
                 </button>
                 <button
                   className="btn-primary"
                   onClick={() => navigate('/dashboard/learner/study')}
+                  title="AI Study Room"
                   style={{
-                    padding: '8px 14px',
+                    padding: isMobile ? '7px 9px' : '8px 14px',
                     borderRadius: 9,
                     fontSize: 13,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
+                    gap: 5,
                     whiteSpace: 'nowrap',
                     background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo))'
                   }}
                 >
                   <span style={{ fontSize: 14 }}>🎓</span>
-                  Study Room
+                  {!isMobile && <span>Study Room</span>}
                 </button>
               </div>
             ) : activeRole === 'Admin' ? (
               <button
                 className="btn-primary"
                 onClick={() => navigate('/dashboard/admin')}
+                title="Admin Console"
                 style={{
-                  padding: '8px 16px',
+                  padding: isMobile ? '7px 10px' : '8px 16px',
                   borderRadius: 9,
                   fontSize: 13,
                   display: 'flex',
@@ -532,14 +619,15 @@ export default function DashboardShell() {
                 }}
               >
                 <span style={{ fontSize: 14 }}>🛡️</span>
-                Admin Console
+                {!isMobile && <span>Admin Console</span>}
               </button>
             ) : (
               <button
                 className="btn-primary"
                 onClick={handleUploadClick}
+                title={activeRole === 'Educator' ? 'Upload Lecture' : 'Upload Video'}
                 style={{
-                  padding: '8px 16px',
+                  padding: isMobile ? '7px 10px' : '8px 16px',
                   borderRadius: 9,
                   fontSize: 13,
                   display: 'flex',
@@ -552,7 +640,7 @@ export default function DashboardShell() {
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                {activeRole === 'Educator' ? 'Upload Lecture' : 'Upload Video'}
+                {!isMobile && <span>{activeRole === 'Educator' ? 'Upload Lecture' : 'Upload Video'}</span>}
               </button>
             )}
 

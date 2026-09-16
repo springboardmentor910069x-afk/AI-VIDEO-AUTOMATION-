@@ -44,6 +44,15 @@ export default function UploadStudio() {
   const [domain, setDomain] = useState<Domain>('Academic Lecture')
   const [queue, setQueue] = useState<QueueItem[]>(INITIAL_QUEUE)
   const [accordionOpen, setAccordionOpen] = useState(true)
+  const [storageTarget, setStorageTarget] = useState<'local' | 'google_drive'>('local')
+  const [driveConnected, setDriveConnected] = useState(false)
+
+  useEffect(() => {
+    api.getDriveStorageStatus().then(status => {
+      if (status.storage_target) setStorageTarget(status.storage_target)
+      setDriveConnected(Boolean(status.connected))
+    }).catch(() => {})
+  }, [])
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -79,6 +88,7 @@ export default function UploadStudio() {
         formData.append('summary_depth', summaryDepth)
         formData.append('domain', domain)
         formData.append('category', domain)
+        formData.append('storage_target', storageTarget)
 
         const vidRes = await api.uploadVideoWithProgress(formData, (pct) => {
           setQueue(prev => prev.map(q => q.id === tempId ? {
@@ -227,7 +237,7 @@ export default function UploadStudio() {
   const sensitivityLabel = sensitivity < 33 ? 'Standard' : sensitivity < 66 ? 'High Precision' : 'Scene Shifts'
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 900, margin: '0 auto' }}>
+    <div className="responsive-page-container" style={{ maxWidth: 960, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Upload & Process Video Asset</h1>
@@ -242,7 +252,7 @@ export default function UploadStudio() {
         onClick={() => fileInputRef.current?.click()}
         className="glass-card"
         style={{
-          padding: '48px 32px',
+          padding: '36px 20px',
           textAlign: 'center',
           cursor: 'pointer',
           border: `2px dashed ${dragOver ? 'var(--accent-cyan)' : 'var(--accent-indigo)'}`,
@@ -314,15 +324,15 @@ export default function UploadStudio() {
         </div>
 
         {/* URL input inside dropzone */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 540, margin: '0 auto' }} onClick={e => e.stopPropagation()}>
-          <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 540, margin: '0 auto', width: '100%' }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input
               type="url"
               className="input-field"
               placeholder="Paste YouTube or Video Link URL (e.g., https://youtube.com/watch?...)"
               value={urlInput}
               onChange={e => setUrlInput(e.target.value)}
-              style={{ flex: 1, height: 42, background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
+              style={{ flex: 1, minWidth: 'min(100%, 260px)', height: 42, background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
             />
             <button
               className="btn-primary"
@@ -354,6 +364,7 @@ export default function UploadStudio() {
                     formData.append('summary_depth', summaryDepth)
                     formData.append('domain', domain)
                     formData.append('category', domain)
+                    formData.append('storage_target', storageTarget)
                     if (youtubeApiKey.trim()) {
                       formData.append('youtube_api_key', youtubeApiKey.trim())
                     }
@@ -442,6 +453,55 @@ export default function UploadStudio() {
               </div>
             </div>
 
+            {/* Storage Target Selector */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Storage Destination
+                </span>
+                <span style={{ fontSize: 11, color: driveConnected ? 'var(--accent-emerald, #10b981)' : 'var(--text-secondary)' }}>
+                  {driveConnected ? '● Google Drive Connected (15 GB)' : '○ Drive not connected'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setStorageTarget('local')}
+                  style={{
+                    padding: '8px 16px', borderRadius: 10, border: '1px solid', cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+                    borderColor: storageTarget === 'local' ? 'var(--accent-indigo)' : 'var(--border-glass)',
+                    background: storageTarget === 'local' ? 'var(--accent-indigo-dim)' : 'var(--bg-surface)',
+                    color: storageTarget === 'local' ? 'var(--accent-indigo)' : 'var(--text-secondary)',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  <span>🖥️</span> Local Server Storage
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!driveConnected) {
+                      showToast('Connect Google Drive in Account Settings first', 'info')
+                      navigate('/dashboard/settings?tab=storage')
+                    } else {
+                      setStorageTarget('google_drive')
+                    }
+                  }}
+                  style={{
+                    padding: '8px 16px', borderRadius: 10, border: '1px solid', cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+                    borderColor: storageTarget === 'google_drive' ? 'var(--accent-indigo)' : 'var(--border-glass)',
+                    background: storageTarget === 'google_drive' ? 'var(--accent-indigo-dim)' : 'var(--bg-surface)',
+                    color: storageTarget === 'google_drive' ? 'var(--accent-indigo)' : 'var(--text-secondary)',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  <span>☁️</span> Google Drive Cloud {driveConnected && '✓'}
+                </button>
+              </div>
+            </div>
+
             {/* Key moments sensitivity */}
             <div style={{ marginBottom: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 10 }}>
@@ -519,7 +579,7 @@ function QueueCard({ item, onRemove, onView }: { item: QueueItem; onRemove: () =
 
   return (
     <div className="glass-card" style={{ padding: '18px 22px', transition: 'box-shadow 0.3s', boxShadow: item.done ? '0 0 14px rgba(16,185,129,0.15)' : isPipelining ? '0 0 14px rgba(245,158,11,0.12)' : 'none' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: (isPipelining) ? 14 : 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: (isPipelining) ? 14 : 0 }}>
         <div style={{
           width: 76, height: 50, borderRadius: 10, flexShrink: 0,
           position: 'relative', overflow: 'hidden',
@@ -537,8 +597,8 @@ function QueueCard({ item, onRemove, onView }: { item: QueueItem; onRemove: () =
           </svg>
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0 }}>{item.size}</span>
             {item.done && <span className="badge badge-success">✓ Ready</span>}
@@ -580,7 +640,7 @@ function QueueCard({ item, onRemove, onView }: { item: QueueItem; onRemove: () =
       {/* High-Tech Animated Pipeline Visualization */}
       {isPipelining && (
         <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 12, background: 'rgba(0,0,0,0.25)', border: '1px solid var(--border-glass)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 16 }}>
                 <div className="equalizer-bar" />
@@ -598,7 +658,7 @@ function QueueCard({ item, onRemove, onView }: { item: QueueItem; onRemove: () =
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+          <div className="tabs-scroll-container" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
             {PIPELINE_STAGES_DEF.map((s, i) => {
               const isDone = i < pipelineStage
               const isActive = i === pipelineStage

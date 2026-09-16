@@ -364,14 +364,14 @@ export default function EducatorEditor() {
   }
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="responsive-page-container" style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Subheader Banner */}
       <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, borderRadius: 12, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>🎓</span> Educator Curriculum Studio
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Lecture Asset:</span>
             <select
               value={selectedVideoId}
@@ -388,7 +388,7 @@ export default function EducatorEditor() {
                 borderRadius: 8,
                 padding: '4px 10px',
                 outline: 'none',
-                maxWidth: 340,
+                maxWidth: 'min(100%, 340px)',
                 textOverflow: 'ellipsis'
               }}
             >
@@ -402,7 +402,7 @@ export default function EducatorEditor() {
         </div>
 
         {/* Global Tab Navigation */}
-        <div style={{ display: 'flex', background: 'var(--bg-surface)', borderRadius: 10, padding: 4, border: '1px solid var(--border-glass)', gap: 4 }}>
+        <div className="tabs-scroll-container" style={{ background: 'var(--bg-surface)', borderRadius: 10, padding: 4, border: '1px solid var(--border-glass)', gap: 4, maxWidth: '100%' }}>
           {[
             { id: 'transcript', label: '🎙️ Transcript', count: segments.length },
             { id: 'chapters', label: '📑 Chapters', count: chapters.length },
@@ -424,7 +424,9 @@ export default function EducatorEditor() {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6
+                gap: 6,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               <span>{tab.label}</span>
@@ -440,9 +442,9 @@ export default function EducatorEditor() {
 
       {/* TAB 1: TRANSCRIPT DIARIZATION */}
       {activeTab === 'transcript' && (
-        <div style={{ display: 'flex', gap: 16, minHeight: 'calc(100vh - 240px)', flexWrap: 'wrap' }}>
+        <div className="stack-on-tablet" style={{ display: 'flex', gap: 16, minHeight: 'calc(100vh - 240px)' }}>
           {/* LEFT Sidebar */}
-          <div style={{ width: 250, flexShrink: 0, background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border-glass)', padding: '20px 16px', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ flex: '1 1 240px', maxWidth: 'min(100%, 280px)', width: '100%', background: 'var(--sidebar-bg)', borderRight: '1px solid var(--border-glass)', padding: '20px 16px', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Speaker Diarization</div>
               {Object.entries(SPEAKER_LABELS).map(([key, label]) => (
@@ -481,7 +483,7 @@ export default function EducatorEditor() {
           </div>
 
           {/* RIGHT Segment Editor */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ flex: '2 1 320px', minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {segments.length === 0 ? (
               <div className="glass-card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
                 <div style={{ fontSize: 32, marginBottom: 10 }}>🎙️</div>
@@ -584,12 +586,12 @@ export default function EducatorEditor() {
       {/* TAB 2: CHAPTERS & TOPICS */}
       {activeTab === 'chapters' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Structured Curriculum Chapters</h3>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>Organize lecture sections, time boundaries, and key takeaway bullets displayed to students.</p>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button className="btn-glass" onClick={addChapter} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13 }}>
                 + Add Chapter
               </button>
@@ -602,7 +604,7 @@ export default function EducatorEditor() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {chapters.map((ch, idx) => (
               <div key={idx} className="glass-card" style={{ padding: 18, border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent-cyan)' }}>#{idx + 1}</span>
                   <input
                     type="text"
@@ -614,7 +616,7 @@ export default function EducatorEditor() {
                       setChapters(updated)
                     }}
                     placeholder="Chapter Title"
-                    style={{ flex: 2, fontWeight: 700, fontSize: 14 }}
+                    style={{ flex: '2 1 200px', minWidth: 'min(100%, 180px)', fontWeight: 700, fontSize: 14 }}
                   />
                   <input
                     type="text"
@@ -626,7 +628,7 @@ export default function EducatorEditor() {
                       setChapters(updated)
                     }}
                     placeholder="Time Range (e.g. 00:00 - 01:30)"
-                    style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}
+                    style={{ flex: '1 1 120px', minWidth: 100, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}
                   />
                   <button
                     onClick={() => setChapters(prev => prev.filter((_, i) => i !== idx))}
@@ -670,12 +672,12 @@ export default function EducatorEditor() {
       {/* TAB 3: QUIZ BUILDER */}
       {activeTab === 'quizzes' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Student Quiz Questions</h3>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>Create customized multiple-choice questions for students in the Study Room.</p>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button className="btn-glass" onClick={addQuizQuestion} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13 }}>
                 + Add Question
               </button>
@@ -688,7 +690,7 @@ export default function EducatorEditor() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {quizzes.map((q, idx) => (
               <div key={idx} className="glass-card" style={{ padding: 18, border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-indigo)' }}>Q{idx + 1}:</span>
                   <input
                     type="text"
@@ -700,7 +702,7 @@ export default function EducatorEditor() {
                       setQuizzes(updated)
                     }}
                     placeholder="Question prompt..."
-                    style={{ flex: 1, fontWeight: 600, fontSize: 14 }}
+                    style={{ flex: '1 1 240px', minWidth: 'min(100%, 200px)', fontWeight: 600, fontSize: 14 }}
                   />
                   <button
                     onClick={() => setQuizzes(prev => prev.filter((_, i) => i !== idx))}
@@ -710,7 +712,7 @@ export default function EducatorEditor() {
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 10 }}>
                   {q.options.map((opt, optIdx) => (
                     <div key={optIdx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <input
@@ -763,12 +765,12 @@ export default function EducatorEditor() {
       {/* TAB 4: FLASHCARD BUILDER */}
       {activeTab === 'flashcards' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)' }}>Lecture Study Flashcards</h3>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>Build flashcards with active recall prompts and lecture timestamps.</p>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button className="btn-glass" onClick={addFlashcard} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 13 }}>
                 + Add Card
               </button>
@@ -778,7 +780,7 @@ export default function EducatorEditor() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 14 }}>
             {flashcards.map((fc, idx) => (
               <div key={idx} className="glass-card" style={{ padding: 16, border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -836,7 +838,7 @@ export default function EducatorEditor() {
       {/* TAB 5: STUDENT PREVIEW */}
       {activeTab === 'preview' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, background: 'rgba(6,182,212,0.1)', border: '1px solid var(--accent-cyan)', borderRadius: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, background: 'rgba(6,182,212,0.1)', border: '1px solid var(--accent-cyan)', borderRadius: 12, flexWrap: 'wrap', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 24 }}>👁️</span>
               <div>

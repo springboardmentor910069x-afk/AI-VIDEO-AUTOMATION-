@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api, Segment, SummarySection, KeyMomentItem } from '../services/api'
+import MindMapViewer, { MindMapNode } from './MindMapViewer'
 
-type Tab = 'summaries' | 'transcript' | 'chat' | 'notes' | 'export'
+type Tab = 'summaries' | 'mindmap' | 'transcript' | 'chat' | 'notes' | 'export'
 
 // All data is dynamically loaded from backend API using useParams video ID
 
@@ -34,8 +35,18 @@ export default function VideoIntelligenceCenter() {
   const [summary, setSummary] = useState<any>(null)
   const [keyMoments, setKeyMoments] = useState<KeyMomentItem[]>([])
   const [evaluation, setEvaluation] = useState<any>(null)
+  const [mindMapData, setMindMapData] = useState<MindMapNode | null>(null)
+  const [mindMapLoading, setMindMapLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [totalSec, setTotalSec] = useState(2538)
+  const [isWideScreen, setIsWideScreen] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true)
+
+  useEffect(() => {
+    const handleResize = () => setIsWideScreen(window.innerWidth >= 1024)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const ytMatch = videoItem?.file_path?.match(/youtube:\/\/([a-zA-Z0-9_-]+)/)
     || videoItem?.filename?.match(/youtube_([a-zA-Z0-9_-]+)\.mp4/)
@@ -115,6 +126,16 @@ export default function VideoIntelligenceCenter() {
           }
         } catch (eErr) {
           console.log('Evaluation loading notice:', eErr)
+        }
+
+        // 6. Fetch interactive AI Mind Map
+        try {
+          const mmRes = await api.getMindMap(id)
+          if (mmRes) {
+            setMindMapData(mmRes)
+          }
+        } catch (mErr) {
+          console.log('Mind map loading notice:', mErr)
         }
 
         // If video duration is set, update totalSec
@@ -435,6 +456,7 @@ export default function VideoIntelligenceCenter() {
 
   const TAB_LIST: { id: Tab; label: string; icon: string }[] = [
     { id: 'summaries', label: 'AI Summaries', icon: '📑' },
+    { id: 'mindmap', label: 'AI Mind Map', icon: '🧠' },
     { id: 'transcript', label: 'Transcript', icon: '💬' },
     { id: 'chat', label: 'AI Chat', icon: '🤖' },
     { id: 'notes', label: 'Key Notes', icon: '📌' },
@@ -442,9 +464,25 @@ export default function VideoIntelligenceCenter() {
   ]
 
   return (
-    <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden', padding: 20, gap: 20, background: 'var(--bg-base)' }}>
-      {/* LEFT PANEL — 55% */}
-      <div style={{ flex: '0 0 55%', display: 'flex', flexDirection: 'column', gap: 16, overflow: 'hidden' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: isWideScreen ? 'row' : 'column',
+      height: isWideScreen ? 'calc(100vh - 64px)' : 'auto',
+      minHeight: isWideScreen ? 'auto' : 'calc(100vh - 64px)',
+      overflow: isWideScreen ? 'hidden' : 'visible',
+      padding: isWideScreen ? 20 : 12,
+      gap: isWideScreen ? 20 : 16,
+      background: 'var(--bg-base)'
+    }}>
+      {/* LEFT PANEL — 55% on desktop, 100% on tablet/mobile */}
+      <div style={{
+        flex: isWideScreen ? '0 0 55%' : 'none',
+        width: isWideScreen ? 'auto' : '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        overflow: isWideScreen ? 'hidden' : 'visible'
+      }}>
         {/* Video player card */}
         <div ref={videoContainerRef} className="glass-card" style={{ overflow: 'hidden', flexShrink: 0 }}>
           {/* Video area */}
@@ -553,8 +591,8 @@ export default function VideoIntelligenceCenter() {
               ))}
             </div>
 
-            {/* Buttons row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Buttons row with responsive wrapping */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <button onClick={togglePlay} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex' }} aria-label={playing ? 'Pause' : 'Play'}>
                 {playing ? (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
@@ -642,21 +680,47 @@ export default function VideoIntelligenceCenter() {
         </div>
       </div>
  
-      {/* RIGHT PANEL — 45% */}
-      <div className="glass-card" style={{ flex: '1 1 45%', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}>
-        {/* Tab Header */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-glass)', padding: '6px 12px', gap: 4, background: 'var(--bg-surface)' }}>
+      {/* RIGHT PANEL — 45% on desktop, 100% on tablet/mobile */}
+      <div className="glass-card" style={{
+        flex: isWideScreen ? '1 1 45%' : 'none',
+        width: isWideScreen ? 'auto' : '100%',
+        minHeight: isWideScreen ? 0 : 540,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        padding: 0
+      }}>
+        {/* Tab Header with smooth mobile scroll */}
+        <div className="tabs-scroll-container" style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--border-glass)',
+          padding: '6px 10px',
+          gap: 4,
+          background: 'var(--bg-surface)',
+          overflowX: 'auto'
+        }}>
           {TAB_LIST.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
-                flex: 1, padding: '10px 8px', borderRadius: 8, border: 'none',
+                flex: isWideScreen ? 1 : 'none',
+                flexShrink: 0,
+                padding: '9px 12px',
+                borderRadius: 8,
+                border: 'none',
                 background: activeTab === tab.id ? 'var(--accent-indigo-dim)' : 'transparent',
                 color: activeTab === tab.id ? 'var(--accent-indigo)' : 'var(--text-secondary)',
-                fontWeight: activeTab === tab.id ? 700 : 500, fontSize: 13,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                transition: 'all 0.15s', fontFamily: 'inherit',
+                fontWeight: activeTab === tab.id ? 700 : 500,
+                fontSize: 13,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.15s',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap'
               }}
             >
               <span>{tab.icon}</span>
@@ -678,6 +742,15 @@ export default function VideoIntelligenceCenter() {
               seekTo={seekTo}
               videoId={id || 'demo'}
             />
+          )}
+          {activeTab === 'mindmap' && (
+            <div style={{ minHeight: 480, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <MindMapViewer
+                data={mindMapData}
+                loading={mindMapLoading}
+                onSeek={seekTo}
+              />
+            </div>
           )}
           {activeTab === 'transcript' && (
             <TranscriptTab

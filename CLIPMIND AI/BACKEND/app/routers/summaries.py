@@ -90,3 +90,52 @@ async def regenerate_summary(
         sentiment=summary.sentiment if summary else "educational",
         created_at=summary.created_at if summary else datetime.now(timezone.utc)
     )
+
+@router.get("/{video_id}/mindmap")
+async def get_video_mindmap(
+    video_id: str,
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
+    """
+    Generates and returns an interactive, timestamped concept mind map for the video.
+    """
+    from app.mongodb_models import KeyMoment
+    from app.services.mindmap_service import mindmap_service
+
+    video = await Video.get(video_id)
+    if not video:
+        try:
+            video = await Video.find_one({"_id": video_id})
+        except Exception:
+            pass
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    summary = await Summary.find_one({"video_id": video_id})
+    key_moments = await KeyMoment.find({"video_id": video_id}).sort("timestamp").to_list()
+
+    summary_sections = summary.sections if summary else []
+    key_takeaways = summary.key_takeaways if summary else []
+    moments_data = [
+        {
+            "timestamp": km.timestamp,
+            "timestamp_str": km.timestamp_str,
+            "title": km.title,
+            "importance_score": km.importance_score
+        }
+        for km in key_moments
+    ]
+
+    mindmap = mindmap_service.build_mindmap(
+        video_title=video.title,
+        summary_sections=summary_sections,
+        key_moments=moments_data,
+        key_takeaways=key_takeaways
+    )
+
+    return {
+        "success": True,
+        "video_id": video_id,
+        "title": video.title,
+        "mindmap": mindmap
+    }

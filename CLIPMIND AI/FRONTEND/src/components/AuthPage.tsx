@@ -125,7 +125,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
     else navigate('/dashboard')
   }
 
-  const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '86124787652-p0isa589ii9umv80ortvjmn40tq4qeod.apps.googleusercontent.com'
+  const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '96783937366-dc7o4rjij1jb5tismndbl0m3lulps2r5.apps.googleusercontent.com'
 
 
   // Sync role to googleRole and showcaseRole
@@ -390,18 +390,17 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
 
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)', position: 'relative' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)', position: 'relative', justifyContent: 'center' }}>
       {/* Theme toggle */}
       <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
         <ThemeToggle />
       </div>
 
-      {/* LEFT — brand canvas */}
-      <div style={{
-        flex: 1, position: 'relative', overflow: 'hidden',
+      {/* LEFT — brand canvas (visible on desktop/laptop, hidden on tablet/mobile) */}
+      <div className="hide-on-tablet" style={{
+        flex: 1.1, position: 'relative', overflow: 'hidden',
         background: 'linear-gradient(135deg, #0A0B0E 0%, #12141C 50%, #0E0F15 100%)',
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
-
         padding: '60px 48px',
       }}>
         {/* Animated Aurora Glow Orbs */}
@@ -654,21 +653,47 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
       </div>
 
 
-      {/* RIGHT — form container */}
+      {/* RIGHT — form container (centered on mobile, side-panel on desktop) */}
       <div style={{
-        width: '48%', maxWidth: 520,
+        flex: 1, maxWidth: 520, width: '100%',
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        padding: '60px 48px',
+        padding: '36px 20px',
         background: 'var(--bg-base)',
         borderLeft: '1px solid var(--border-glass)',
         overflowY: 'auto',
       }}>
+        {/* Mobile Brand Header (Visible only on mobile/tablet) */}
+        <div className="show-on-mobile" style={{ marginBottom: 24, textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 8 }} onClick={() => navigate('/')}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 16px var(--accent-indigo-glow)'
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+            </div>
+            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>ClipMind<span style={{ color: 'var(--accent-indigo)' }}> AI</span></span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)',
+              padding: '3px 10px', borderRadius: 9999,
+              fontSize: 10.5, fontWeight: 700, color: '#34D399', letterSpacing: '0.03em'
+            }}>
+              <span className="live-pulse-dot" style={{ width: 6, height: 6 }} />
+              <span>AI ENGINE ONLINE</span>
+            </span>
+          </div>
+        </div>
+
         {/* Header */}
-        <div style={{ marginBottom: 36 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
             {tab === 'login' ? 'Welcome back' : 'Create your account'}
           </h1>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
             {tab === 'login' ? 'Sign in to your ClipMind AI workspace.' : 'Start your free account today — no credit card required.'}
           </p>
         </div>

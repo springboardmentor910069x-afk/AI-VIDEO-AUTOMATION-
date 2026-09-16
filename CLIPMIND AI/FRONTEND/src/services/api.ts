@@ -770,6 +770,52 @@ export const api = {
     return res.json()
   },
 
+  // Mind Map (clipmind.tech inspired)
+  async getMindMap(videoId: string) {
+    const res = await fetch(`${API_BASE_URL}/summaries/${videoId}/mindmap`, { headers: getHeaders() })
+    if (!res.ok) throw new Error('Failed to fetch video mind map')
+    return res.json()
+  },
+
+  // Google Drive Cloud Storage Integration
+  async getDriveStorageStatus() {
+    const res = await fetch(`${API_BASE_URL}/settings/drive/status`, { headers: getHeaders() })
+    if (!res.ok) return { connected: false, storage_target: 'local', quota: {} }
+    return res.json()
+  },
+
+  async connectGoogleDrive(accessToken: string, email?: string) {
+    const res = await fetch(`${API_BASE_URL}/settings/drive/connect`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ access_token: accessToken, email }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || 'Failed to connect Google Drive')
+    }
+    return res.json()
+  },
+
+  async disconnectGoogleDrive() {
+    const res = await fetch(`${API_BASE_URL}/settings/drive/disconnect`, {
+      method: 'POST',
+      headers: getHeaders(),
+    })
+    if (!res.ok) throw new Error('Failed to disconnect Google Drive')
+    return res.json()
+  },
+
+  async setStorageTarget(storageTarget: 'local' | 'google_drive') {
+    const res = await fetch(`${API_BASE_URL}/settings/storage-target`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ storage_target: storageTarget }),
+    })
+    if (!res.ok) throw new Error('Failed to update storage target')
+    return res.json()
+  },
+
   getVideoStreamUrl(videoId?: string, filename?: string): string {
     if (videoId) {
       return `${API_BASE_URL}/videos/${videoId}/stream`

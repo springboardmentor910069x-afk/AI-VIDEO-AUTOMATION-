@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, BackgroundTasks, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, BackgroundTasks, Request, status
 from fastapi.responses import FileResponse, StreamingResponse
 
 from app.mongodb_models import Video, Transcript, Summary, KeyMoment, User, Share, Bookmark, ContentInsight, Quiz, FlashcardSet, AuditLog
@@ -70,6 +70,7 @@ async def upload_video(
     summary_depth: Optional[str] = Form("Detailed Breakdown"),
     domain: Optional[str] = Form("Academic Lecture"),
     category: Optional[str] = Form("Academic"),
+    storage_target: Optional[str] = Form("local"),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
     if not file and not video_url:
@@ -85,6 +86,7 @@ async def upload_video(
         summary_depth=summary_depth,
         domain=domain,
         category=category,
+        storage_target=storage_target or "local",
         background_tasks=background_tasks
     )
 
@@ -393,7 +395,7 @@ async def share_video(
 
 
 @router.get("/{video_id}/stream")
-async def stream_video(video_id: str):
+async def stream_video(video_id: str, request: Request):
     video = None
     try:
         video = await Video.get(video_id)
@@ -404,6 +406,22 @@ async def stream_video(video_id: str):
             video = await Video.find_one({"_id": video_id})
         except Exception:
             pass
+
+    # 1. If stored in Google Drive, stream from Google Drive API with Range headers (HTTP 206)
+    if video and getattr(video, "storage_type", "") == "google_drive" and getattr(video, "drive_file_id", None):
+        try:
+            from app.services.drive_storage import drive_storage
+            from app.mongodb_models import Setting
+            user_setting = await Setting.find_one(Setting.user_id == str(video.user_id)) if video.user_id else None
+            token = getattr(user_setting, "google_drive_token", None) if user_setting else None
+            if token:
+                range_hdr = request.headers.get("range") or request.headers.get("Range")
+                status_code, resp_headers, stream_gen = await drive_storage.stream_video_chunk(
+                    token, video.drive_file_id, range_hdr
+                )
+                return StreamingResponse(stream_gen, status_code=status_code, headers=resp_headers)
+        except Exception as e:
+            print(f"[WARN] Failed to stream from Google Drive: {e}, falling back to local/sample")
 
     # Resolve video media file path
     target_path = None

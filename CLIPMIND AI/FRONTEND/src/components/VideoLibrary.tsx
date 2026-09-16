@@ -183,9 +183,9 @@ export default function VideoLibrary() {
   const previewVideo = filtered.find(v => v.id === previewId) ?? null
 
   return (
-    <div style={{ padding: '28px 32px', height: '100%', overflowY: 'auto', position: 'relative' }}>
+    <div className="responsive-page-container" style={{ height: '100%', overflowY: 'auto', position: 'relative' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Video Library</h1>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{filtered.length} of {VIDEOS.length} videos</p>
@@ -202,6 +202,7 @@ export default function VideoLibrary() {
           display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
           borderRadius: 10, marginBottom: 16, border: '1px solid var(--accent-indigo)',
           background: 'var(--accent-indigo-dim)', animation: 'stream-in 0.2s ease',
+          flexWrap: 'wrap'
         }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-indigo)' }}>
             {selected.size} video{selected.size > 1 ? 's' : ''} selected
@@ -248,7 +249,7 @@ export default function VideoLibrary() {
           )}
         </button>
 
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+        <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 'min(100%, 200px)' }}>
           <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="search" className="input-field" placeholder="Search videos, tags..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: 36, height: 36, background: 'var(--bg-surface)', color: 'var(--text-primary)' }} />
         </div>
@@ -290,7 +291,7 @@ export default function VideoLibrary() {
 
       {/* Grid / List */}
       {viewMode === 'grid' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 20 }}>
           {filtered.map(v => (
             <VideoGridCard
               key={v.id}
@@ -371,7 +372,7 @@ export default function VideoLibrary() {
 function InlinePreview({ video, onClose, onOpen }: { video: VideoCard; onClose: () => void; onOpen: () => void }) {
   return (
     <div style={{
-      position: 'fixed', right: 24, bottom: 24, width: 380, zIndex: 200,
+      position: 'fixed', right: 16, bottom: 16, width: 380, maxWidth: 'calc(100vw - 32px)', zIndex: 200,
       borderRadius: 16, border: `1px solid ${video.color}55`,
       background: 'var(--bg-surface)', boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${video.color}22`,
       animation: 'stream-in 0.2s ease', overflow: 'hidden',

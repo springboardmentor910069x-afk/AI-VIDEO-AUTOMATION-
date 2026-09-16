@@ -49,6 +49,7 @@ class VideoService:
         summary_depth: str = "Detailed Breakdown",
         domain: str = "Academic Lecture",
         category: str = "Academic",
+        storage_target: str = "local",
         user_id: str = "demo-user",
         background_tasks: Optional[BackgroundTasks] = None
     ) -> Video:
@@ -235,6 +236,28 @@ class VideoService:
             return video
 
         # Fresh video: create record and dispatch 7-stage processing pipeline
+        # Google Drive cloud storage check
+        storage_type = "local"
+        drive_file_id = None
+        drive_folder_id = None
+        drive_web_link = None
+
+        if storage_target == "google_drive" and file_path and os.path.exists(file_path):
+            try:
+                from app.mongodb_models import Setting
+                from app.services.drive_storage import drive_storage
+                user_setting = await Setting.find_one(Setting.user_id == user_id)
+                token = getattr(user_setting, "google_drive_token", None) if user_setting else None
+                if token:
+                    drive_res = await drive_storage.upload_file(token, file_path, filename=final_title)
+                    storage_type = "google_drive"
+                    drive_file_id = drive_res.get("id")
+                    drive_folder_id = drive_res.get("folder_id")
+                    drive_web_link = drive_res.get("webViewLink")
+                    logger.info(f"Video uploaded to Google Drive successfully: {drive_file_id}")
+            except Exception as e:
+                logger.warning(f"Failed to upload to Google Drive: {e}, falling back to local storage")
+
         video = Video(
             title=final_title,
             filename=saved_filename,
@@ -250,7 +273,11 @@ class VideoService:
             user_id=user_id,
             category=category or "Academic",
             summary_depth=summary_depth or "Detailed Breakdown",
-            domain=domain or "Academic Lecture"
+            domain=domain or "Academic Lecture",
+            storage_type=storage_type,
+            drive_file_id=drive_file_id,
+            drive_folder_id=drive_folder_id,
+            drive_web_link=drive_web_link
         )
         await video.insert()
 

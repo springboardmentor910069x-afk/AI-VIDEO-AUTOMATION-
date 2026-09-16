@@ -199,14 +199,15 @@ function ActivityHeatmap({ matrix }: { matrix?: number[][] }) {
         ))}
       </div>
       {/* Grid */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', gap: 0, marginBottom: 3 }}>
-          {hours.filter(h => h % 3 === 0).map(h => (
-            <div key={h} style={{ flex: 3, fontSize: 10, color: 'var(--text-secondary)', textAlign: 'center', fontFamily: "'JetBrains Mono', monospace" }}>
-              {h.toString().padStart(2, '0')}h
-            </div>
-          ))}
-        </div>
+      <div className="table-responsive-wrapper" style={{ flex: 1 }}>
+        <div style={{ minWidth: 440 }}>
+          <div style={{ display: 'flex', gap: 0, marginBottom: 3 }}>
+            {hours.filter(h => h % 3 === 0).map(h => (
+              <div key={h} style={{ flex: 3, fontSize: 10, color: 'var(--text-secondary)', textAlign: 'center', fontFamily: "'JetBrains Mono', monospace" }}>
+                {h.toString().padStart(2, '0')}h
+              </div>
+            ))}
+          </div>
         {heatData.map((row, di) => (
           <div key={di} style={{ display: 'flex', gap: 2, marginBottom: 2 }}>
             {row.map((v, hi) => (
@@ -225,13 +226,14 @@ function ActivityHeatmap({ matrix }: { matrix?: number[][] }) {
             ))}
           </div>
         ))}
-        {/* Legend */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 11, color: 'var(--text-secondary)' }}>
-          <span>Less</span>
-          {[0.1, 0.3, 0.5, 0.7, 0.9].map(v => (
-            <div key={v} style={{ width: 12, height: 12, borderRadius: 2, background: `rgba(99,102,241,${v})` }} />
-          ))}
-          <span>More</span>
+          {/* Legend */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 11, color: 'var(--text-secondary)' }}>
+            <span>Less</span>
+            {[0.1, 0.3, 0.5, 0.7, 0.9].map(v => (
+              <div key={v} style={{ width: 12, height: 12, borderRadius: 2, background: `rgba(99,102,241,${v})` }} />
+            ))}
+            <span>More</span>
+          </div>
         </div>
       </div>
     </div>
@@ -339,9 +341,9 @@ export default function AnalyticsDashboard() {
   ]
 
   return (
-    <div style={{ padding: '28px 32px', overflowY: 'auto', height: '100%' }}>
+    <div className="responsive-page-container" style={{ overflowY: 'auto', height: '100%' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
             Analytics & Insights
@@ -389,7 +391,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 16, marginBottom: 24 }}>
         {STAT_CARDS.map((s, i) => (
           <div key={i} className="glass-card" style={{ padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
@@ -410,7 +412,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Charts row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 16, marginBottom: 24 }}>
         {/* Video views over time */}
         <div className="glass-card" style={{ padding: '20px 22px' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Video Views Over Time</div>
@@ -427,7 +429,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Donut + categories + top videos */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 16, marginBottom: 24 }}>
         {/* Content categories donut */}
         <div className="glass-card" style={{ padding: '20px 22px' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>Content Categories</div>
@@ -494,7 +496,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Heatmap + Retention side by side */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 16, marginBottom: 24 }}>
         {/* Activity heatmap */}
         <div className="glass-card" style={{ padding: '20px 22px' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Usage Activity Heatmap</div>
@@ -514,7 +516,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Summary quality metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
         {qualityMetrics.map((m: any, i: number) => (
           <div key={i} className="glass-card" style={{ padding: '18px 20px', borderLeft: `3px solid ${m.color}` }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>{m.label}</div>

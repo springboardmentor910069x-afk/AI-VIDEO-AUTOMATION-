@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { api, VideoData, Segment, Bookmark } from '../services/api'
 import { useToast } from './Toast'
+import MindMapViewer, { MindMapNode } from './MindMapViewer'
 
 interface Message {
   role: 'user' | 'ai'
@@ -55,8 +56,10 @@ export default function LearnerStudyRoom() {
   const [inputVal, setInputVal] = useState('')
   const [thinking, setThinking] = useState(false)
 
-  // 4 Tabs: chat, flashcards, quiz, transcript
-  const [activeSection, setActiveSection] = useState<'chat' | 'flashcards' | 'quiz' | 'transcript'>('chat')
+  // 5 Tabs: chat, flashcards, quiz, transcript, mindmap
+  const [activeSection, setActiveSection] = useState<'chat' | 'flashcards' | 'quiz' | 'transcript' | 'mindmap'>('chat')
+  const [mindMapData, setMindMapData] = useState<MindMapNode | null>(null)
+  const [mindMapLoading, setMindMapLoading] = useState(false)
 
   // Flashcards state
   const [flashcards, setFlashcards] = useState<Flashcard[]>([])
@@ -214,6 +217,18 @@ export default function LearnerStudyRoom() {
           }
         } catch (e) {
           setVideoNotes([])
+        }
+
+        // Interactive Concept Mind Map
+        try {
+          setMindMapLoading(true)
+          const mm = await api.getMindMap(selectedVideoId)
+          if (mm) setMindMapData(mm)
+          else setMindMapData(null)
+        } catch (e) {
+          setMindMapData(null)
+        } finally {
+          setMindMapLoading(false)
         }
 
       } catch (e) {
@@ -658,7 +673,7 @@ export default function LearnerStudyRoom() {
   const posterUrl = video?.thumbnail_url ? api.getThumbnailUrl(video.thumbnail_url) : ''
 
   return (
-    <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="responsive-page-container" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Subheader Banner */}
       <div className="glass-card" style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, borderRadius: 12, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -687,7 +702,8 @@ export default function LearnerStudyRoom() {
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                   outline: 'none',
-                  maxWidth: 360
+                  maxWidth: 'min(100%, 300px)',
+                  textOverflow: 'ellipsis'
                 }}
               >
                 {availableVideos.map(v => (
@@ -737,7 +753,7 @@ export default function LearnerStudyRoom() {
 
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
         {/* LEFT — video player, controls, study notes & key moments */}
-        <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ flex: '1 1 min(100%, 500px)', minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div ref={videoContainerRef} className="glass-card" style={{ overflow: 'hidden' }}>
             <div
               style={{ position: 'relative', paddingTop: '56.25%', background: '#000', cursor: ytId ? 'default' : 'pointer' }}
@@ -1002,32 +1018,38 @@ export default function LearnerStudyRoom() {
         </div>
 
         {/* RIGHT — 4 Interactive Study Tabs: AI Tutor / Flashcards / Quiz / Transcript */}
-        <div style={{ flex: '1 1 450px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Tab buttons */}
-          <div style={{ display: 'flex', gap: 6, background: 'var(--bg-surface)', padding: 4, borderRadius: 12, border: '1px solid var(--border-glass)' }}>
+        <div style={{ flex: '1 1 min(100%, 450px)', minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Tab buttons with smooth horizontal scroll on mobile */}
+          <div className="tabs-scroll-container" style={{ display: 'flex', gap: 6, background: 'var(--bg-surface)', padding: 4, borderRadius: 12, border: '1px solid var(--border-glass)', overflowX: 'auto' }}>
             <button
               onClick={() => setActiveSection('chat')}
-              style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: activeSection === 'chat' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'chat' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+              style={{ flex: 1, minWidth: 90, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'chat' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'chat' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
               💬 AI Tutor
             </button>
             <button
               onClick={() => setActiveSection('flashcards')}
-              style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: activeSection === 'flashcards' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'flashcards' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+              style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'flashcards' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'flashcards' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
               🃏 Cards ({flashcards.length})
             </button>
             <button
               onClick={() => setActiveSection('quiz')}
-              style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: activeSection === 'quiz' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'quiz' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+              style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'quiz' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'quiz' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
               📝 Quiz ({quizQuestions.length})
             </button>
             <button
               onClick={() => setActiveSection('transcript')}
-              style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: activeSection === 'transcript' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'transcript' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+              style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'transcript' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'transcript' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
             >
               📜 Transcript
+            </button>
+            <button
+              onClick={() => setActiveSection('mindmap')}
+              style={{ flex: 1, minWidth: 95, padding: '9px 12px', borderRadius: 9, border: 'none', background: activeSection === 'mindmap' ? 'var(--accent-indigo)' : 'transparent', color: activeSection === 'mindmap' ? '#fff' : 'var(--text-secondary)', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+            >
+              🧠 Mind Map
             </button>
           </div>
 
@@ -1335,6 +1357,20 @@ export default function LearnerStudyRoom() {
                   })
                 )}
               </div>
+            </div>
+          )}
+
+          {/* TAB 5: AI CONCEPT MIND MAP */}
+          {activeSection === 'mindmap' && (
+            <div className="glass-card" style={{ flex: 1, height: 500, overflow: 'hidden', padding: 0 }}>
+              <MindMapViewer
+                data={mindMapData}
+                loading={mindMapLoading}
+                onSeek={(sec) => {
+                  seekTo(sec)
+                  setPlaying(true)
+                }}
+              />
             </div>
           )}
         </div>

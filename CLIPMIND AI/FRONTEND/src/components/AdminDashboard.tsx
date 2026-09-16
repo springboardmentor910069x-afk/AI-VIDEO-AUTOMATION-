@@ -223,9 +223,9 @@ export default function AdminDashboard() {
   )
 
   return (
-    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1400, margin: '0 auto' }}>
+    <div className="responsive-page-container" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Operations Header */}
-      <div className="glass-card" style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14 }}>
+      <div className="glass-card" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14, flexWrap: 'wrap', gap: 14 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <span>🛡️</span> Administrator Operations & Management Console
@@ -234,12 +234,12 @@ export default function AdminDashboard() {
             Direct governance for user permissions, platform video catalog, and security audit trails.
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={handleCleanCache}
             disabled={loading}
             style={{
-              padding: '10px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              padding: '9px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600,
               display: 'flex', alignItems: 'center', gap: 8,
               background: 'var(--bg-surface)', border: '1px solid var(--border-glass)',
               color: 'var(--text-primary)', cursor: loading ? 'not-allowed' : 'pointer'
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
           <button
             className="btn-primary"
             onClick={() => setUserModal(true)}
-            style={{ padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}
+            style={{ padding: '9px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}
           >
             <span>+</span> Add New User
           </button>
@@ -258,29 +258,32 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Management Tab Navigation */}
-      <div style={{ display: 'flex', gap: 8, background: 'var(--bg-surface)', padding: 6, borderRadius: 12, border: '1px solid var(--border-glass)' }}>
+      <div className="tabs-scroll-container" style={{ display: 'flex', gap: 8, background: 'var(--bg-surface)', padding: 6, borderRadius: 12, border: '1px solid var(--border-glass)', overflowX: 'auto' }}>
         {[
-          { id: 'users', label: '👥 User & Role Governance', badge: `${users.length} Users` },
-          { id: 'videos', label: '🎬 Video Catalog Management', badge: `${videos.length} Videos` },
-          { id: 'logs', label: '📋 Security Audit Trail', badge: `${logs.length} Events` },
+          { id: 'users', label: '👥 User Governance', badge: `${users.length}` },
+          { id: 'videos', label: '🎬 Video Catalog', badge: `${videos.length}` },
+          { id: 'logs', label: '📋 Audit Trail', badge: `${logs.length}` },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveSection(tab.id as any)}
             style={{
               flex: 1,
-              padding: '12px 18px',
+              minWidth: 140,
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              padding: '11px 16px',
               borderRadius: 10,
               border: 'none',
               cursor: 'pointer',
-              fontSize: 13.5,
+              fontSize: 13,
               fontWeight: 700,
               fontFamily: 'inherit',
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 10,
+              gap: 8,
               background: activeSection === tab.id ? 'linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan))' : 'transparent',
               color: activeSection === tab.id ? '#ffffff' : 'var(--text-secondary)',
               boxShadow: activeSection === tab.id ? '0 0 16px var(--accent-indigo-glow)' : 'none',

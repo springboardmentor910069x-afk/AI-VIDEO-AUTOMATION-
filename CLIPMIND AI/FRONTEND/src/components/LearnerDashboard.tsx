@@ -168,7 +168,7 @@ export default function LearnerDashboard() {
   const todayMinutes = data?.today_study_minutes || 0
 
   return (
-    <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1400, margin: '0 auto' }}>
+    <div className="responsive-page-container" style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1400, margin: '0 auto' }}>
       {/* Top Welcome & Motivation Banner */}
       <div className="glass-card" style={{
         padding: '24px 28px',
@@ -290,7 +290,7 @@ export default function LearnerDashboard() {
       </div>
 
       {/* 4 Core Real Metric Cards (Zero Fake Numbers) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
         {/* Total study time */}
         <div className="glass-card" style={{ padding: '18px 22px', borderLeft: '4px solid var(--accent-cyan)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -373,9 +373,9 @@ export default function LearnerDashboard() {
       </div>
 
       {/* Main Grid: Left = Course Lectures & Continue Learning; Right = Quick Practice & Notes */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1.2fr)', gap: 24, alignItems: 'start' }}>
+      <div className="stack-on-tablet" style={{ display: 'flex', gap: 24, alignItems: 'start' }}>
         {/* LEFT: Lecture Catalog & Learning Pathways */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ flex: '1.8 1 500px', minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 18 }}>
           {/* Header & Filter Controls */}
           <div className="glass-card" style={{ padding: '18px 20px', borderRadius: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
@@ -445,7 +445,7 @@ export default function LearnerDashboard() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 16 }}>
               {filteredLectures.map(lecture => {
                 const durMin = Math.floor(lecture.duration_sec / 60)
                 const durSec = lecture.duration_sec % 60
@@ -611,7 +611,7 @@ export default function LearnerDashboard() {
         </div>
 
         {/* RIGHT: Interactive Flashcard Practice Hub & Recent Study Notes */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ flex: '1.2 1 340px', minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 18 }}>
           {/* Quick Flashcard Trainer Hub */}
           <div className="glass-card" style={{ padding: '20px 22px', borderRadius: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
