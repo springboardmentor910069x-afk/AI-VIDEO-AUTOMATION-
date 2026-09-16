@@ -414,6 +414,9 @@ async def stream_video(video_id: str, request: Request):
             from app.mongodb_models import Setting
             user_setting = await Setting.find_one(Setting.user_id == str(video.user_id)) if video.user_id else None
             token = getattr(user_setting, "google_drive_token", None) if user_setting else None
+            if not token:
+                any_setting = await Setting.find_one(Setting.google_drive_connected == True)
+                token = getattr(any_setting, "google_drive_token", None) if any_setting else None
             if token:
                 range_hdr = request.headers.get("range") or request.headers.get("Range")
                 status_code, resp_headers, stream_gen = await drive_storage.stream_video_chunk(
@@ -423,7 +426,7 @@ async def stream_video(video_id: str, request: Request):
         except Exception as e:
             print(f"[WARN] Failed to stream from Google Drive: {e}, falling back to local/sample")
 
-    # Resolve video media file path
+    # 2. Resolve video media file path on local disk
     target_path = None
     fallback_sample = os.path.join(settings.UPLOAD_DIR, "sample_lecture.mp4")
 
@@ -432,19 +435,56 @@ async def stream_video(video_id: str, request: Request):
             video.file_path,
             os.path.join(settings.UPLOAD_DIR, os.path.basename(video.file_path)),
             os.path.join(settings.BASE_DIR, video.file_path) if not os.path.isabs(video.file_path) else None,
-            os.path.join(settings.UPLOAD_DIR, video.filename) if video.filename else None
+            os.path.join(settings.UPLOAD_DIR, video.filename) if video.filename else None,
+            os.path.join(settings.BASE_DIR, "uploads", video.filename) if video.filename else None
         ]
         for c in candidates:
-            if c and os.path.exists(c) and os.path.getsize(c) > 1000:
+            if c and os.path.exists(c) and os.path.getsize(c) > 500:
                 target_path = c
                 break
 
-    # If file not found on disk or was an external stream / empty file, stream fallback sample MP4
+    # If file not found on disk (e.g. wiped after container restart), stream fallback sample MP4
     if not target_path or not os.path.exists(target_path):
         if os.path.exists(fallback_sample):
             target_path = fallback_sample
         else:
             raise HTTPException(status_code=404, detail="Video media file not available on disk")
+
+    # 3. HTTP 206 Partial Content Range Streaming for HTML5 <video> seeking
+    file_size = os.path.getsize(target_path)
+    range_header = request.headers.get("range") or request.headers.get("Range")
+
+    if range_header:
+        try:
+            range_str = range_header.replace("bytes=", "").strip()
+            parts = range_str.split("-")
+            start = int(parts[0]) if parts[0] else 0
+            end = int(parts[1]) if len(parts) > 1 and parts[1] else file_size - 1
+            end = min(end, file_size - 1)
+            content_length = end - start + 1
+
+            def iterfile():
+                with open(target_path, "rb") as f:
+                    f.seek(start)
+                    remaining = content_length
+                    while remaining > 0:
+                        chunk_size = min(128 * 1024, remaining)
+                        data = f.read(chunk_size)
+                        if not data:
+                            break
+                        remaining -= len(data)
+                        yield data
+
+            headers = {
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(content_length),
+                "Content-Type": "video/mp4",
+                "Cache-Control": "no-cache",
+            }
+            return StreamingResponse(iterfile(), status_code=206, headers=headers)
+        except Exception as re:
+            print(f"[Stream] Range processing notice: {re}")
 
     return FileResponse(
         target_path,

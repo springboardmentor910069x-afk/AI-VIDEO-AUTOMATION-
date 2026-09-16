@@ -48,6 +48,7 @@ clipmind.db
 **/uploads/**
 !**/uploads/
 !**/uploads/.gitkeep
+!**/uploads/sample_lecture.mp4
 !**/uploads/thumbnails/
 !**/uploads/thumbnails/.gitkeep
 !**/uploads/exports/

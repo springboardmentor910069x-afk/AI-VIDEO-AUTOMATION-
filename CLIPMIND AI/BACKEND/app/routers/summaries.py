@@ -116,6 +116,26 @@ async def get_video_mindmap(
 
     summary_sections = summary.sections if summary else []
     key_takeaways = summary.key_takeaways if summary else []
+
+    # If summary is still pending, dynamically synthesize concept chapters from transcript segments
+    if not summary_sections:
+        transcript = await Transcript.find_one({"video_id": video_id})
+        if transcript and transcript.segments:
+            total_segs = len(transcript.segments)
+            chunk_size = max(1, total_segs // 3)
+            summary_sections = []
+            for c_idx in range(min(4, (total_segs + chunk_size - 1) // chunk_size)):
+                c_segs = transcript.segments[c_idx * chunk_size : (c_idx + 1) * chunk_size]
+                if c_segs:
+                    start_t = c_segs[0].get("timestamp") or "00:00"
+                    end_t = c_segs[-1].get("timestamp") or "01:00"
+                    summary_sections.append({
+                        "title": f"Chapter {c_idx + 1}: {c_segs[0].get('text', '')[:40]}...",
+                        "timeRange": f"{start_t} - {end_t}",
+                        "summary": c_segs[0].get("text", "")[:140],
+                        "bulletPoints": [s.get("text", "")[:80] for s in c_segs[1:4] if s.get("text")]
+                    })
+
     moments_data = [
         {
             "timestamp": km.timestamp,

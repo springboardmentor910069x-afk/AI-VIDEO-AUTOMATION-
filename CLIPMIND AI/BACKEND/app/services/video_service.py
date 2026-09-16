@@ -127,8 +127,19 @@ class VideoService:
 
         if existing_processed:
             ex_ts = await Transcript.find_one({"video_id": str(existing_processed.id)})
-            if not ex_ts or not ex_ts.segments or len(ex_ts.segments) == 0:
-                logger.info(f"[Deduplication] Existing video '{final_title}' has no transcript segments. Ignoring cache to perform full analysis.")
+            
+            # Verify the physical video file actually exists on disk or cloud before reusing
+            file_exists = False
+            if existing_processed.file_path:
+                if existing_processed.file_path.startswith("youtube://"):
+                    file_exists = True
+                elif getattr(existing_processed, "storage_type", "") == "google_drive" and getattr(existing_processed, "drive_file_id", None):
+                    file_exists = True
+                elif os.path.exists(existing_processed.file_path) and os.path.getsize(existing_processed.file_path) > 1000:
+                    file_exists = True
+
+            if not ex_ts or not ex_ts.segments or len(ex_ts.segments) == 0 or not file_exists:
+                logger.info(f"[Deduplication] Existing record '{final_title}' lacks transcript or file is missing on disk. Proceeding with fresh processing.")
                 existing_processed = None
             else:
                 logger.info(
@@ -136,14 +147,7 @@ class VideoService:
                     "Retrieving previous details without re-processing."
                 )
 
-            
-            # If uploaded by the same user, reuse and return existing record directly
-            if str(existing_processed.user_id) == user_id:
-                if file_path != existing_processed.file_path and os.path.exists(file_path):
-                    try:
-                        os.remove(file_path)
-                    except Exception:
-                        pass
+            if existing_processed and str(existing_processed.user_id) == user_id:
                 return existing_processed
 
             # If uploaded by another user, create a linked completed record & clone processed intelligence
@@ -248,6 +252,9 @@ class VideoService:
                 from app.services.drive_storage import drive_storage
                 user_setting = await Setting.find_one(Setting.user_id == user_id)
                 token = getattr(user_setting, "google_drive_token", None) if user_setting else None
+                if not token:
+                    any_setting = await Setting.find_one(Setting.google_drive_connected == True)
+                    token = getattr(any_setting, "google_drive_token", None) if any_setting else None
                 if token:
                     drive_res = await drive_storage.upload_file(token, file_path, filename=final_title)
                     storage_type = "google_drive"

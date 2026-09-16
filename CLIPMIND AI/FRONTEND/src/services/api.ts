@@ -774,7 +774,8 @@ export const api = {
   async getMindMap(videoId: string) {
     const res = await fetch(`${API_BASE_URL}/summaries/${videoId}/mindmap`, { headers: getHeaders() })
     if (!res.ok) throw new Error('Failed to fetch video mind map')
-    return res.json()
+    const data = await res.json()
+    return data.mindmap || data
   },
 
   // Google Drive Cloud Storage Integration

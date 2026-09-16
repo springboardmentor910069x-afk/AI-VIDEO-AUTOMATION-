@@ -28,6 +28,17 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
 
+  const rawNode: any = (data as any)?.mindmap || data
+  const rootNode: MindMapNode | null = rawNode && typeof rawNode === 'object' ? {
+    id: rawNode.id || 'root-concept',
+    label: rawNode.label || (data as any)?.title || 'Video Concepts Overview',
+    type: rawNode.type || 'root',
+    timestamp: rawNode.timestamp || '00:00',
+    timestamp_sec: rawNode.timestamp_sec || 0,
+    color: rawNode.color || '#6366F1',
+    children: Array.isArray(rawNode.children) ? rawNode.children : []
+  } : null
+
   if (loading) {
     return (
       <div style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, color: 'var(--text-secondary)' }}>
@@ -37,7 +48,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
     )
   }
 
-  if (!data) {
+  if (!rootNode) {
     return (
       <div style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32, textAlign: 'center', color: 'var(--text-secondary)' }}>
         <div style={{ fontSize: 42, opacity: 0.8 }}>🧠</div>
@@ -95,7 +106,8 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${data.label.replace(/\s+/g, '_')}_mindmap.svg`
+    const safeTitle = (rootNode?.label || 'video').replace(/\s+/g, '_')
+    link.download = `${safeTitle}_mindmap.svg`
     link.click()
     URL.revokeObjectURL(url)
   }
@@ -355,7 +367,7 @@ export default function MindMapViewer({ data, loading, onSeek, onNodeClick }: Mi
             display: 'inline-flex',
           }}
         >
-          {renderTree(data)}
+          {renderTree(rootNode)}
         </div>
       </div>
 
