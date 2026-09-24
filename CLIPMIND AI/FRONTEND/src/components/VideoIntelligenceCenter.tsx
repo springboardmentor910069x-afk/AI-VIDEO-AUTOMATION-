@@ -585,7 +585,7 @@ export default function VideoIntelligenceCenter() {
                 borderRadius: 10, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8,
                 backdropFilter: 'blur(10px)', animation: 'stream-in 0.3s ease forwards',
               }}>
-                <span style={{ fontSize: 16 }}></span>
+                <span style={{ fontSize: 16 }}>⏱</span>
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Key Moment: </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', flex: 1 }}>{showToast.text}</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--accent-cyan)' }}>{formatTime(currentTimeSec)}</span>
@@ -679,7 +679,7 @@ export default function VideoIntelligenceCenter() {
         {/* Key moments horizontal cards */}
         <div className="glass-card" style={{ padding: 14, flexShrink: 0 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span></span> Key Moments Timeline
+            <span>⚡</span> Key Moments Timeline
           </div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
             {keyMoments.length === 0 ? (

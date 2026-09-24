@@ -579,3 +579,30 @@ input, select, textarea, button {
 .glow-cyan {
   box-shadow: 0 0 20px -2px rgba(6, 182, 212, 0.45);
 }
+
+/* ==============================================================================
+   MindMap Top-to-Bottom Flow & Glass Adaptation
+   ============================================================================== */
+.mindmap-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.mindmap-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Mobile App Native Experience Tweaks */
+@media (max-width: 767px) {
+  .responsive-page-container {
+    padding: 12px 10px 80px 10px !important;
+  }
+  
+  /* Better mobile touch scrolling */
+  body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}

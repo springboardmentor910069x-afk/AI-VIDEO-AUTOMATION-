@@ -716,19 +716,18 @@ export default function LearnerStudyRoom() {
                 className="btn-primary"
                 onClick={() => navigate('/dashboard/upload')}
                 style={{
-                  padding: '5px 12px',
+                  padding: '6px 12px',
                   borderRadius: 8,
                   fontSize: 12,
                   fontWeight: 600,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 5,
+                  gap: 6,
                   whiteSpace: 'nowrap',
-                  background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo))',
                   cursor: 'pointer'
                 }}
               >
-                <span></span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 + Upload Video / URL
               </button>
             </div>

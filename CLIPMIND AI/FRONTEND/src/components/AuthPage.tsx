@@ -773,7 +773,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             alignItems: 'center',
             gap: 8
           }}>
-            <span></span>
+            <span>⚠️</span>
             <span>{errorMsg}</span>
           </div>
         )}
@@ -1027,7 +1027,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                 display: 'flex', alignItems: 'center', gap: 8,
                 marginBottom: 20
               }}>
-                <span></span>
+                <span>🔒</span>
                 <span>Instant Google SSO • Pure Database Verification</span>
               </div>
 
@@ -1133,7 +1133,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                   borderColor: 'var(--accent-indigo)'
                 }}
               >
-                <span></span>
+                <span>⚡</span>
                 <span>One-Click Restore via Google Popup</span>
               </button>
             </div>

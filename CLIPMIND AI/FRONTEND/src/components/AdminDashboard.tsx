@@ -228,7 +228,7 @@ export default function AdminDashboard() {
       <div className="glass-card" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 14, flexWrap: 'wrap', gap: 14 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span></span> Administrator Operations & Management Console
+            <span>🛡️</span> Administrator Operations & Management Console
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             Direct governance for user permissions, platform video catalog, and security audit trails.
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
               color: 'var(--text-primary)', cursor: loading ? 'not-allowed' : 'pointer'
             }}
           >
-            <span></span> {loading ? 'Cleaning...' : 'Clean Cache'}
+            <span>🧹</span> {loading ? 'Cleaning...' : 'Clean Cache'}
           </button>
           <button
             className="btn-primary"
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
               alignItems: 'center',
               gap: 8
             }}>
-              <span></span>
+              <span>✅</span>
               <span>All Creator & Educator accounts are verified. No pending approval requests.</span>
             </div>
           )}

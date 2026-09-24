@@ -593,7 +593,7 @@ function CloudStorageTab({
                 display: 'flex', alignItems: 'center', gap: 8
               }}
             >
-              <span></span>
+              <span>☁️</span>
               {loading ? 'Connecting...' : 'Connect Google Drive'}
             </button>
           )}
@@ -699,7 +699,7 @@ function CloudStorageTab({
           onClick={() => setShowManual(!showManual)}
           style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          <span></span>
+          <span>🔑</span>
           {showManual ? 'Hide Advanced Token Input' : 'Advanced: Link with Google OAuth Access Token'}
         </button>
 

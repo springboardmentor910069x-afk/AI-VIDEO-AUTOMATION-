@@ -405,7 +405,7 @@ export default function UploadStudio() {
               }}
               style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6, padding: '0 20px', height: 42 }}
             >
-              <span></span> Ingest Stream
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Ingest Stream
             </button>
           </div>
         </div>
@@ -421,7 +421,7 @@ export default function UploadStudio() {
           }}
         >
           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span></span> AI Processing Configuration
+            <span>⚙️</span> AI Processing Configuration
           </span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: accordionOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
             <polyline points="6 9 12 15 18 9"/>

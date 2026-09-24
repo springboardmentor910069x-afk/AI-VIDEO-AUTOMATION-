@@ -369,7 +369,7 @@ export default function EducatorEditor() {
       <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, borderRadius: 12, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span></span> Educator Curriculum Studio
+            <span>🎓</span> Educator Curriculum Studio
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Lecture Asset:</span>
